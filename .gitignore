@@ -13,11 +13,6 @@ local.properties
 *.db
 *.sqlite
 
-# Datasets pesados
-SisFall_dataset/*
-!SisFall_dataset/Readme.txt
-Synthetic_patient-HealthCare-Monitoring_dataset.csv
-
 # Compilación y entornos
 build/
 __pycache__/
