@@ -1,0 +1,14 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "terminal.integrated.env.windows": {
+      "JAVA_HOME": "C:\\Users\\29682\\Documents\\Codex\\toolchains\\android-build\\jdk",
+      "ANDROID_HOME": "C:\\Users\\29682\\Documents\\Codex\\toolchains\\android-build\\android-sdk",
+      "PATH": "C:\\Users\\29682\\Documents\\Codex\\toolchains\\android-build\\jdk\\bin;C:\\Users\\29682\\Documents\\Codex\\toolchains\\android-build\\android-sdk\\platform-tools;C:\\Users\\29682\\Documents\\Codex\\toolchains\\android-build\\android-sdk\\cmdline-tools\\latest\\bin;${env:PATH}"
+    }
+  }
+}

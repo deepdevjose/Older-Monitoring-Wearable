@@ -1,0 +1,9 @@
+{
+  "description": "Illustrative trends only. These are synthetic demo points, not stored ESP32 history.",
+  "heart_rate_bpm": [72,74,75,73,76,74,78,76,75,77,76,76],
+  "spo2_percent": [98,98,97,98,98,99,98,98],
+  "surface_temp_c": [33.1,33.3,33.2,33.4,33.5,33.4,33.5,33.5],
+  "ambient_temp_c": [23.8,24.0,24.1,24.0,24.1,24.1],
+  "microphone_adc": [95,120,105,145,110,180,135,150],
+  "light_adc": [1800,1900,1850,2050,2150,2080,1990,2000]
+}

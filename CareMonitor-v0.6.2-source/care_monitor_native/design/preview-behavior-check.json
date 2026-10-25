@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "scope": "JavaScript with DOM stubs, not real browser layout",
+  "screens": 8,
+  "sensor_drilldowns": 6,
+  "scenarios": 4,
+  "checks": [
+    "demo form navigation",
+    "invalid and offline readings hidden",
+    "alert acknowledgment",
+    "sensor detail navigation",
+    "host state restoration",
+    "no credentials in saved state",
+    "no network requests"
+  ],
+  "icon_initializations": 16
+}

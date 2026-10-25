@@ -1,0 +1,104 @@
+{
+  "revision": "ppg-checked-fifo-20261023",
+  "result": "compiled",
+  "exit_code": 0,
+  "verified_at_utc": "2026-10-23T07:33:13.721411+00:00",
+  "fqbn": "esp32:esp32:esp32:PartitionScheme=huge_app",
+  "jobs": 2,
+  "core_version": "3.3.11",
+  "library_versions": {
+    "ArduinoJson": "7.4.3",
+    "SparkFun MAX3010x Pulse and Proximity Sensor Library": "1.1.2"
+  },
+  "sketch_sha256": "afc00cb0a06f0c6d8094610dd218fd9c326a03a9fb51073d5b1fe8db8dc19e1f",
+  "state_header_sha256": "39465776bd444eba5a5de8364f9d55fda6b7451b129e5fca4c70c40f2e82da05",
+  "test_source_sha256": "79edcaf09a33943d0e966fac2a64b6ca8f911aef5e9bfe125466efa4f5ad6ca2",
+  "fifo_reader_header_sha256": "5607d5b9c9237a5ec9c6c7c7e578f7b37d920fa3dcbcb9a0909c97bf4dafe3ae",
+  "fifo_test_source_sha256": "2977505aea6d62d25ecaa43902192bd9ece6b3f1ccbfdf286a28576d8960ef83",
+  "source_files": {
+    "team_spp_no_sound.ino": {
+      "bytes": 22255,
+      "sha256": "afc00cb0a06f0c6d8094610dd218fd9c326a03a9fb51073d5b1fe8db8dc19e1f"
+    },
+    "PpgReadingState.h": {
+      "bytes": 4680,
+      "sha256": "39465776bd444eba5a5de8364f9d55fda6b7451b129e5fca4c70c40f2e82da05"
+    },
+    "../tests/ppg_reading_state_test.cpp": {
+      "bytes": 5359,
+      "sha256": "79edcaf09a33943d0e966fac2a64b6ca8f911aef5e9bfe125466efa4f5ad6ca2"
+    },
+    "PpgFifoReader.h": {
+      "bytes": 5233,
+      "sha256": "5607d5b9c9237a5ec9c6c7c7e578f7b37d920fa3dcbcb9a0909c97bf4dafe3ae"
+    },
+    "../tests/ppg_fifo_reader_test.cpp": {
+      "bytes": 11069,
+      "sha256": "2977505aea6d62d25ecaa43902192bd9ece6b3f1ccbfdf286a28576d8960ef83"
+    }
+  },
+  "source_matches_private_build": true,
+  "generated_header_matches_source_after_line_directive_removal": true,
+  "compiled_binaries": {
+    "team_spp_no_sound.ino.bin": {
+      "bytes": 1679760,
+      "sha256": "5e72a42126f36116332a9a120c7f7558470bd5d2c34c277bc2875ea33ba90a08"
+    },
+    "team_spp_no_sound.ino.partitions.bin": {
+      "bytes": 3072,
+      "sha256": "aaae2888c5a6a348004b5b436f47abb25ae32e72d9003902955a998eda723edd"
+    },
+    "team_spp_no_sound.ino.bootloader.bin": {
+      "bytes": 24992,
+      "sha256": "427f96e10c620c4f062dab15da54fc45494d897e8397ae6f3aecc98c42d7e379"
+    }
+  },
+  "resource_usage": {
+    "flash_bytes": 1679609,
+    "flash_maximum_bytes": 3145728,
+    "global_ram_bytes": 67280,
+    "ram_maximum_bytes": 327680
+  },
+  "app_flash_offset": "0x10000",
+  "app_partition_maximum_bytes": 3145728,
+  "sampling": {
+    "sensor_sample_hz": 100,
+    "sample_average": 4,
+    "effective_sample_hz": 25,
+    "window_samples": 100,
+    "step_samples": 25,
+    "finger_ir_threshold": 50000,
+    "sample_timeout_ms": 500,
+    "result_timeout_ms": 2500,
+    "serial_tx_buffer_bytes_requested": 4096,
+    "fifo_reader": "checked_direct",
+    "max_samples_per_poll": 31,
+    "exact_six_byte_sample_reads": true,
+    "pointer_field_mask": "0x1f",
+    "adc_field_mask": "0x3ffff",
+    "unused_upper_bits": "diagnostic observations only; no rejection or window reset",
+    "no_window_reset_for_failed_pointer_probe": true,
+    "verified_overflow_recovery": "Discard ambiguous queued samples using checked RD_PTR=WR_PTR and overflow counter acknowledgement."
+  },
+  "tests": {
+    "count": 30,
+    "lifecycle_count": 10,
+    "fifo_count": 20,
+    "result": "compile_time_passed",
+    "compiler": "xtensa-esp32-elf-g++.exe",
+    "options": [
+      "-std=gnu++17",
+      "-fsyntax-only"
+    ],
+    "source": "../tests/ppg_reading_state_test.cpp",
+    "sources": [
+      "../tests/ppg_reading_state_test.cpp",
+      "../tests/ppg_fifo_reader_test.cpp"
+    ]
+  },
+  "no_device_upload_performed_by_compilation": true,
+  "physical_flashing_and_readings": "Record separately; this receipt proves full compilation and compile-time policy checks only.",
+  "private_compiled_binaries_in_source_release": false,
+  "wifi_credentials": "Preserved in existing private secrets.h; excluded from public files.",
+  "compiler_log": "compile-ppg-checked-reader-final-20261023.log"
+}

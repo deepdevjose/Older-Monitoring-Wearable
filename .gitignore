@@ -1,0 +1,35 @@
+# Secretos y certificados
+certs/
+*.key
+*.pem
+.env
+secrets.h
+!secrets.example.h
+*.jks
+*.keystore
+local.properties
+
+# Bases de datos locales
+*.db
+*.sqlite
+
+# Datasets pesados
+SisFall_dataset/*
+!SisFall_dataset/Readme.txt
+Synthetic_patient-HealthCare-Monitoring_dataset.csv
+
+# Compilación y entornos
+build/
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+
+# Diagnósticos locales
+CareMonitor-problem-firmware-20261023/diagnostics/
+
+# Editor / SO
+.vscode/
+.idea/
+.DS_Store

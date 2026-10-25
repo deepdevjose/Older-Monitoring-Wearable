@@ -1,0 +1,24 @@
+{
+  "verified_date": "2026-10-20",
+  "timezone": "Asia/Shanghai",
+  "application_id": "org.caremonitor.demo",
+  "version_name": "0.6.2",
+  "version_code": 10,
+  "apk_sha256": "2a44d465983cc288bd2d81ab9dc616435345019fc0a6c737170df9fbec8fd43a",
+  "phone_model": "24094RAD4G",
+  "installation_method": "adb install -r",
+  "install_result": "Success",
+  "install_success": true,
+  "no_uninstall_performed": true,
+  "launch_success": true,
+  "installed_version_observed": {
+    "versionName": "0.6.2",
+    "versionCode": 10
+  },
+  "foreground_activity_observed": "org.caremonitor.demo/.MainActivity",
+  "interactive_settings_navigation_tested": false,
+  "spp_pairing_tested": false,
+  "spp_sensor_stream_tested": false,
+  "server_delivery_tested": false,
+  "firmware_modified_or_flashed": false
+}

@@ -1,0 +1,22 @@
+{
+  "type": "code-rendered design references",
+  "not_real_app_screenshots": true,
+  "screen_size": {
+    "width": 390,
+    "height": 844
+  },
+  "raster_scale": 2,
+  "screens": [
+    "wireframes\\01-login.png",
+    "wireframes\\02-signup.png",
+    "wireframes\\03-overview.png",
+    "wireframes\\04-sensors.png",
+    "wireframes\\05-sensor-detail.png",
+    "wireframes\\06-alerts.png",
+    "wireframes\\07-alert-detail.png",
+    "wireframes\\08-settings.png"
+  ],
+  "contact_sheet": "wireframes-contact-sheet.png",
+  "renderer": "Pillow 12.3.0; Segoe UI fonts",
+  "browser_screenshot_status": "Unavailable: sandbox Edge process closed before page load"
+}

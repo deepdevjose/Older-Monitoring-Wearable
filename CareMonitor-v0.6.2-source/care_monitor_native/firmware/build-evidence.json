@@ -1,0 +1,35 @@
+{
+  "verified_at_utc": "2026-10-20T03:29:30.763172+00:00",
+  "command": [
+    "C:\\Users\\29682\\AppData\\Local\\Programs\\Arduino IDE\\resources\\app\\lib\\backend\\resources\\arduino-cli.exe",
+    "compile",
+    "--fqbn",
+    "esp32:esp32:esp32",
+    "--build-path",
+    "C:\\Users\\29682\\Documents\\ChatGPT\\Mobile Phone\\work\\esp32_ble_v060_build",
+    "C:\\Users\\29682\\Documents\\ChatGPT\\Mobile Phone\\care_monitor_native\\firmware\\care_monitor_ble"
+  ],
+  "return_code": 0,
+  "sketch_sha256": "4d13fcfec007ac2b4de325ac94247710aa9188baf3eeb015ece1c1dcf91bfb58",
+  "fqbn": "esp32:esp32:esp32",
+  "compiled_binaries": {
+    "care_monitor_ble.ino.bin": {
+      "bytes": 1142560,
+      "sha256": "5f43cf45462ad0166fa0fe7b086062e1e1371fb7d806e6dd25b825c2c57f3024"
+    },
+    "care_monitor_ble.ino.bootloader.bin": {
+      "bytes": 24992,
+      "sha256": "427f96e10c620c4f062dab15da54fc45494d897e8397ae6f3aecc98c42d7e379"
+    },
+    "care_monitor_ble.ino.merged.bin": {
+      "bytes": 4194304,
+      "sha256": "0c724ad42cdacfaba2c57d8be4e4480decbb1dca773d72ac9c809aa43c80234c"
+    },
+    "care_monitor_ble.ino.partitions.bin": {
+      "bytes": 3072,
+      "sha256": "148b959cbff1c38aa8e1d5c0ba9d612c54997b945e56a63f41223eef650653a1"
+    }
+  },
+  "hardware_flashed": false,
+  "physical_sensor_or_phone_tested": false
+}

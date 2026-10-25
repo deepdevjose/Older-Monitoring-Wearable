@@ -1,0 +1,52 @@
+{
+  "created_at_utc": "2026-10-23T07:46:11.983537+00:00",
+  "purpose": "exact problematic deployed firmware source review",
+  "working_release": false,
+  "source_files": [
+    {
+      "path": "team_spp_no_sound/team_spp_no_sound.ino",
+      "bytes": 22255,
+      "sha256": "afc00cb0a06f0c6d8094610dd218fd9c326a03a9fb51073d5b1fe8db8dc19e1f"
+    },
+    {
+      "path": "team_spp_no_sound/PpgFifoReader.h",
+      "bytes": 5233,
+      "sha256": "5607d5b9c9237a5ec9c6c7c7e578f7b37d920fa3dcbcb9a0909c97bf4dafe3ae"
+    },
+    {
+      "path": "team_spp_no_sound/PpgReadingState.h",
+      "bytes": 4680,
+      "sha256": "39465776bd444eba5a5de8364f9d55fda6b7451b129e5fca4c70c40f2e82da05"
+    },
+    {
+      "path": "team_spp_no_sound/secrets.example.h",
+      "bytes": 158,
+      "sha256": "232fe97e55a30b6955a6ff93e01f8a0c0304f76b884ab2a1984c723d84eacdf7"
+    },
+    {
+      "path": "team_spp_no_sound/PPG_BUILD_EVIDENCE.json",
+      "bytes": 4074,
+      "sha256": "1e6137f854a8ca79ba5aac8dd4ed5208c55b2bc4405c809a9b1d83febd9417fd"
+    },
+    {
+      "path": "tests/ppg_reading_state_test.cpp",
+      "bytes": 5359,
+      "sha256": "79edcaf09a33943d0e966fac2a64b6ca8f911aef5e9bfe125466efa4f5ad6ca2"
+    },
+    {
+      "path": "tests/ppg_fifo_reader_test.cpp",
+      "bytes": 11069,
+      "sha256": "2977505aea6d62d25ecaa43902192bd9ece6b3f1ccbfdf286a28576d8960ef83"
+    },
+    {
+      "path": "diagnostics/checked-direct-server-receipt-20261023.json",
+      "bytes": 3687,
+      "sha256": "db6ba45ac2fe16b977ab1c6691ad85d21477a8304a2248b8678030feb60e156b"
+    },
+    {
+      "path": "diagnostics/ppg_serial_checked_fifo_startup_20261023.json",
+      "bytes": 15129,
+      "sha256": "8ae575f1f53db51004acf1c6481cda9a66ea72ce8f75b318f6421d297b060354"
+    }
+  ]
+}
