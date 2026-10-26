@@ -20,6 +20,9 @@ for name,command in commands:
     print(f'{name}: exit {run.returncode}')
     if run.returncode:
         print(run.stdout[-6000:]);raise SystemExit(run.returncode)
+    if name=='jvm':
+        artifacts=ROOT/'mobile/artifacts';artifacts.mkdir(exist_ok=True)
+        (artifacts/'JVM_TEST_RESULTS.txt').write_text(run.stdout)
     results.append({'name':name,'command':command,'exit_code':run.returncode})
 root=ET.parse(local/'pytest.xml').getroot()
 suites=list(root.iter('testsuite'))

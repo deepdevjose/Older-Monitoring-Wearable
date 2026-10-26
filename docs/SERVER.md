@@ -49,12 +49,12 @@ El comando anterior es temporal; verificar antes de hacerlo permanente. La app n
 
 ## 4. Instalar en el Samsung Galaxy S26 Ultra
 
-El artefacto está en `release/CareMonitor-1.0.0.apk`. Se compila con API 37 para preparar Android 17. No se ha conectado ni validado ese Samsung/One UI: el APK es una build de desarrollo pendiente de aceptación en el teléfono real.
+El artefacto está en `release/CareMonitor-1.0.0.apk`, código 13. Se compila con API 37 y se ha instalado y abierto por USB en el Samsung SM-S948B con Android 17. La aceptación del flujo Bluetooth, servidor, permisos y avisos en segundo plano sigue pendiente.
 
 1. Copiar el APK al teléfono e instalar desde una fuente local confiable. Autorizar temporalmente a esa aplicación de archivos para instalar APK. También puede usarse `adb install release/CareMonitor-1.0.0.apk` cuando USB debugging esté autorizado.
 2. Si una instalación antigua tiene otro certificado, Android rechazará actualizarla. Conseguir la clave original o decidir conscientemente si se elimina esa instalación y sus datos locales. No se desinstala automáticamente nada.
-3. Conectar a la Wi-Fi del servidor. En acceso, confirmar `https://192.168.3.3:8443/api/v1`. En Android 17 conceder **red local** cuando se solicite.
-4. Crear una cuenta ficticia de **Adulto** con contraseña de al menos doce caracteres, y otras cuentas ficticias de **Cuidador**. La aceptación académica es obligatoria; no hay credenciales predeterminadas.
+3. Conectar a la Wi-Fi del servidor. La pantalla inicial usa la dirección HTTPS preparada en el APK (`ApiSession.DEFAULT_BASE`) o la última conexión guardada, sin mostrar un campo de servidor. Antes del primer acceso, el despliegue debe proporcionar una dirección alcanzable y cubierta por el certificado. En Android 17 conceder **red local** cuando se solicite. Tras iniciar sesión, cambiar la conexión en **Ajustes → Conexión con tu servidor** exige iniciar sesión en el nuevo servidor. Se puede volver a la conexión anterior si falla ese primer acceso.
+4. Pulsar **Crear una cuenta**, elegir el rol y completar nombre, correo y contraseña en pasos separados. Usar cuentas ficticias, contraseña de doce a 128 caracteres y aceptación académica; no hay credenciales predeterminadas. La persona mayor recibe una guía para conectar el wearable y puede retomarla más tarde; el cuidador pasa a solicitar un vínculo.
 5. Desde el adulto generar invitación de cuatro cifras. En el cuidador solicitar vínculo. Volver al adulto y aprobar la identidad correcta. Repetir con cada cuidador.
 6. En el adulto abrir Bluetooth, dar permisos y seleccionar `ElderSensors-elder-demo-01`. Comparar el código con Serial y confirmar `Y` cuando lo solicite el firmware. No se cambia el firmware para conectar la app.
 7. Comprobar contador de mensajes, vigencia de la lectura, cola y confirmación del servidor. Los diagnósticos reales se identifican como `device_diagnostic` y no generan alertas fisiológicas.

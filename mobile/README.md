@@ -1,23 +1,25 @@
 # CareMonitor Android 1.0.0
 
-Esta carpeta contiene **la única fuente Android** del proyecto. El APK generado se entrega en `../release/CareMonitor-1.0.0.apk`; no contiene un servidor, credenciales compartidas ni un firmware alternativo. Aplicación nativa Java, paquete `org.caremonitor.demo`, versión 1.0.0/código 11, Android mínimo 7/API 24, objetivo Android 17/API 37.
+Esta carpeta contiene **la única fuente Android** del proyecto. El APK generado se entrega en `../release/CareMonitor-1.0.0.apk`; no contiene un servidor, credenciales compartidas ni un firmware alternativo. Aplicación nativa Java, paquete `org.caremonitor.demo`, versión 1.0.0/código 13, Android mínimo 7/API 24, objetivo Android 17/API 37.
 
 ## Preparar el teléfono
 
 1. Inicia el servidor siguiendo `../docs/SERVER.md` y conecta el Samsung y la computadora a la misma red Wi-Fi accesible. El modo aislamiento de clientes de algunos routers impide la conexión entre dispositivos.
 2. Instala el APK. Desde una computadora con Android Platform Tools: `adb install ../release/CareMonitor-1.0.0.apk`. También puedes copiar el archivo al teléfono y autorizar temporalmente a ese gestor de archivos para instalarlo.
-3. Abre CareMonitor. Escribe la dirección HTTPS que muestra la CLI, terminada en `/api/v1`. En esta preparación: `https://192.168.3.3:8443/api/v1`. La dirección IP puede cambiar; debe aparecer en el SAN del certificado del servidor.
-4. Crea una cuenta ficticia para la **persona mayor**, con correo de prueba, contraseña de al menos 12 caracteres y aceptación académica. Concede notificaciones, dispositivos cercanos y el permiso de red local cuando se soliciten. Android 17 bloquea el acceso LAN sin este permiso.
-5. Abre los ajustes Bluetooth, empareja `ElderSensors-elder-demo-01` y vuelve a **Hoy → Conectar mi wearable → Buscar dispositivos Bluetooth**. Selecciónalo. La recepción y la cantidad de muestras pendientes aparecen en la pantalla y en una notificación persistente con **Stop**.
+3. Abre CareMonitor. El acceso usa la conexión preconfigurada, sin pedir una URL en la pantalla inicial. La primera dirección procede de `ApiSession.DEFAULT_BASE` y debe prepararse al desplegar el APK; actualmente es `https://192.168.3.3:8443/api/v1`. Debe ser accesible y aparecer en el SAN del certificado. Después de iniciar sesión puedes cambiarla en **Ajustes → Conexión con tu servidor**. Guardar otra dirección cierra la sesión y exige autenticarse allí; no transfiere tokens ni la cola del servidor anterior. Hasta conseguir acceso en la nueva dirección, el login permite **Volver a mi conexión anterior**. Si la dirección inicial no es accesible, el administrador debe corregir el despliegue antes del primer acceso.
+4. Pulsa **Crear una cuenta**. Primero elige **Soy la persona mayor** o **Soy cuidador o cuidadora**, y continúa con una pregunta por pantalla: nombre, correo y contraseña de 12 a 128 caracteres con aceptación académica. Atrás conserva nombre, correo y rol; la contraseña no se guarda al recrear la pantalla. Android 17 pide red local al autenticar. Bluetooth, notificaciones, ubicación y micrófono se solicitan al activar su función.
+5. Solo la persona mayor recibe la guía del wearable después del registro: preparar, emparejar en Bluetooth, buscar/seleccionar y comprobar recepción reciente. Puede omitirla y retomarla desde **Hoy → Conectar mi wearable** o **Ajustes → Configurar mi wearable**. Empareja `ElderSensors-elder-demo-01` y comprueba dirección/código. La recepción y muestras pendientes aparecen en la pantalla y en una notificación persistente con **Stop**. El cuidador pasa directamente a vincularse con una persona, sin controles de conexión del wearable.
 6. Crea cuentas ficticias de **cuidador** en otros teléfonos. La persona mayor genera un código de 4 dígitos en **Cuidado**. Cada cuidador solicita acceso con ese código y la persona mayor revisa y aprueba su identidad. Un código no concede acceso directamente. Para añadir otro cuidador se genera una nueva invitación.
-7. En **Avisos** o **Cuenta**, pulsa **Activar avisos locales**. Este canal mantiene una conexión HTTPS al servidor de tu computadora y muestra una notificación permanente con **Detener**. No necesita servicios de notificación externos. Cada teléfono debe activarlo individualmente.
+7. Abre **Avisos → Configurar notificaciones** o **Ajustes → Notificaciones** y pulsa **Activar avisos locales**. Este canal mantiene una conexión HTTPS al servidor de tu computadora y muestra una notificación permanente con **Detener**. No necesita servicios de notificación externos. Cada teléfono debe activarlo individualmente.
 8. El cuidador selecciona a la persona vinculada y crea recordatorios desde **Cuidado**. La persona mayor confirma la toma cuando el aviso ya venció. La confirmación registra una declaración; no verifica ingestión. El botón de agua crea un recordatorio educativo, sin detectar deshidratación ni recomendar cantidades.
 
-No hay teléfono conectado durante esta preparación y no se afirma validación en un Galaxy S26 Ultra/One UI 9. La compatibilidad se ha preparado y compilado contra API 37. Emparejamiento, permisos del fabricante, legibilidad con TalkBack/texto grande, comportamiento con pantalla bloqueada y entrega en segundo plano requieren comprobarse en el dispositivo.
+Se ha instalado y abierto la app en el Samsung SM-S948B con Android 17 por USB. Esa comprobación no acredita el flujo completo wearable–teléfono–servidor. Emparejamiento, permisos del fabricante, lectura con TalkBack, pruebas de uso, comportamiento con pantalla bloqueada y entrega en segundo plano requieren aceptación independiente.
+
+La revisión del código 13 por instrumentación nativa pasó 709 comprobaciones en ese teléfono: acceso sin campo de servidor, selección explícita de rol, pasos y navegación atrás, contraseña oculta inicialmente y ausente del estado guardado, servidor dentro de Ajustes y bloqueo del wearable para el cuidador. El registro también se midió con `fontScale=2.0` en memoria: campos desplazables sin recortes y acción principal fija visible, fuera del formulario. Se comprobó el tab activo en las cuatro áreas y subpáginas de Ajustes. Usa perfiles ficticios solo en memoria; no registra cuentas ni inicia sensores. Preferencias, sesión, cola, configuración de texto y permisos permanecieron iguales. La rotación durante una autenticación real todavía requiere aceptación.
 
 ## Qué hace y qué limita
 
-- Cuatro áreas: Hoy, Avisos, Cuidado y Cuenta. Controles de al menos 56 dp, texto principal de 18 sp, desplazamiento y nombres claros. La interfaz sigue un lenguaje sobrio de tarjetas, tipografía amplia y controles azules.
+- Cuatro áreas con iconos y etiquetas: Hoy, Avisos, Cuidado y Ajustes. Diseño con fondo gris suave, superficies blancas, títulos amplios, tarjetas y filas agrupadas. Registro con rol explícito, progreso, una pregunta por pantalla y botón principal fijo abajo. Acciones secundarias discretas, estados de foco/pulsación y opción Mostrar contraseña. Controles de al menos 56 dp y texto principal de 18 sp. Las métricas usan dos columnas y pasan a una al ampliar el texto; Ajustes separa conexión, notificaciones, privacidad y seguridad.
 - El backend autentica, autoriza, interpreta y almacena. El teléfono conserva indicadores de validez y transmite los JSON diagnósticos del firmware. La interfaz nunca convierte un valor inválido en normal.
 - La cola usa UUID por muestra, persistido antes de enviar. Un reintento conserva el UUID y el servidor deduplica. Es una cola AES-GCM en almacenamiento privado con clave AndroidKeyStore; capacidad 200 muestras. Si se llena, rechaza las nuevas y muestra la pérdida. No garantiza una historia completa tras una desconexión larga.
 - La cola está ligada a dirección del servidor e identidad de la persona mayor. Cambiar de cuenta o servidor bloquea su entrega hasta volver a su propietario o borrarla expresamente. Cerrar sesión detiene los servicios y conserva la cola privada. La sesión vencida pausa el envío.
@@ -29,7 +31,7 @@ No hay teléfono conectado durante esta preparación y no se afirma validación 
 
 ## Ubicación y micrófono
 
-Se activan expresamente desde **Cuenta**, después del consentimiento y del permiso Android. Ambos muestran un servicio en primer plano con una acción **Detener** y paran al cerrar sesión. No solicitan ubicación permanente en segundo plano ni comienzan automáticamente al reiniciar.
+Se activan expresamente desde **Ajustes → Privacidad**, después del consentimiento y del permiso Android. Ambos muestran un servicio en primer plano con una acción **Detener** y paran al cerrar sesión. No solicitan ubicación permanente en segundo plano ni comienzan automáticamente al reiniciar.
 
 Para ubicación, configura coordenadas ficticias de casa y un radio de 100 a 10 000 m. Esas coordenadas se cifran y permanecen en el teléfono. La app solo envía un punto cuando su distancia menos la incertidumbre de precisión supera por completo el radio; rechaza puntos antiguos, simulados por el proveedor Android o con precisión peor de 100 m. Envía como máximo aproximadamente un punto por minuto. Se usa exclusivamente `LocationManager.GPS_PROVIDER`, sin proveedor de red, geocodificación ni SDK de ubicación externo. El cuidador ve coordenadas en una ventana nativa, sin abrir servicios de mapas. El sensor es el teléfono: dejarlo en otro lugar invalida cualquier interpretación de presencia del usuario. El servidor debe seguir siendo accesible fuera de la Wi-Fi local para recibir esos puntos; esta entrega no se ha comprobado físicamente.
 
@@ -43,11 +45,14 @@ Requisitos: JDK con `javac --release 8`, SDK Android con plataforma `android-37.
 
 ```bash
 python3 mobile/scripts/test_reading_summary.py --jdk /usr
+python3 mobile/scripts/test_onboarding_device.py --serial SERIAL_DEL_TELEFONO --sdk "$HOME/Android/Sdk" --jdk /usr
 python3 mobile/scripts/build_apk.py \
   --sdk /home/deepdevjose/Android/Sdk \
   --jdk /usr \
   --keystore .local/dev-signing.jks
 ```
+
+La instrumentación exige que la app esté sin sesión y aborta si hay una cuenta activa. Instala y retira únicamente el paquete auxiliar `org.caremonitor.uitest`; no borra datos de CareMonitor ni concede permisos. Añade `--build-only` para compilar el test sin tocar un dispositivo.
 
 Ejecutar desde la raíz del repositorio. El builder reutiliza `mobile/build/current`, compila recursos y Java, genera DEX, alinea y firma el APK y verifica firma, metadatos, alineación y estructura ZIP. Deja `mobile/artifacts/BUILD_EVIDENCE.json` con hashes exactos y flags honestos de pruebas físicas. El empaquetador de la raíz entrega la versión en `release/`; los directorios generados se pueden borrar y regenerar. Las suites JVM verifican utilidades de framing/frescura, política de relay y la frontera GPS/aislamiento de cuentas; **no sustituyen pruebas Android, Keystore ni Bluetooth reales**.
 
@@ -57,7 +62,7 @@ Antes de compilar para otro despliegue, copia su **certificado público de CA**,
 
 ## Permisos y canal de avisos autohospedado
 
-La aplicación declara y solicita `ACCESS_LOCAL_NETWORK` antes de conectar con el servidor en Android 17. Denegar o revocar este permiso pausa las conexiones y conserva la cola cifrada. Se puede solicitar de nuevo en Cuenta; no se evita la decisión del usuario. Consulta la [documentación oficial del permiso de red local](https://developer.android.com/privacy-and-security/local-network-permission).
+La aplicación declara y solicita `ACCESS_LOCAL_NETWORK` antes de conectar con el servidor en Android 17. Denegar o revocar este permiso pausa las conexiones y conserva la cola cifrada. Se puede solicitar de nuevo en Ajustes; no se evita la decisión del usuario. Consulta la [documentación oficial del permiso de red local](https://developer.android.com/privacy-and-security/local-network-permission).
 
 El servicio `NotificationChannelService` tiene tipo `specialUse`, permiso `FOREGROUND_SERVICE_SPECIAL_USE` y la propiedad `android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE` que explica la vigilancia del buzón privado habilitada por el usuario. Inicia solo desde la app visible, mantiene una notificación con parada y no se reinicia automáticamente después de un cierre forzado o reinicio. No se presenta como mensajería SMS, servicio médico validado ni servicio exento del sistema. El uso del tipo especial sigue el contrato de [tipos de servicio en primer plano de Android](https://developer.android.com/develop/background-work/services/fgs/service-types#special-use); distribución por tiendas exigiría la evaluación correspondiente, fuera de este APK académico instalado directamente.
 

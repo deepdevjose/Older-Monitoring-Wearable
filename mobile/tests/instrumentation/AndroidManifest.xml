@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.caremonitor.uitest"
+    android:versionCode="1"
+    android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="37" />
+    <application android:label="CareMonitor isolated UI checks"
+        android:allowBackup="false" android:usesCleartextTraffic="false" />
+    <instrumentation android:name=".SetupInstrumentation"
+        android:targetPackage="org.caremonitor.demo"
+        android:functionalTest="true" android:handleProfiling="false" />
+</manifest>

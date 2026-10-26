@@ -1,4 +1,4 @@
-"""Run status, inbox, framing, freshness, relay and stream-session checks (no Android runtime)."""
+"""Run profile setup, status, inbox and transport checks (no Android runtime)."""
 import argparse
 from datetime import datetime
 import os
@@ -18,6 +18,8 @@ env['JAVA_TOOL_OPTIONS'] = (env.get('JAVA_TOOL_OPTIONS', '') +
     ' -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8').strip()
 subprocess.run([str(args.jdk / ('bin/javac' + suffix)), '-encoding', 'UTF-8',
     '--release', '8', '-d', str(folder),
+    str(ROOT / 'app/src/main/java/org/caremonitor/demo/AccountSetup.java'),
+    str(ROOT / 'tests/AccountSetupTest.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/ReadingSummary.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/AlertCatalog.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/AlertInbox.java'),
@@ -48,3 +50,6 @@ subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
 
 subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
     'org.caremonitor.demo.NotificationCursorTest'], check=True, env=env)
+
+subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
+    'org.caremonitor.demo.AccountSetupTest'], check=True, env=env)

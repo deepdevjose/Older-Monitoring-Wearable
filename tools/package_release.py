@@ -29,6 +29,11 @@ def main():
     if actual!=set(build['input_sha256']): raise SystemExit('Android source inventory changed after build')
     apk=ROOT/'mobile/artifacts'/build['apk']
     if sha(apk)!=build['sha256']: raise SystemExit('APK hash does not match verified build')
+    ui_file=RELEASE/'ANDROID_UI_EVIDENCE.json'
+    ui=json.loads(ui_file.read_text()) if ui_file.exists() else None
+    if ui is not None and (ui['apk_sha256']!=build['sha256'] or ui['result']!='PASS'):
+        raise SystemExit('Stale or failed Android UI evidence; rerun device checks for this APK')
+    if ui is not None: verify_hashes(ROOT,ui['input_sha256'])
     validation=json.loads((RELEASE/'VALIDATION.json').read_text())
     verify_hashes(ROOT,validation['input_sha256'])
     if any(c['exit_code'] for c in validation['commands']): raise SystemExit('Failed validation command')
@@ -74,7 +79,9 @@ def main():
     report={'version':VERSION,'created_at':datetime.now(timezone.utc).isoformat(),'source_files':len(sources),'source_sha256':manifest,
             'outputs':outputs,'python_tests':validation['python'],'jvm_assertions':validation['jvm_assertions'],
             'https_integration_checks':integration['passed'],'private_keys_packaged':False,
-            'physical_phone_tested':False,'full_bluetooth_phone_server_tested':False,'cloud_services_used':False,
+            'physical_phone_tested':ui is not None,
+            'physical_phone_test_scope':ui['scope'] if ui else [],
+            'full_bluetooth_phone_server_tested':False,'cloud_services_used':False,
             'signing':'Local development certificate; retain private .local/dev-signing.jks for updates'}
     (RELEASE/'MANIFEST.json').write_text(json.dumps(report,indent=2)+'\n')
     checksum_files=sorted(p for p in RELEASE.iterdir() if p.is_file() and p.name!='SHA256SUMS')

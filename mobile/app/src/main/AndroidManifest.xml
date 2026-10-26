@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.caremonitor.demo"
-    android:versionCode="11"
+    android:versionCode="13"
     android:versionName="1.0.0">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="37" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />

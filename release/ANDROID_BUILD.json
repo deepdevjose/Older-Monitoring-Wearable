@@ -1,16 +1,17 @@
 {
   "result": "APK compiled, aligned, signed and verified",
   "apk": "CareMonitor-1.0.0.apk",
-  "bytes": 239897,
-  "sha256": "fb3adfdbf3485698a19aa105213ed95ff102e6fbed5d20f9e4b317f52309b5e3",
+  "bytes": 277473,
+  "sha256": "417c12efa634e960b5e3f0ab680a14951b4357a8580f59eb7b7c75caea206378",
   "application_id": "org.caremonitor.demo",
   "version_name": "1.0.0",
-  "version_code": 11,
+  "version_code": 13,
   "min_api": 24,
   "target_api": 37,
   "input_sha256": {
-    "app/src/main/AndroidManifest.xml": "17993da4c4ca4ef7886d82ed7188bb8b9fb9c98429baf4f8a678a55c29c81328",
+    "app/src/main/AndroidManifest.xml": "aae9b584767837cce971a0552a35cb5af4033760a9165588978b1f254a88368b",
     "app/src/main/assets/server_ca.crt": "47b1214d10184ff6b1edb09061bb1414cdeae00ad130d146bfcfcf0068ec8cec",
+    "app/src/main/java/org/caremonitor/demo/AccountSetup.java": "b1eb091afd8f04b290ab8fa834c4e78f3afe0e1c2f6d5eaf14639dd96a7a2fd4",
     "app/src/main/java/org/caremonitor/demo/AlertCatalog.java": "4bcc9a92ec046af9ecdc8e0f492465b3bbd61bca0f43e5629d31db8a79253ccf",
     "app/src/main/java/org/caremonitor/demo/AlertInbox.java": "6ba05653ebf5e1d7f9934dd333659e7abfd838e36cffb0d3b779af79fb509ed0",
     "app/src/main/java/org/caremonitor/demo/ApiClient.java": "d711266f2e552ae82f7632a03ea2243f93594d1e960fa7366bc8371bb350646a",
@@ -19,7 +20,7 @@
     "app/src/main/java/org/caremonitor/demo/CarePalette.java": "823e96722ab359a55d89e507453066c86bc3f5b51f9782fd993692f17f9aa75c",
     "app/src/main/java/org/caremonitor/demo/LiveMonitorService.java": "4675d0515aa2fb19fb1f630a52dcd3609f111f078c3da0fc3714ae476030e750",
     "app/src/main/java/org/caremonitor/demo/LiveSampleFreshness.java": "b6f465f7ef09219b319d4415b16ec2c51562d7ba0f61ec2b2729bcb6cb5269bb",
-    "app/src/main/java/org/caremonitor/demo/MainActivity.java": "5947ae1cfc822ea3cc311a6482fd4322da03a1ccfa0965dd2db2812dc410ab0c",
+    "app/src/main/java/org/caremonitor/demo/MainActivity.java": "124eb7f3ab72f14705ca639efd324440a979f53a32b385945de8cd36303efb8a",
     "app/src/main/java/org/caremonitor/demo/NdjsonFramer.java": "a344a31644a6a2124917ce6f1364d574d46f7918b39f8ae1133297b3fd149557",
     "app/src/main/java/org/caremonitor/demo/NotificationChannelService.java": "1b071257eb38c33bd2829e0cff0b57b0f5b5fe5f0642f030b25751174caaf839",
     "app/src/main/java/org/caremonitor/demo/NotificationCursor.java": "3c61915d4eb84933f75065a956877d0d372eac6898e477e5627ebeee38c062a7",
@@ -39,9 +40,14 @@
     "app/src/main/res/drawable/ic_bluetooth.xml": "0e5ffb31c22d4e724e33eafd8c9ce710a5e83c3f8c2dff32785c21e63a455680",
     "app/src/main/res/drawable/ic_buzzer.xml": "331f5f45099855fbc4f36891ee16ea985b223e6f2603d8284fd9468277b70edc",
     "app/src/main/res/drawable/ic_care_monitor.xml": "8a71916a80b092ce0c49e45f22aa150dd4f43df485e7917110ca311c41e9546c",
+    "app/src/main/res/drawable/ic_check_circle.xml": "c4d6401c7b829f604c01ed175b8c7e2dd6312bc5df4dfee4062c5519e81a491e",
+    "app/src/main/res/drawable/ic_chevron_left.xml": "a17348b8fbb220248a4ec221671113d09c229e17bf7779f36912c2fca59e501e",
+    "app/src/main/res/drawable/ic_chevron_right.xml": "1c2d799c23bd9d2c004dfd4116a05006255a0a9891f8ea913414373da97e448e",
     "app/src/main/res/drawable/ic_fall.xml": "a88bf39a1d21e67e6edd43b4387da405ef90f26259040aac5d44d38b93bc04a7",
     "app/src/main/res/drawable/ic_heart.xml": "3440730e350886c348482b672a47d485cbf8a267d37a28b56c35b1d9da69c1f0",
     "app/src/main/res/drawable/ic_light.xml": "88d8a1bbd7d70c413ab1760f889f9bec0feebe22fc2ade63e07f81c4765e4c0d",
+    "app/src/main/res/drawable/ic_lock.xml": "cc576a8e6e2b3b5fb592421c748688b9af1d33b3ddc35928147ff64e2f38c087",
+    "app/src/main/res/drawable/ic_mail.xml": "5cd8c8c282821b4dd3acfcdf2a88f09e7a1f631aa5196b6c3ccea19765261334",
     "app/src/main/res/drawable/ic_microphone.xml": "95a0279ccf28702dfb07711fa6ab22c6fb67c3bb0a86396f53bd9412635f396d",
     "app/src/main/res/drawable/ic_more.xml": "ec35429e1576f58679123a6f25679486e190455bf301b3d7b4b0ea8c8112de31",
     "app/src/main/res/drawable/ic_motion.xml": "ae4a717d2f90f391407b488f56e8a60ba8cb47f3055e93e71c96be924ce3b716",
@@ -51,7 +57,11 @@
     "app/src/main/res/drawable/ic_nav_sensors.xml": "63af5f53adf98c9034d8b5437da34fc1bffada5cd842e4287275949a542c4884",
     "app/src/main/res/drawable/ic_nav_settings.xml": "9a8838a1efb42a827589eb33a7caf38cfe6521dabb00aba0e71d10c36f7eba90",
     "app/src/main/res/drawable/ic_oxygen.xml": "4968c63735b2e28525c798e666d90a1f273d5234707b78ac75c5e50481d5971a",
+    "app/src/main/res/drawable/ic_people.xml": "ec03d1902b3fce462e54a2fcdd358b928f86b0191843dcd5d2e31a32aaa59ade",
+    "app/src/main/res/drawable/ic_person.xml": "bdc4debf9068ddd68a717c7e7ebec835a1b80cf75555247e0adf553264fa5a6f",
     "app/src/main/res/drawable/ic_pressure.xml": "873162bdca3a970827684edb2b8b37bca3ab0e9317b91b8bce1ce3b9a224d5de",
+    "app/src/main/res/drawable/ic_shield.xml": "ee1fe5bac8f6d79de46baa01eb3c6c0da7602343152ec4748b18905cf7a1fbb1",
+    "app/src/main/res/drawable/ic_sparkle.xml": "4c2ea6ce9988b26f1f380082855de000b9805439235429bf77c8e6b6d78046c1",
     "app/src/main/res/drawable/ic_status_attention.xml": "708bedfea9b0037969e6b06d55f14b06d559149da831b8e036b521b1f874e293",
     "app/src/main/res/drawable/ic_status_ok.xml": "e0e9bc8dd1f28de3a9b5ad0458342f842ed105d3fdbf6d09eb27504847da4215",
     "app/src/main/res/drawable/ic_status_unknown.xml": "24d464e931512b077e3260f2906bb23e695cec8a151b17c940240357c0096ce0",
@@ -59,7 +69,7 @@
     "app/src/main/res/drawable/ic_watch.xml": "2104a4e93e03c51321d85ff139530ca457262450ea30fca7312fd0d35ff671ce",
     "app/src/main/res/drawable/ic_water.xml": "ebbbfb19a4a037cfe890a14cc341c8964bae7e45e6a185764409c76135e05d18",
     "app/src/main/res/values/strings.xml": "be83615542df9a445e62f841042fddaff305355f4a3237b67dab9e8caef9b9a2",
-    "app/src/main/res/values/styles.xml": "b1fa99eeea9c3988ee442dcde1d23c0dbeda132e46b9087e71858696c94fdac0",
+    "app/src/main/res/values/styles.xml": "11c948602d93bee52c9d92fabc6690e591b88500462e6266b8482e82e2e04477",
     "scripts/build_apk.py": "755cd86aeb98584a57be8e0a5f8631898d202a1711ea52651cad01e16f4a4c0f"
   },
   "framework": "Native Android Java, no WebView",
@@ -92,6 +102,21 @@
       "output": ""
     },
     {
+      "step": "Compile resource ic_check_circle.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "step": "Compile resource ic_chevron_left.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "step": "Compile resource ic_chevron_right.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
       "step": "Compile resource ic_fall.xml",
       "exit_code": 0,
       "output": ""
@@ -103,6 +128,16 @@
     },
     {
       "step": "Compile resource ic_light.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "step": "Compile resource ic_lock.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "step": "Compile resource ic_mail.xml",
       "exit_code": 0,
       "output": ""
     },
@@ -152,7 +187,27 @@
       "output": ""
     },
     {
+      "step": "Compile resource ic_people.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "step": "Compile resource ic_person.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
       "step": "Compile resource ic_pressure.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "step": "Compile resource ic_shield.xml",
+      "exit_code": 0,
+      "output": ""
+    },
+    {
+      "step": "Compile resource ic_sparkle.xml",
       "exit_code": 0,
       "output": ""
     },
@@ -239,7 +294,7 @@
     {
       "step": "Inspect packaged Android metadata",
       "exit_code": 0,
-      "output": "package: name='org.caremonitor.demo' versionCode='11' versionName='1.0.0' platformBuildVersionName='17' platformBuildVersionCode='37' compileSdkVersion='37' compileSdkVersionCodename='17'\nminSdkVersion:'24'\ntargetSdkVersion:'37'\nuses-permission: name='android.permission.BLUETOOTH' maxSdkVersion='30'\nuses-permission: name='android.permission.BLUETOOTH_ADMIN' maxSdkVersion='30'\nuses-permission: name='android.permission.ACCESS_FINE_LOCATION'\nuses-permission: name='android.permission.ACCESS_COARSE_LOCATION'\nuses-permission: name='android.permission.RECORD_AUDIO'\nuses-permission: name='android.permission.FOREGROUND_SERVICE_LOCATION'\nuses-permission: name='android.permission.FOREGROUND_SERVICE_MICROPHONE'\nuses-permission: name='android.permission.RECEIVE_BOOT_COMPLETED'\nuses-permission: name='android.permission.BLUETOOTH_SCAN' usesPermissionFlags='neverForLocation'\nuses-permission: name='android.permission.BLUETOOTH_CONNECT'\nuses-permission: name='android.permission.INTERNET'\nuses-permission: name='android.permission.ACCESS_LOCAL_NETWORK'\nuses-permission: name='android.permission.FOREGROUND_SERVICE_SPECIAL_USE'\nuses-permission: name='android.permission.ACCESS_NETWORK_STATE'\nuses-permission: name='android.permission.FOREGROUND_SERVICE'\nuses-permission: name='android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE'\nuses-permission: name='android.permission.POST_NOTIFICATIONS'\napplication-label:'Care Monitor'\napplication-icon-160:'res/drawable/ic_care_monitor.xml'\napplication: label='Care Monitor' icon='res/drawable/ic_care_monitor.xml'\nproperty: name='android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE' value='User-enabled self-hosted care-alert inbox monitoring, with a visible connection notification and Stop control; no external push infrastructure.' \nlaunchable-activity: name='org.caremonitor.demo.MainActivity'  label='' icon=''\nfeature-group: label=''\n  uses-feature-not-required: name='android.hardware.bluetooth'\n  uses-feature-not-required: name='android.hardware.bluetooth_le'\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\n  uses-feature: name='android.hardware.location'\n  uses-implied-feature: name='android.hardware.location' reason='requested android.permission.ACCESS_COARSE_LOCATION permission, and requested android.permission.ACCESS_FINE_LOCATION permission'\n  uses-feature: name='android.hardware.microphone'\n  uses-implied-feature: name='android.hardware.microphone' reason='requested android.permission.RECORD_AUDIO permission'\nmain\nother-services\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--'\ndensities: '160'\n"
+      "output": "package: name='org.caremonitor.demo' versionCode='13' versionName='1.0.0' platformBuildVersionName='17' platformBuildVersionCode='37' compileSdkVersion='37' compileSdkVersionCodename='17'\nminSdkVersion:'24'\ntargetSdkVersion:'37'\nuses-permission: name='android.permission.BLUETOOTH' maxSdkVersion='30'\nuses-permission: name='android.permission.BLUETOOTH_ADMIN' maxSdkVersion='30'\nuses-permission: name='android.permission.ACCESS_FINE_LOCATION'\nuses-permission: name='android.permission.ACCESS_COARSE_LOCATION'\nuses-permission: name='android.permission.RECORD_AUDIO'\nuses-permission: name='android.permission.FOREGROUND_SERVICE_LOCATION'\nuses-permission: name='android.permission.FOREGROUND_SERVICE_MICROPHONE'\nuses-permission: name='android.permission.RECEIVE_BOOT_COMPLETED'\nuses-permission: name='android.permission.BLUETOOTH_SCAN' usesPermissionFlags='neverForLocation'\nuses-permission: name='android.permission.BLUETOOTH_CONNECT'\nuses-permission: name='android.permission.INTERNET'\nuses-permission: name='android.permission.ACCESS_LOCAL_NETWORK'\nuses-permission: name='android.permission.FOREGROUND_SERVICE_SPECIAL_USE'\nuses-permission: name='android.permission.ACCESS_NETWORK_STATE'\nuses-permission: name='android.permission.FOREGROUND_SERVICE'\nuses-permission: name='android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE'\nuses-permission: name='android.permission.POST_NOTIFICATIONS'\napplication-label:'Care Monitor'\napplication-icon-160:'res/drawable/ic_care_monitor.xml'\napplication: label='Care Monitor' icon='res/drawable/ic_care_monitor.xml'\nproperty: name='android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE' value='User-enabled self-hosted care-alert inbox monitoring, with a visible connection notification and Stop control; no external push infrastructure.' \nlaunchable-activity: name='org.caremonitor.demo.MainActivity'  label='' icon=''\nfeature-group: label=''\n  uses-feature-not-required: name='android.hardware.bluetooth'\n  uses-feature-not-required: name='android.hardware.bluetooth_le'\n  uses-feature: name='android.hardware.faketouch'\n  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'\n  uses-feature: name='android.hardware.location'\n  uses-implied-feature: name='android.hardware.location' reason='requested android.permission.ACCESS_COARSE_LOCATION permission, and requested android.permission.ACCESS_FINE_LOCATION permission'\n  uses-feature: name='android.hardware.microphone'\n  uses-implied-feature: name='android.hardware.microphone' reason='requested android.permission.RECORD_AUDIO permission'\nmain\nother-services\nsupports-screens: 'small' 'normal' 'large' 'xlarge'\nsupports-any-density: 'true'\nlocales: '--_--'\ndensities: '160'\n"
     }
   ]
 }
