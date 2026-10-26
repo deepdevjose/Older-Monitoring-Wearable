@@ -1,0 +1,12 @@
+flowchart LR
+    subgraph baseline["Verified v0.7.4 engineering baseline — historical operation"]
+      sensors["MAX30102 · MPU6050 · GY906 · light"] -->|"I2C / ADC"| esp["ESP32 team_sparkfun_baseline<br/>optical rolling window; quality flags<br/>1000 ms report interval; buzzer LOW"]
+      esp -->|"Classic SPP · newline JSON"| phone["Native Android v0.7.4<br/>worker-thread framing<br/>foreground service · freshness gates<br/>recent live charts"]
+      phone -->|"Wi-Fi · HTTPS · scoped upload key"| api["FastAPI server<br/>validation · scoped access<br/>configured rules / alert episodes<br/>HR + oxygen JSON trees: shadow only"]
+      api -->|"commit readings / alert state"| db[("SQLite")]
+      api -->|"alert sync; scoped acknowledgement"| phone
+      db -->|"local access"| dashboard["Loopback Dashboard<br/>real-time view<br/>Start / Stop valid capture"]
+      dashboard -->|"fresh valid HR + SpO2 + XYZ rows"| csv["CSV export"]
+    end
+    scope["Limits: no authenticated patient/caregiver accounts; no deployed fall detector;<br/>no clinical accuracy claim; numeric alert rules disabled by default."]
+    baseline ~~~ scope

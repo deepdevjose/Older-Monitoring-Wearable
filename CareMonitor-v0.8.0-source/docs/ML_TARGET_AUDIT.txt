@@ -1,0 +1,56 @@
+IndiCare / CareMonitor integration v0.8.0 - ML target and evidence audit
+26 October 2026
+
+Decision
+Preserve the verified NORMAL/ABNORMAL models and integrate their classification/confidence API honestly. No defensible, approved three-class target was found in the inspected dataset, code or actual assessment brief. No model was retrained and no existing measurement was rerun for this audit. The working v0.7.4 baseline was not changed.
+
+UNRESOLVED — THREE-CLASS TARGET DEFINITION REQUIRES HUMAN/TUTOR CONFIRMATION
+
+1. What is uncertain: the definitions of Normal, Warning and Critical, both per vital-sign task and for any combined patient status. Binary ABNORMAL does not identify which of Warning or Critical applies.
+2. Why: the supplied CSV contains four binary alert targets only. The assessment explicitly requests the three states but supplies no numerical severity boundaries or labelling method. Existing code does not establish an approved conversion.
+3. Missing evidence: either the intended assessment dataset with authorised three-class labels and its data dictionary, or a versioned, approved severity mapping specifying inputs, units, exact boundaries, precedence/combination rules and missing/invalid-data handling. A model-confidence threshold is not a severity definition.
+4. What the group should provide: the original three-class dataset/label source, if one exists; otherwise ask the tutor to confirm the intended Normal/Warning/Critical definitions and whether a documented synthetic educational rule mapping is acceptable. Provide the written definition and approval, with examples for all three classes. Do not merely relabel ABNORMAL, disease names, Fall Detection=Yes, or low prediction confidence as Critical.
+5. What can continue: authentication, Android role views, binary classification/confidence, unavailable/error/stale states, history, storage, supported alert workflows and integration tests. Three-class rubric compliance and Critical-class evaluation remain unresolved until the target is defined.
+
+Actual assessment evidence
+The following two local files are byte-identical:
+C:/Users/29682/Downloads/IOT308TC_Assessment_2and_Rubric rv.docx
+C:/Users/29682/Downloads/IOT308TC_Assessment_2and_Rubric rv (1).docx
+SHA-256: 2e732f037ed3f72b9c74e2e20b51f60b20b31f55b53034517182fc7236467bad
+The task paragraph requires normal/warning/critical classifications. Core requirements include two introductory classifiers, classification plus confidence as JSON, and the listed classification metrics. No three-class threshold/target table was found in the 145 extracted paragraphs. The ethical section permits supplied synthetic or approved fully anonymised data and excludes participants, real health measurements and healthcare deployment from the assessment. Physical prototype observations must not be represented as authorised assessment data without resolving that conflict with the tutor.
+
+Actual supplied dataset
+File: incoming/iot_app_ml_20261020/Synthetic_patient-HealthCare-Monitoring_dataset.csv
+SHA-256: 35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb
+Rows inspected: 60,000. Columns:
+Patient Number; Heart Rate (bpm); SpO2 Level (%); Systolic Blood Pressure (mmHg); Diastolic Blood Pressure (mmHg); Body Temperature (degrees C); Fall Detection; Predicted Disease; Data Accuracy (%); Heart Rate Alert; SpO2 Level Alert; Blood Pressure Alert; Temperature Alert.
+
+Full-file target counts (NORMAL / ABNORMAL):
+- Heart Rate Alert: 36,992 / 23,008.
+- SpO2 Level Alert: 34,770 / 25,230.
+- Blood Pressure Alert: 26,530 / 33,470.
+- Temperature Alert: 44,656 / 15,344.
+Fall Detection contains No/Yes only (56,926 / 3,074). Predicted Disease contains Diabetes Mellitus, Heart Disease, Asthma, Hypertension and Healthy. Neither field defines graded urgency. Data Accuracy (%) is supplied metadata, not measured model accuracy or a Warning/Critical label.
+
+Relevant earlier implementations
+incoming/iot_app_original/Iot App/main.py and incoming/iot_app_v2_review/main.py were inspected alongside the supplied firmware. The latter uses DEMO_SPO2_THRESHOLD=95.0 with consecutive low/normal readings to open/recover a demonstration low-oxygen alert. That is not a three-class label definition or evidence of tutor approval. The current alert engine accepts configurable info/warning/urgent rule severities; an operator_acknowledged flag does not establish an approved supervised target or a mapping from the ML's ABNORMAL label. No such mapping was promoted into the integrated model.
+
+Verified same-task comparison
+The copied comparison script, its unit-test script and baseline training script match the source hashes recorded in outputs/CareMonitor-assessment-verification-20261026.json. The copied metrics, comparison CSV, split, manifest and export-verification artifacts are byte-identical to the earlier isolated candidate. All four JSON model hashes match their manifest. Machine-readable details are in care_monitor_ml/vitals/target_audit.json.
+
+Recorded training run: 2026-10-26T04:49:21.097604+00:00.
+Seed: 20261020. Filtering, task-specific inputs/targets and split are identical for Decision Tree and Random Forest. Exact prior membership was checked for every row: 35,993 training, 12,005 validation and 12,002 test. Split SHA-256: c26ef042301a48315461fbdc59b7808032bb252698c615acc5578149075b72fb.
+
+Decision Tree candidate depths: 1/2/3. Random Forest candidate depths: 2/4/8, using 100 trees. Both use minimum leaf size 20. Each family's depth is selected by validation macro-F1, preferring lower depth on ties. Family ties prefer the interpretable Decision Tree. Each selected configuration is refitted on 47,998 training-plus-validation rows before held-out evaluation; test results do not select a model.
+
+Stored results: both classifiers achieve accuracy, macro precision, macro recall and macro-F1 of 1.000 on all four synthetic tasks. Selected DT depths are 2/1/3/1; RF depths are 2/2/4/2 for heart rate, oxygen, blood pressure and temperature respectively. Neither classifier is claimed to be more accurate. All per-task confusion matrices are perfect on this particular synthetic holdout, with NORMAL/ABNORMAL correct counts respectively 7,413/4,589; 6,878/5,124; 5,310/6,692; and 8,898/3,104. False-ABNORMAL and missed-ABNORMAL rates are zero for that holdout; these must not be renamed false-warning or missed-critical rates.
+
+Selection and deployment evidence
+The justified selection is the declared validation tie-break for interpretability and simple JSON deployment. Current selected JSON artifact sizes/node counts are: heart rate 2,087 bytes / 5 nodes; oxygen 1,581 / 3; blood pressure 3,224 / 9; body temperature 1,618 / 3. These are actual file sizes, not measured runtime memory. No Random Forest serialized size or fresh inference-speed comparison is claimed. No unnecessary retraining or microbenchmark was performed.
+Manifest SHA-256: 93f2ab696da2338bd059536cdf1f84b71eb98d4d7af290ce2e6c1515adceee7b.
+Comparison script SHA-256: 547777f55794c4b2fe968398aeb3dde7b814ee1b85a3594fcd70dd98cf875783.
+
+The reviewed classification implementation returns classification, confidence, class_probabilities, model/dataset provenance, confidence_calibrated=false and three_class_supported=false. JSON traversal uses float32 comparisons and pinned artifact hashes; no pickle loading is required. Android integration must retain the actual NORMAL/ABNORMAL labels and unavailable states rather than display invented Warning/Critical results.
+
+Evidence limits
+The earlier run recorded 240,000 JSON-versus-scikit-learn class/probability comparisons and six ML regression tests; those are historical stored results, not new tests in this audit. Synthetic labels have simple relationships to the inputs. Identical complete five-vital vectors are separated, but individual predictor values repeat across partitions. Patient Number is not a verified participant identity. The empirical leaf class probability can be 1.0 for pure synthetic leaves and is not calibrated medical certainty. No independent assessment hidden-test performance, real-device calibration, clinical accuracy, or robustness improvement follows from the 100% synthetic scores. Dataset original provenance and confirmation that this exact CSV is the tutor-supplied assessment dataset remain unresolved.

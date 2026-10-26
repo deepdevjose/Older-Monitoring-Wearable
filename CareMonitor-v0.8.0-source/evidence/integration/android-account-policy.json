@@ -1,0 +1,11 @@
+{
+  "recorded_at_utc": "2026-10-26T05:44:35.706078+00:00",
+  "status": "passed",
+  "checks": 140,
+  "scope": "Plain JVM AccountPresentationPolicy only",
+  "android_runtime_tested": false,
+  "keystore_tested": false,
+  "live_network_tested": false,
+  "source_sha256": "bb67195dd7ecd402e0edc10bdba3247e58f45855a034e2c5964f1289ba0fc36c",
+  "test_sha256": "d5c7067e62d6de54b72c3d44ca2e2029172cd5d8c1fd6c2b7c9c9d4a0d5ffabb"
+}

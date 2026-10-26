@@ -1,0 +1,24 @@
+{
+  "dataset_sha256": "35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb",
+  "seed": 20261020,
+  "input_rows": 60000,
+  "usable_rows": 60000,
+  "rejected_rows": 0,
+  "split_rows": {
+    "train": 35993,
+    "validation": 12005,
+    "test": 12002
+  },
+  "split_groups": {
+    "train": 35367,
+    "validation": 11789,
+    "test": 11790
+  },
+  "unique_five_vital_groups": 58946,
+  "duplicate_five_vital_rows": 1054,
+  "cross_split_identical_five_vital_groups": 0,
+  "recorded_split_exact_match": true,
+  "recorded_split_sha256": "c26ef042301a48315461fbdc59b7808032bb252698c615acc5578149075b72fb",
+  "real_subject_disjoint_validation": false,
+  "output_membership_sha256": "c26ef042301a48315461fbdc59b7808032bb252698c615acc5578149075b72fb"
+}

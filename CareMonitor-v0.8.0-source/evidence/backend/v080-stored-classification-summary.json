@@ -1,0 +1,22 @@
+{
+  "recorded_at_utc": "2026-10-26T05:46:51.3412471Z",
+  "scope": "v0.8.0 integration copy only; isolated synthetic software verification",
+  "backend_tests": 302,
+  "subtests": 6,
+  "new_stored_classification_tests": 50,
+  "https_loopback_requests": 22,
+  "android_verified": false,
+  "hardware_verified": false,
+  "wifi_verified": false,
+  "running_database_accessed": false,
+  "live_policy_changed": false,
+  "clinical_validation": false,
+  "source_sha256": {
+    "care_monitor_server/stored_classification.py": "502b2fb2f34b39517a26dd6eb1d4f19adfbd05caa9b66c89816500c483193b79",
+    "care_monitor_server/classification.py": "23a2e5c1ba4cd405b51048e289f49f3c0e52e01201377206edc625eeb46575bb",
+    "care_monitor_server/account_routes.py": "0ea83f7b3f70226e0bb62f86be42aa4589a70ecc39c3657dcb05bb2518070f42",
+    "care_monitor_server/tests/test_stored_classification.py": "98d4600fd00b6f949847a1ad20b4ce06e3a206d761e42fdd4d6fe426d982ff3a",
+    "care_monitor_server/candidate_app.py": "6eb292eb81d3f4b4f262167d2db78f31a9aff8dbe2f238459ca2b4bfc8e5bf4e",
+    "care_monitor_server/measure_https_integration.py": "037e6411945670413ecb453de372340022e38ef87b9e4c7973a7f9ca7e541c91"
+  }
+}

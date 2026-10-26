@@ -1,0 +1,89 @@
+{
+  "format": "care-monitor-assessment-probability-tree-v1",
+  "model_version": "synthetic-vitals-dt-rf-20261026",
+  "task": "heart_rate",
+  "estimator": "DecisionTreeClassifier",
+  "synthetic_only": true,
+  "clinical_validation": false,
+  "confidence_calibrated": false,
+  "deployed": false,
+  "dataset_sha256": "35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb",
+  "comparison_input_type": "float32",
+  "features": [
+    "Heart Rate (bpm)"
+  ],
+  "classes": [
+    "NORMAL",
+    "ABNORMAL"
+  ],
+  "supported_training_ranges": {
+    "Heart Rate (bpm)": [
+      50.0,
+      139.0
+    ]
+  },
+  "confidence_semantics": "Empirical training-leaf class proportion; not a calibrated clinical probability",
+  "output_meaning": "Agreement with supplied synthetic binary labels, not clinical normality",
+  "nodes": [
+    {
+      "left": 1,
+      "right": 4,
+      "feature": 0,
+      "threshold": 100.5,
+      "predicted_class": "NORMAL",
+      "probabilities": [
+        0.6162548439518313,
+        0.38374515604816867
+      ],
+      "training_samples": 47998
+    },
+    {
+      "left": 2,
+      "right": 3,
+      "feature": 0,
+      "threshold": 59.5,
+      "predicted_class": "NORMAL",
+      "probabilities": [
+        0.9852113379742198,
+        0.014788662025780235
+      ],
+      "training_samples": 30023
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "ABNORMAL",
+      "probabilities": [
+        0.0,
+        1.0
+      ],
+      "training_samples": 444
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "NORMAL",
+      "probabilities": [
+        1.0,
+        0.0
+      ],
+      "training_samples": 29579
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "ABNORMAL",
+      "probabilities": [
+        0.0,
+        1.0
+      ],
+      "training_samples": 17975
+    }
+  ]
+}

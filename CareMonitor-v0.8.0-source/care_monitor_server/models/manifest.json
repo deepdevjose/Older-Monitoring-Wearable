@@ -1,0 +1,12 @@
+{
+  "deployment_mode": "shadow_only",
+  "clinical_validation": false,
+  "format": "care-monitor-offline-tree-v1",
+  "model_version": "synthetic-json-tree-v1",
+  "provenance": "Byte-identical JSON exports already produced in outputs/ml/vitals; no retraining or pickle loading",
+  "assets": {
+    "heart_rate_tree.json": "87fe9e9adc2b4040c6aa2f25912492c26680c549954de6e3c3ab25004cbf9da2",
+    "oxygen_tree.json": "81a7207f33a978b97ece247d0ce7e522089490570dc4385bb65d27779654b0b9"
+  },
+  "meaning": "Predictions reproduce synthetic labels; they are not clinical diagnoses or calibrated probabilities"
+}

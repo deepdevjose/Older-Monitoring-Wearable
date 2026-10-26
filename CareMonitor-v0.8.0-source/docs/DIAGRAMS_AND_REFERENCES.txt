@@ -1,0 +1,36 @@
+Documentation artifacts — 26 October 2026
+
+The four diagrams are authored as editable SVG and companion Mermaid text. They distinguish evidence boundaries rather than merging all code into one claimed deployed system.
+
+1. verified-live-architecture.svg / .mmd
+   Historical v0.7.4 hardware -> Classic SPP -> Android -> HTTPS server -> SQLite -> local Dashboard -> valid CSV capture. Alert synchronization and shadow-only model use are shown separately. It does not claim a new hardware run, clinical validation or real patient/caregiver login.
+
+2. offline-ml-boundaries.svg / .mmd
+   The binary vital-sign decision-tree workflow, external SisFall Random Forest experiment and future reference-paired adaptation workflow are separate. No group physical fall tests or trained target-device calibration are claimed. External source permission and synthetic provenance are unresolved.
+
+3. isolated-candidate-data-flow.svg / .mmd
+   Candidate POST /ml/classify is software-tested, binary, isolated and not deployed. The same-task Decision Tree / Random Forest comparison and backend account gates are complete at the software-evidence level. Confidence is an uncalibrated empirical training-leaf class proportion. Android role UI, three-class labels/output and complete phone demonstration remain pending.
+
+4. candidate-fall-response.svg / .mmd
+   Isolated software-tested response state machine: pending -> cancellation before the 15-second detection-time deadline, or escalation on deadline/immediate help -> caregiver notification queue. FCM is not configured; no actual fall detector or group physical fall trial is claimed.
+
+Primary local evidence used:
+care_monitor_native/app/src/main/AndroidManifest.xml
+care_monitor_native/app/src/main/java/org/caremonitor/demo/{MainActivity,LiveMonitorService,SppSensorClient,NdjsonFramer,ServerRelay,RemoteAlertClient,OpticalEstimatePolicy}.java
+care_monitor_native/firmware/team_spp_no_sound/{team_spp_no_sound.ino,PpgReadingState.h,PPG_BUILD_EVIDENCE.json}
+care_monitor_native/artifacts/{BUILD_EVIDENCE,JVM_TEST_EVIDENCE,PPG_PHYSICAL_VERIFICATION_20261023}.json
+care_monitor_server/{app.py,alert_engine.py,database.py,ML_MODEL_CARD.md}
+care_monitor_dashboard/{app.py,capture.py,store.py}
+care_monitor_ml/vitals/{train_vitals.py,MODEL_CARD.md}
+care_monitor_ml/fall/train.py
+care_monitor_ml/device_adaptation/README.md
+
+These diagrams do not embed private keys, raw sensor records, screenshots, participant IDs or hotspot credentials. All SVG files were parsed as XML and rendered to PNG; the renders were visually inspected. No new software/model/hardware test was run for the documentation refresh. Current candidate evidence records 252 server test cases, with 6 subtests separately reported by pytest, 6 separate ML unittest checks and 240,000 JSON/model comparisons. These totals do not establish phone deployment or clinical validity.
+
+references.tsv contains 13 primary sources opened or retrieved through the web on 26 October 2026. It records their exact URLs, access date, supported claims and limits. The sources are manufacturers, project maintainers, official Android documentation and the original SisFall research paper. Manufacturer/API documentation supports technical background, not project test results.
+
+The official MPU6050 PDF URL redirected to an unavailable manufacturer search page, so it was not counted as a verified reference. The original SisFall paper was verified through the PMC full-text record and publisher search record after the direct publisher page rate-limited access. No source was substituted for the unknown generator/provenance of the supplied vital-sign CSV.
+
+rubric-check.txt quotes and distinguishes the actual assessment requirements. Both Word files were byte-identical; metadata is in rubric-extraction-metadata.json. Body paragraph references include table cells and are extraction locators, not page numbers.
+
+Approval wording: the user reports verbal tutor approval for group-member sensor self-tests. The written brief contains a restriction and no written exception was supplied. Preserve this distinction; do not imply blanket external-participant/clinical permission.

@@ -1,0 +1,13 @@
+data/
+.venv/
+__pycache__/
+.pytest_cache/
+*.db
+*.db-shm
+*.db-wal
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+.env

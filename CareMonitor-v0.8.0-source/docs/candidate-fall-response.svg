@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="800" viewBox="0 0 1440 800" role="img" aria-labelledby="title desc"><title id="title">Candidate fall-response state machine</title><desc id="desc">Isolated software-tested event response; no physical fall detector or phone push delivery.</desc><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#526477"/></marker><style>text{font-family:Arial,sans-serif;fill:#183047}.title{font-size:30px;font-weight:700}.sub{font-size:18px;fill:#51677d}.head{font-size:21px;font-weight:700}.body{font-size:18px}.label{font-size:16px;font-weight:700;fill:#34546c}</style></defs><rect width="1440" height="800" fill="#f7f9fc"/><text x="40" y="55" class="title">Candidate fall-response state machine — software tested</text><text x="40" y="88" class="sub">Response to an authorized event; not automatic fall detection and not a group physical fall trial.</text>
+<rect x="40" y="180" width="300" height="190" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="60" y="216" class="head" text-anchor="start">Authorized event</text>
+<text x="60" y="251" class="body" text-anchor="start">Manual test or wearer help</text>
+<text x="60" y="278" class="body" text-anchor="start">Device / patient checked</text>
+<text x="60" y="305" class="body" text-anchor="start">No automatic detector</text>
+<rect x="425" y="180" width="340" height="190" rx="16" fill="#eef1ff" stroke="#8196aa" stroke-width="2"/>
+<text x="445" y="216" class="head" text-anchor="start">Pending response</text>
+<text x="445" y="251" class="body" text-anchor="start">Deadline = detected_at + 15 s</text>
+<text x="445" y="278" class="body" text-anchor="start">Late receipt does not reset it</text>
+<text x="445" y="305" class="body" text-anchor="start">Immediate Help can escalate</text>
+<rect x="1060" y="180" width="335" height="190" rx="16" fill="#fff4df" stroke="#8196aa" stroke-width="2"/>
+<text x="1080" y="216" class="head" text-anchor="start">Escalated</text>
+<text x="1080" y="251" class="body" text-anchor="start">Durable state transition</text>
+<text x="1080" y="278" class="body" text-anchor="start">Caregiver queue created</text>
+<text x="1080" y="305" class="body" text-anchor="start">Assignment checks applied</text>
+<path d="M340 275 L422 275" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="382" y="255" class="label" text-anchor="middle">Create</text>
+<path d="M765 275 L1057 275" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="910" y="255" class="label" text-anchor="middle">Deadline reached / immediate Help</text>
+<rect x="425" y="480" width="340" height="150" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="445" y="516" class="head" text-anchor="start">Cancelled</text>
+<text x="445" y="551" class="body" text-anchor="start">Accepted before deadline</text>
+<text x="445" y="578" class="body" text-anchor="start">No escalation for this event</text>
+<path d="M590 370 L590 477" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="590" y="430" class="label" text-anchor="middle">Cancel before deadline</text>
+<rect x="1020" y="480" width="375" height="150" rx="16" fill="#fff4df" stroke="#8196aa" stroke-width="2"/>
+<text x="1040" y="516" class="head" text-anchor="start">Notification boundary</text>
+<text x="1040" y="551" class="body" text-anchor="start">Caregiver notification queue</text>
+<text x="1040" y="578" class="body" text-anchor="start">FCM is not configured</text>
+<text x="1040" y="605" class="body" text-anchor="start">Phone push delivery unverified</text>
+<path d="M1225 370 L1225 477" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="1225" y="430" class="label" text-anchor="middle">Queue; not push delivery</text>
+<rect x="40" y="700" width="1355" height="80" rx="16" fill="#fff4df" stroke="#8196aa" stroke-width="2"/>
+<text x="60" y="736" class="head" text-anchor="start">Deployment boundary</text>
+<text x="60" y="771" class="body" text-anchor="start">Isolated server software evidence only. No change to the installed v0.7.4 App or working hardware baseline.</text>
+</svg>

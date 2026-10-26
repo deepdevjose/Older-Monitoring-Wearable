@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "tasks": {
+    "heart_rate": {
+      "synthetic_rows_checked": 60000,
+      "class_predictions_match": true,
+      "probabilities_match_atol": 1e-12,
+      "split_match_verified_before_training": true
+    },
+    "oxygen": {
+      "synthetic_rows_checked": 60000,
+      "class_predictions_match": true,
+      "probabilities_match_atol": 1e-12,
+      "split_match_verified_before_training": true
+    },
+    "blood_pressure": {
+      "synthetic_rows_checked": 60000,
+      "class_predictions_match": true,
+      "probabilities_match_atol": 1e-12,
+      "split_match_verified_before_training": true
+    },
+    "body_temperature": {
+      "synthetic_rows_checked": 60000,
+      "class_predictions_match": true,
+      "probabilities_match_atol": 1e-12,
+      "split_match_verified_before_training": true
+    }
+  },
+  "total_synthetic_prediction_checks": 240000,
+  "physical_sensor_testing": false,
+  "clinical_validation": false
+}

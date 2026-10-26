@@ -1,0 +1,101 @@
+ASSESSMENT CANDIDATE — CLASSIFICATION API AND ALERT SOFTWARE EVIDENCE
+
+This directory is an isolated candidate copy. It is not the working v0.7.4
+deployment. These changes do not edit its firmware, Android package, running
+server, database or alert policy.
+
+POST /ml/classify
+Authentication: HTTPS plus X-API-Key with sensor:read, bound to device_id.
+The existing body-size, credential/failed-auth rate limits and safe errors apply.
+A sensor:write-only upload credential cannot use this endpoint.
+
+Request example (synthetic data, not a person's health record):
+{
+  "device_id": "elder-demo-01",
+  "task": "heart_rate",
+  "features": {"Heart Rate (bpm)": 76},
+  "input_source": "synthetic_dataset"
+}
+
+Supported exact task and feature names:
+heart_rate       Heart Rate (bpm)
+oxygen           SpO2 Level (%)
+blood_pressure   Systolic Blood Pressure (mmHg), Diastolic Blood Pressure (mmHg)
+body_temperature Body Temperature (°C)
+
+input_source must be synthetic_dataset, external_reference or prototype_sensor.
+The latter is rejected for blood_pressure and body_temperature: the current
+prototype does not supply those validated measurements. Surface/object
+temperature cannot be supplied under a substitute feature alias. The declaration
+of input_source is client-supplied provenance, not independently verified
+measurement quality or proof of a reference device.
+
+Missing, extra, unknown, string, boolean, null, non-finite and out-of-training-
+domain inputs return 400. SpO2 greater than 100%, or at/below zero, is invalid
+input and never a high-oxygen health alert. Three-class labels are not invented.
+
+Successful output includes classification NORMAL/ABNORMAL, numeric confidence,
+class_probabilities, model version/hash, manifest hash, dataset hash and input
+source. Confidence is the uncalibrated empirical class proportion in the selected
+decision-tree training leaf. A value of 1.0 is not medical certainty and is
+particularly limited by the deterministic synthetic labels used for training.
+The response states confidence_calibrated:false, three_class_supported:false,
+clinical_validation:false and care_alert_created:false. This endpoint does not
+store a reading or create an alert; the original ingestion and shadow path remain
+separate. It does not enforce clinical or live sensor-contact/freshness criteria.
+
+OPT-IN ARTIFACT CONFIGURATION
+Both environment variables (or corresponding create_app keyword arguments) are
+required:
+CM_CLASSIFICATION_MODEL_MANIFEST = absolute path to evidence/ml/manifest.json
+CM_CLASSIFICATION_MANIFEST_SHA256 =
+93f2ab696da2338bd059536cdf1f84b71eb98d4d7af290ce2e6c1515adceee7b
+
+Keyword arguments:
+classification_manifest
+classification_manifest_sha256
+
+The manifest is SHA-256 pinned; each JSON tree has its own pinned digest.
+Artifact format, task/features/classes, source metadata, finite probabilities,
+input domains, tree structure, cycles, depth, size and local file containment
+are checked. Only JSON is loaded, never pickle/joblib. Models load into memory
+when create_app is called; a model update requires explicit new pins and restart.
+An absent configuration returns 503 with status disabled; failed integrity or
+schema checks return 503 with status unavailable. Neither emits a normal fallback
+or exposes server file paths. Do not copy real API keys into examples or evidence.
+
+ALERT RULE CHANGE IN THIS CANDIDATE
+The unvalidated oxygen_high rule has been removed from the example and accepted
+rule directions. High-SpO2 health inference is listed as unsupported. A previously
+stored policy containing that unsupported rule fails closed on candidate startup.
+All default numeric and quality rules remain disabled; a policy is not enabled
+by using the classifier.
+
+REPRODUCIBLE SOFTWARE CHECKS
+From this candidate directory and an environment with its test dependencies:
+python -m pytest care_monitor_server/tests/test_security_api.py care_monitor_server/tests/test_alert_engine.py care_monitor_server/tests/test_classification_api.py -q --junitxml=evidence/backend/classification-and-regression.xml
+python -m care_monitor_server.measure_alert_integration
+
+The recorded run passed 197 checks: 146 existing backend checks plus 51 candidate
+classification/security checks. An httpx/TestClient deprecation warning is
+recorded; it did not fail these checks.
+
+The alert measurement harness always creates a fresh temporary SQLite database
+and ephemeral fixture credentials. It enables one explicitly synthetic HR rule
+only in that temporary database. Eight constructed snapshots produce one stored
+episode despite five abnormal inputs, permit review and acknowledgement, preserve
+the episode after a duplicate acknowledgement, recover on three later inputs,
+and remain readable after an app restart. It deletes the temporary database on
+completion and writes aggregate evidence without tokens or participant readings.
+
+Evidence:
+evidence/backend/classification-and-regression.xml
+evidence/backend/classification-api-checks.json
+evidence/backend/alert-integration.json
+
+The harness uses synthetic advancing timestamps, not actual two-second waiting.
+Its timings measure in-process ASGI software requests; they exclude Bluetooth,
+Wi-Fi, TLS handshake, Android polling, caregiver notification delivery and sensor
+accuracy. This is not a physical phone or clinical alarm test. The original
+v0.7.4 live-reading observations and historical test counts remain separate.
+

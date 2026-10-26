@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1000" viewBox="0 0 1440 1000" role="img" aria-labelledby="title desc"><title id="title">Offline ML workflows — separate evidence boundaries</title><desc id="desc">Offline dataset results do not establish clinical accuracy or live detection on the cheaper sensors.</desc><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#526477"/></marker><style>text{font-family:Arial,sans-serif;fill:#183047}.title{font-size:30px;font-weight:700}.sub{font-size:18px;fill:#51677d}.head{font-size:21px;font-weight:700}.body{font-size:18px}.small{font-size:16px;fill:#51677d}.label{font-size:16px;font-weight:700;fill:#34546c}</style></defs><rect width="1440" height="1000" fill="#f7f9fc"/><text id="pageTitle" x="40" y="55" class="title">Offline ML workflows — separate evidence boundaries</text><text x="40" y="88" class="sub">Offline dataset results do not establish clinical accuracy or live detection on the cheaper sensors.</text>
+<rect x="40" y="145" width="390" height="185" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="60" y="181" class="head" text-anchor="start">Vital-sign CSV</text>
+<text x="60" y="215" class="body" text-anchor="start">Synthetic-named source</text>
+<text x="60" y="242" class="body" text-anchor="start">Generator / module provenance</text>
+<text x="60" y="269" class="body" text-anchor="start">not independently established</text>
+<text x="60" y="296" class="body" text-anchor="start">No real physiology validation</text>
+<rect x="505" y="145" width="385" height="185" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="525" y="181" class="head" text-anchor="start">Preparation / modelling</text>
+<text x="525" y="215" class="body" text-anchor="start">pandas; grouped predictor split</text>
+<text x="525" y="242" class="body" text-anchor="start">Binary DecisionTree targets</text>
+<text x="525" y="269" class="body" text-anchor="start">Training / validation / test</text>
+<text x="525" y="296" class="body" text-anchor="start">Dataset-label evaluation</text>
+<rect x="965" y="145" width="430" height="185" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="985" y="181" class="head" text-anchor="start">Exported JSON trees</text>
+<text x="985" y="215" class="body" text-anchor="start">HR / oxygen loaded by server</text>
+<text x="985" y="242" class="body" text-anchor="start">Shadow-only predictions</text>
+<text x="985" y="269" class="body" text-anchor="start">No ML-generated care alarms</text>
+<path d="M430 235 L502 235" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="466" y="216" class="label" text-anchor="middle">Offline</text>
+<path d="M890 235 L962 235" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="926" y="216" class="label" text-anchor="middle">Export</text>
+<rect x="40" y="395" width="390" height="185" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="60" y="431" class="head" text-anchor="start">External SisFall dataset</text>
+<text x="60" y="465" class="body" text-anchor="start">Published motion recordings</text>
+<text x="60" y="492" class="body" text-anchor="start">Not group physical fall trials</text>
+<text x="60" y="519" class="body" text-anchor="start">Separate dataset permission</text>
+<text x="60" y="546" class="body" text-anchor="start">must be established</text>
+<rect x="505" y="395" width="385" height="185" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="525" y="431" class="head" text-anchor="start">Features / evaluation</text>
+<text x="525" y="465" class="body" text-anchor="start">Trial-level motion features</text>
+<text x="525" y="492" class="body" text-anchor="start">Subject-separated evaluation</text>
+<text x="525" y="519" class="body" text-anchor="start">Offline Random Forest</text>
+<text x="525" y="546" class="body" text-anchor="start">Fall / ADL target</text>
+<rect x="965" y="395" width="430" height="185" rx="16" fill="#fff4df" stroke="#ba8b30" stroke-width="2"/>
+<text x="985" y="431" class="head" text-anchor="start">Not deployed live</text>
+<text x="985" y="465" class="body" text-anchor="start">No streaming fall detector</text>
+<text x="985" y="492" class="body" text-anchor="start">1 Hz live snapshots do not</text>
+<text x="985" y="519" class="body" text-anchor="start">recreate the dataset trials</text>
+<text x="985" y="546" class="body" text-anchor="start">No physical fall tests performed</text>
+<path d="M430 485 L502 485" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="466" y="466" class="label" text-anchor="middle">Offline</text>
+<path d="M890 485 L962 485" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="926" y="466" class="label" text-anchor="middle">Boundary</text>
+<rect x="40" y="645" width="390" height="185" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="60" y="681" class="head" text-anchor="start">Target-device adaptation</text>
+<text x="60" y="715" class="body" text-anchor="start">Workflow source only</text>
+<text x="60" y="742" class="body" text-anchor="start">Approved paired reference data</text>
+<text x="60" y="769" class="body" text-anchor="start">would be required</text>
+<text x="60" y="796" class="body" text-anchor="start">No trained calibration claimed</text>
+<rect x="505" y="645" width="385" height="185" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="525" y="681" class="head" text-anchor="start">Independent quality review</text>
+<text x="525" y="715" class="body" text-anchor="start">Contact / quality gates</text>
+<text x="525" y="742" class="body" text-anchor="start">Device and session separation</text>
+<text x="525" y="769" class="body" text-anchor="start">Offline candidate evaluation</text>
+<text x="525" y="796" class="body" text-anchor="start">Agreement is not clinical proof</text>
+<rect x="965" y="645" width="430" height="185" rx="16" fill="#fff4df" stroke="#ba8b30" stroke-width="2"/>
+<text x="985" y="681" class="head" text-anchor="start">Assessment restrictions</text>
+<text x="985" y="715" class="body" text-anchor="start">No automatic production route</text>
+<text x="985" y="742" class="body" text-anchor="start">No synthetic provenance assumed</text>
+<text x="985" y="769" class="body" text-anchor="start">No three-class labels invented</text>
+<text x="985" y="796" class="body" text-anchor="start">Approval remains unresolved</text>
+<path d="M430 735 L502 735" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)" stroke-dasharray="8 6"/>
+<text x="466" y="716" class="label" text-anchor="middle">If approved</text>
+<path d="M890 735 L962 735" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)" stroke-dasharray="8 6"/>
+<text x="926" y="716" class="label" text-anchor="middle">Review</text>
+<text x="40" y="925" class="small" text-anchor="start">Solid arrows: documented offline workflow. Dashed arrows: future prerequisites, not completed experiments.</text>
+</svg>

@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="256" time="26.642" timestamp="2026-10-26T12:58:44.353513+08:00" hostname="LAPTOP-LKURCMQ3"><testcase classname="care_monitor_server.tests.test_accounts" name="test_patient_account_and_device_scope" time="0.685" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_caregiver_acknowledges_only_assigned_patient" time="0.892" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_logout_revokes_session_and_expiry_is_enforced" time="0.872" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_disabled_user_and_removed_assignment_take_effect" time="0.645" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_login_does_not_allow_role_or_patient_self_assignment" time="0.432" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_credentials_not_saved_plaintext_or_returned" time="0.596" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_unknown_and_wrong_password_same_response_and_rate_limit" time="0.875" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_machine_key_is_not_a_patient_or_caregiver_session" time="0.493" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_https_required_for_login" time="0.063" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_invalid_provisioning_fails[administrator-None]" time="0.042" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_invalid_provisioning_fails[patient-None]" time="0.042" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_invalid_provisioning_fails[patient-unknown-patient]" time="0.040" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_invalid_provisioning_fails[caregiver-demo-patient-001]" time="0.044" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_candidate_rejects_implicit_live_database[None]" time="0.000" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_candidate_rejects_implicit_live_database[]" time="0.000" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_candidate_rejects_implicit_live_database[  ]" time="0.000" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_action_revalidates_after_earlier_authentication" time="0.603" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_password_work_does_not_hold_database_or_event_loop" time="0.596" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_account_changed_between_password_check_and_issue_is_rejected[password_hash]" time="0.761" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_account_changed_between_password_check_and_issue_is_rejected[active]" time="0.585" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_invalid_session_failures_are_committed_and_limited" time="0.745" /><testcase classname="care_monitor_server.tests.test_accounts" name="test_device_reassignment_does_not_expose_previous_patient_records" time="1.346" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_default_rules_off_but_shadow_records_abnormal" time="0.004" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[online-False]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[status-no_finger]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[status-read_error]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[status-None]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[status-warming_up]" time="0.005" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[status-unstable]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[status-waiting]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[finger_detected-False]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[finger_detected-None]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[finger_detected-true]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_valid-False]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_valid-None]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_valid-1]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_bpm-None]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_bpm-True]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_bpm-76]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_bpm-nan]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_bpm-inf]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_bpm--1]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_optical_values_never_become_normal_or_trigger[heart_rate_bpm-3280]" time="0.004" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_oxygen_processed_estimate_physical_bounds[None]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_oxygen_processed_estimate_physical_bounds[True]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_oxygen_processed_estimate_physical_bounds[98]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_oxygen_processed_estimate_physical_bounds[0]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_oxygen_processed_estimate_physical_bounds[-5]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_oxygen_processed_estimate_physical_bounds[101]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_oxygen_processed_estimate_physical_bounds[nan]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_oxygen_processed_estimate_physical_bounds[inf]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_hr_can_be_valid_while_oxygen_is_invalid" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_partial_window_uses_only_its_independently_valid_channel[heart_rate]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_partial_window_uses_only_its_independently_valid_channel[oxygen]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_warming_up_never_reuses_stale_validity_flags" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages0]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages1]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages2]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages3]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages4]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages5]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages6]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages7]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages8]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages9]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages10]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_supplied_invalid_or_stale_optical_ages_abstain[ages11]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_fresh_or_legacy_absent_optical_ages_keep_valid_channels[ages0]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_fresh_or_legacy_absent_optical_ages_keep_valid_channels[ages1]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_fresh_or_legacy_absent_optical_ages_keep_valid_channels[ages2]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_fresh_or_legacy_absent_optical_ages_keep_valid_channels[ages3]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_fresh_or_legacy_absent_optical_ages_keep_valid_channels[ages4]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_optional_online_absence_accepted_but_other_flags_required" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_raw_counts_do_not_supply_missing_vitals" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_physical_values_outside_training_range_are_not_normal[40-98]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_physical_values_outside_training_range_are_not_normal[200-98]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_physical_values_outside_training_range_are_not_normal[76-50]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_single_phone_timestamp_is_acceptable" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_timestamp_quality_gate[data0-2026-10-22T02:00:00Z-missing_sample_timestamp]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_timestamp_quality_gate[data1-2026-10-22T02:00:00Z-invalid_timestamp]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_timestamp_quality_gate[data2-2026-10-22T02:00:00Z-invalid_timestamp]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_timestamp_quality_gate[data3-2026-10-22T02:00:31Z-stale_sample]" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_timestamp_quality_gate[data4-2026-10-22T02:00:00Z-future_sample]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_either_old_timestamp_prevents_historical_queue_current_alarm" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_duplicate_timestamp_and_identity_gate" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_out_of_order_snapshots_do_not_move_watermark_backwards" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_device_mismatch_gates_even_if_wrapper_prevents_it" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_snapshot_is_unavailable_and_not_diagnosis" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_episode_deduplicates_acknowledgement_preserves_alarm_and_recovers" time="0.042" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_or_missing_values_never_resolve_existing_episode" time="0.005" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_gap_resets_consecutive_trigger_and_recovery" time="0.007" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_fast_packet_burst_cannot_replace_elapsed_persistence" time="0.012" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_duplicate_or_invalid_gap_resets_persistence" time="0.004" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_optional_quality_episode_requires_valid_recovery" time="0.006" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_low_rule_and_surface_temperature_are_separate_from_core_body" time="0.005" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_surface_temperature_not_eligible[None]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_surface_temperature_not_eligible[True]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_surface_temperature_not_eligible[-273.15]" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_surface_temperature_not_eligible[9999]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_surface_temperature_not_eligible[nan]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_no_supported_input_fabricates_bp_wear_hydration_or_fall" time="0.005" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_delta_sync_ack_and_resolution_revisions_are_monotonic" time="0.007" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_no_cross_device_acknowledgement_or_patient_rebinding" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_functions_leave_commit_to_caller" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_episode_and_counter_survive_database_reopen" time="0.107" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_shadow_retention_is_globally_bounded_including_duplicates" time="0.006" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_missing_or_tampered_models_fail_unavailable_without_care_alert" time="0.004" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_schema_validation_rejects_cyclic_even_if_digest_were_updated" time="0.004" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_policy_requires_explicit_valid_operator_config[change0]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_policy_requires_explicit_valid_operator_config[change1]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_policy_requires_explicit_valid_operator_config[change2]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_policy_requires_explicit_valid_operator_config[change3]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_policy_requires_explicit_valid_operator_config[change4]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_invalid_config_file_fails_closed_with_visible_error" time="0.007" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_admin_initialization_without_environment_preserves_existing_policy" time="0.003" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_capabilities_bound_to_database_even_if_another_database_initializes" time="0.002" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_unsupported_metric_and_no_hysteresis_are_rejected" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_delta_cursor_bounds[-1-50]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_delta_cursor_bounds[True-50]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_delta_cursor_bounds[0-0]" time="0.001" /><testcase classname="care_monitor_server.tests.test_alert_engine" name="test_delta_cursor_bounds[0-201]" time="0.002" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_real_export_binary_probability_and_provenance[heart_rate]" time="0.116" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_real_export_binary_probability_and_provenance[oxygen]" time="0.093" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_real_export_binary_probability_and_provenance[blood_pressure]" time="0.099" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_real_export_binary_probability_and_provenance[body_temperature]" time="0.092" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_abnormal_is_binary_not_warning_or_critical" time="0.090" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_missing_configuration_is_explicitly_unavailable" time="0.070" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_configuration_is_explicit_and_bad_pin_does_not_expose_path" time="0.121" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_auth_scope_expiry_revocation_device_and_duplicate_headers" time="0.205" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change0]" time="0.091" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change1]" time="0.090" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change2]" time="0.095" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change3]" time="0.086" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change4]" time="0.099" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change5]" time="0.085" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change6]" time="0.095" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change7]" time="0.087" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change8]" time="0.090" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change9]" time="0.083" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change10]" time="0.087" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change11]" time="0.085" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change12]" time="0.083" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change13]" time="0.085" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_strict_feature_and_request_schema[change14]" time="0.093" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_missing_required_field[device_id]" time="0.085" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_missing_required_field[task]" time="0.085" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_missing_required_field[features]" time="0.083" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_missing_required_field[input_source]" time="0.084" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_malformed_duplicate_and_nonfinite_json[[]]" time="0.085" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_malformed_duplicate_and_nonfinite_json[null]" time="0.107" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_malformed_duplicate_and_nonfinite_json[bad]" time="0.084" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_malformed_duplicate_and_nonfinite_json[\xff]" time="0.090" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_malformed_duplicate_and_nonfinite_json[{&quot;device_id&quot;:&quot;elder-demo-01&quot;,&quot;device_id&quot;:&quot;other&quot;}]" time="0.087" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_malformed_duplicate_and_nonfinite_json[{&quot;device_id&quot;:&quot;elder-demo-01&quot;,&quot;task&quot;:&quot;heart_rate&quot;,&quot;features&quot;:{&quot;Heart Rate (bpm)&quot;:NaN},&quot;input_source&quot;:&quot;synthetic_dataset&quot;}]" time="0.086" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_malformed_duplicate_and_nonfinite_json[{&quot;device_id&quot;:&quot;elder-demo-01&quot;,&quot;task&quot;:&quot;heart_rate&quot;,&quot;features&quot;:{&quot;Heart Rate (bpm)&quot;:1e400},&quot;input_source&quot;:&quot;synthetic_dataset&quot;}]" time="0.083" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_oxygen_above_100_is_invalid_not_high_health_alert[0]" time="0.097" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_oxygen_above_100_is_invalid_not_high_health_alert[-1]" time="0.084" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_oxygen_above_100_is_invalid_not_high_health_alert[100.01]" time="0.087" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_oxygen_above_100_is_invalid_not_high_health_alert[101]" time="0.084" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_oxygen_above_100_is_invalid_not_high_health_alert[9000]" time="0.088" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_no_fake_prototype_blood_pressure_or_core_temperature[blood_pressure]" time="0.126" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_no_fake_prototype_blood_pressure_or_core_temperature[body_temperature]" time="0.111" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_inherited_tls_body_limit_and_credential_rate_limit" time="0.141" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_pinned_json_artifact_integrity_and_schema[bytes]" time="0.022" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_pinned_json_artifact_integrity_and_schema[cycle]" time="0.026" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_pinned_json_artifact_integrity_and_schema[probabilities]" time="0.020" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_pinned_json_artifact_integrity_and_schema[label]" time="0.024" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_pinned_json_artifact_integrity_and_schema[schema]" time="0.024" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_pinned_json_artifact_integrity_and_schema[path]" time="0.020" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_pinned_json_artifact_integrity_and_schema[classes]" time="0.022" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_candidate_rejects_high_oxygen_rule_and_keeps_default_off" time="0.034" /><testcase classname="care_monitor_server.tests.test_classification_api" name="test_legacy_high_oxygen_policy_cannot_survive_candidate_restart" time="0.065" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_arrival_before_deadline_has_only_remaining_time" time="0.079" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_cancel_at_14_999_seconds_prevents_escalation" time="0.083" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_cancel_at_exact_15_seconds_escalates_once" time="0.081" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_cancelled_event_allows_reassignment_without_orphaning_new_episode" time="0.084" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_cancelled_event_is_not_backfilled_for_later_assignment" time="0.084" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_concurrent_cancel_and_expiry_at_deadline_queue_once" time="0.094" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_concurrent_duplicate_creation_persists_one_event" time="0.091" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_delayed_upload_does_not_restart_countdown" time="0.060" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_duplicate_conflicts_on_payload_device_or_detection_time" time="0.070" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_duplicate_keeps_original_times_and_advances_expiry" time="0.070" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_equivalent_timezone_and_payload_key_order_are_idempotent" time="0.079" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_immediate_help_bypasses_countdown_and_is_idempotent" time="0.076" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_invalid_future_naive_and_nonfinite_times_or_payload_rejected" time="0.076" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_late_caregiver_assignment_backfills_after_restart_once" time="0.096" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_nested_transaction_does_not_commit_callers_work" time="0.070" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_newly_activated_caregiver_gets_unique_backfilled_notification" time="0.088" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_no_caregiver_does_not_claim_delivery" time="0.080" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_one_unresolved_event_per_device" time="0.078" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_only_active_assigned_caregivers_are_queued" time="0.084" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_patient_reassignment_blocked_until_escalated_event_resolved" time="0.082" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_reassigned_resolved_event_outbox_is_not_exposed_to_new_patient" time="0.090" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_resolved_event_is_not_backfilled_for_later_assignment" time="0.082" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_restart_preserves_pending_deadline_and_queue" time="0.112" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_retry_is_durable_and_delivery_requires_ack_reference" time="0.081" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_scope_binding_and_caregiver_resolution" time="0.080" /><testcase classname="care_monitor_server.tests.test_fall_events.FallEventTests" name="test_time_cannot_move_backwards_across_state_changes" time="0.077" /><testcase classname="care_monitor_server.tests.test_fall_routes" name="test_cancel_before_deadline_no_caregiver_notification" time="0.838" /><testcase classname="care_monitor_server.tests.test_fall_routes" name="test_late_arrival_escalates_once_seen_and_resolution_separate" time="0.984" /><testcase classname="care_monitor_server.tests.test_fall_routes" name="test_help_bypasses_deadline_and_role_boundaries" time="0.845" /><testcase classname="care_monitor_server.tests.test_fall_routes" name="test_no_claimed_live_detector_or_unauthenticated_events" time="0.637" /><testcase classname="care_monitor_server.tests.test_fall_routes" name="test_reassignment_does_not_leak_old_notification" time="0.887" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_receiver_retains_optical_quality_and_acceleration_in_same_row[partial]" time="0.079" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_receiver_retains_optical_quality_and_acceleration_in_same_row[warming_up]" time="0.090" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_receiver_retains_optical_quality_and_acceleration_in_same_row[no_finger]" time="0.089" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_key_entropy_shape_digest_default_expiry_and_no_legacy_bypass" time="0.092" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_protected_reads_no_key_or_wrong_key[/auth/status]" time="0.089" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_protected_reads_no_key_or_wrong_key[/sensor-data]" time="0.072" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_protected_reads_no_key_or_wrong_key[/sensors]" time="0.069" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_protected_reads_no_key_or_wrong_key[/sensors/max30102]" time="0.070" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_protected_reads_no_key_or_wrong_key[/alerts]" time="0.073" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_expired_revoked_same_safe_error" time="0.129" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_scopes_and_device_binding[scopes0]" time="0.166" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_scopes_and_device_binding[scopes1]" time="0.147" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_scopes_and_device_binding[scopes2]" time="0.182" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_scopes_and_device_binding[scopes3]" time="0.151" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_wrong_device_and_no_read_cross_device" time="0.199" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_storage_compatible_ack_persists_restart" time="0.171" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_old_lab_tables_untouched" time="0.051" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_removed_microphone_hidden_from_modules_but_history_preserved" time="0.217" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_dedup_identity_and_conflicts" time="0.202" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_dedup_requires_both_valid_nonempty_fields[fields0]" time="0.075" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_dedup_requires_both_valid_nonempty_fields[fields1]" time="0.077" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_dedup_requires_both_valid_nonempty_fields[fields2]" time="0.071" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_dedup_requires_both_valid_nonempty_fields[fields3]" time="0.072" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_dedup_requires_both_valid_nonempty_fields[fields4]" time="0.068" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_dedup_requires_both_valid_nonempty_fields[fields5]" time="0.071" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_tls_and_no_forwarded_header_bypass" time="0.100" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_failed_auth_limiter_persists_between_app_instances" time="0.108" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_percredential_limiter_shared_across_workers" time="0.111" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_snapshot_safe_errors[not-json]" time="0.081" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_snapshot_safe_errors[[]]" time="0.069" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_snapshot_safe_errors[{&quot;device_id&quot;:&quot;elder-demo-01&quot;,&quot;n&quot;:NaN}]" time="0.090" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_snapshot_safe_errors[{&quot;device_id&quot;:&quot;elder-demo-01&quot;,&quot;n&quot;:1e400}]" time="0.072" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_snapshot_safe_errors[{&quot;device_id&quot;:&quot;elder-demo-01&quot;,&quot;device_id&quot;:&quot;someone&quot;}]" time="0.057" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_snapshot_safe_errors[\xff]" time="0.070" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_oversized_content_length_and_actual_body" time="0.058" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_asgi_chunked_bytes_without_content_length" time="0.040" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_health_coarse_and_read_headers" time="0.074" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_local_admin_create_list_revoke_rotate_and_no_secret_recovery" time="0.077"><failure message="SystemExit: 2">self = ArgumentParser(prog='__main__.py revoke', usage=None, description=None, formatter_class=&lt;class 'argparse.HelpFormatter'&gt;, conflict_handler='error', add_help=True)
+args = ['-XMmFJxBoHiW'], namespace = Namespace(key_id=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+&gt;               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:1943: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='__main__.py revoke', usage=None, description=None, formatter_class=&lt;class 'argparse.HelpFormatter'&gt;, conflict_handler='error', add_help=True)
+arg_strings = ['-XMmFJxBoHiW'], namespace = Namespace(key_id=None)
+intermixed = False
+
+    def _parse_known_args(self, arg_strings, namespace, intermixed):
+        # replace arg strings that are file references
+        if self.fromfile_prefix_chars is not None:
+            arg_strings = self._read_args_from_files(arg_strings)
+    
+        # map all mutually exclusive arguments to the other arguments
+        # they can't occur with
+        action_conflicts = {}
+        for mutex_group in self._mutually_exclusive_groups:
+            group_actions = mutex_group._group_actions
+            for i, mutex_action in enumerate(mutex_group._group_actions):
+                conflicts = action_conflicts.setdefault(mutex_action, [])
+                conflicts.extend(group_actions[:i])
+                conflicts.extend(group_actions[i + 1:])
+    
+        # find all option indices, and determine the arg_string_pattern
+        # which has an 'O' if there is an option at an index,
+        # an 'A' if there is an argument, or a '-' if there is a '--'
+        option_string_indices = {}
+        arg_string_pattern_parts = []
+        arg_strings_iter = iter(arg_strings)
+        for i, arg_string in enumerate(arg_strings_iter):
+    
+            # all args after -- are non-options
+            if arg_string == '--':
+                arg_string_pattern_parts.append('-')
+                for arg_string in arg_strings_iter:
+                    arg_string_pattern_parts.append('A')
+    
+            # otherwise, add the arg to the arg strings
+            # and note the index if it was an option
+            else:
+                option_tuples = self._parse_optional(arg_string)
+                if option_tuples is None:
+                    pattern = 'A'
+                else:
+                    option_string_indices[i] = option_tuples
+                    pattern = 'O'
+                arg_string_pattern_parts.append(pattern)
+    
+        # join the pieces together to form the pattern
+        arg_strings_pattern = ''.join(arg_string_pattern_parts)
+    
+        # converts arg strings to the appropriate and then takes the action
+        seen_actions = set()
+        seen_non_default_actions = set()
+    
+        def take_action(action, argument_strings, option_string=None):
+            seen_actions.add(action)
+            argument_values = self._get_values(action, argument_strings)
+    
+            # error if this argument is not allowed with other previously
+            # seen arguments
+            if action.option_strings or argument_strings:
+                seen_non_default_actions.add(action)
+                for conflict_action in action_conflicts.get(action, []):
+                    if conflict_action in seen_non_default_actions:
+                        msg = _('not allowed with argument %s')
+                        action_name = _get_action_name(conflict_action)
+                        raise ArgumentError(action, msg % action_name)
+    
+            # take the action if we didn't receive a SUPPRESS value
+            # (e.g. from a default)
+            if argument_values is not SUPPRESS:
+                action(self, namespace, argument_values, option_string)
+    
+        # function to convert arg_strings into an optional action
+        def consume_optional(start_index):
+    
+            # get the optional identified at this index
+            option_tuples = option_string_indices[start_index]
+            # if multiple actions match, the option string was ambiguous
+            if len(option_tuples) &gt; 1:
+                options = ', '.join([option_string
+                    for action, option_string, sep, explicit_arg in option_tuples])
+                args = {'option': arg_strings[start_index], 'matches': options}
+                msg = _('ambiguous option: %(option)s could match %(matches)s')
+                raise ArgumentError(None, msg % args)
+    
+            action, option_string, sep, explicit_arg = option_tuples[0]
+    
+            # identify additional optionals in the same arg string
+            # (e.g. -xyz is the same as -x -y -z if no args are required)
+            match_argument = self._match_argument
+            action_tuples = []
+            while True:
+    
+                # if we found no optional action, skip it
+                if action is None:
+                    extras.append(arg_strings[start_index])
+                    extras_pattern.append('O')
+                    return start_index + 1
+    
+                # if there is an explicit argument, try to match the
+                # optional's string arguments to only this
+                if explicit_arg is not None:
+                    arg_count = match_argument(action, 'A')
+    
+                    # if the action is a single-dash option and takes no
+                    # arguments, try to parse more single-dash options out
+                    # of the tail of the option string
+                    chars = self.prefix_chars
+                    if (
+                        arg_count == 0
+                        and option_string[1] not in chars
+                        and explicit_arg != ''
+                    ):
+                        if sep or explicit_arg[0] in chars:
+                            msg = _('ignored explicit argument %r')
+                            raise ArgumentError(action, msg % explicit_arg)
+                        action_tuples.append((action, [], option_string))
+                        char = option_string[0]
+                        option_string = char + explicit_arg[0]
+                        optionals_map = self._option_string_actions
+                        if option_string in optionals_map:
+                            action = optionals_map[option_string]
+                            explicit_arg = explicit_arg[1:]
+                            if not explicit_arg:
+                                sep = explicit_arg = None
+                            elif explicit_arg[0] == '=':
+                                sep = '='
+                                explicit_arg = explicit_arg[1:]
+                            else:
+                                sep = ''
+                        else:
+                            extras.append(char + explicit_arg)
+                            extras_pattern.append('O')
+                            stop = start_index + 1
+                            break
+                    # if the action expect exactly one argument, we've
+                    # successfully matched the option; exit the loop
+                    elif arg_count == 1:
+                        stop = start_index + 1
+                        args = [explicit_arg]
+                        action_tuples.append((action, args, option_string))
+                        break
+    
+                    # error if a double-dash option did not use the
+                    # explicit argument
+                    else:
+                        msg = _('ignored explicit argument %r')
+                        raise ArgumentError(action, msg % explicit_arg)
+    
+                # if there is no explicit argument, try to match the
+                # optional's string arguments with the following strings
+                # if successful, exit the loop
+                else:
+                    start = start_index + 1
+                    selected_patterns = arg_strings_pattern[start:]
+                    arg_count = match_argument(action, selected_patterns)
+                    stop = start + arg_count
+                    args = arg_strings[start:stop]
+                    action_tuples.append((action, args, option_string))
+                    break
+    
+            # add the Optional to the list and return the index at which
+            # the Optional's string args stopped
+            assert action_tuples
+            for action, args, option_string in action_tuples:
+                take_action(action, args, option_string)
+            return stop
+    
+        # the list of Positionals left to be parsed; this is modified
+        # by consume_positionals()
+        positionals = self._get_positional_actions()
+    
+        # function to convert arg_strings into positional actions
+        def consume_positionals(start_index):
+            # match as many Positionals as possible
+            match_partial = self._match_arguments_partial
+            selected_pattern = arg_strings_pattern[start_index:]
+            arg_counts = match_partial(positionals, selected_pattern)
+    
+            # slice off the appropriate arg strings for each Positional
+            # and add the Positional and its args to the list
+            for action, arg_count in zip(positionals, arg_counts):
+                args = arg_strings[start_index: start_index + arg_count]
+                # Strip out the first '--' if it is not in REMAINDER arg.
+                if action.nargs == PARSER:
+                    if arg_strings_pattern[start_index] == '-':
+                        assert args[0] == '--'
+                        args.remove('--')
+                elif action.nargs != REMAINDER:
+                    if (arg_strings_pattern.find('-', start_index,
+                                                 start_index + arg_count) &gt;= 0):
+                        args.remove('--')
+                start_index += arg_count
+                take_action(action, args)
+    
+            # slice off the Positionals that we just parsed and return the
+            # index at which the Positionals' string args stopped
+            positionals[:] = positionals[len(arg_counts):]
+            return start_index
+    
+        # consume Positionals and Optionals alternately, until we have
+        # passed the last option string
+        extras = []
+        extras_pattern = []
+        start_index = 0
+        if option_string_indices:
+            max_option_string_index = max(option_string_indices)
+        else:
+            max_option_string_index = -1
+        while start_index &lt;= max_option_string_index:
+    
+            # consume any Positionals preceding the next option
+            next_option_string_index = min([
+                index
+                for index in option_string_indices
+                if index &gt;= start_index])
+            if not intermixed and start_index != next_option_string_index:
+                positionals_end_index = consume_positionals(start_index)
+    
+                # only try to parse the next optional if we didn't consume
+                # the option string during the positionals parsing
+                if positionals_end_index &gt; start_index:
+                    start_index = positionals_end_index
+                    continue
+                else:
+                    start_index = positionals_end_index
+    
+            # if we consumed all the positionals we could and we're not
+            # at the index of an option string, there were extra arguments
+            if start_index not in option_string_indices:
+                strings = arg_strings[start_index:next_option_string_index]
+                extras.extend(strings)
+                extras_pattern.extend(arg_strings_pattern[start_index:next_option_string_index])
+                start_index = next_option_string_index
+    
+            # consume the next optional and any arguments for it
+            start_index = consume_optional(start_index)
+    
+        if not intermixed:
+            # consume any positionals following the last Optional
+            stop_index = consume_positionals(start_index)
+    
+            # if we didn't consume all the argument strings, there were extras
+            extras.extend(arg_strings[stop_index:])
+        else:
+            extras.extend(arg_strings[start_index:])
+            extras_pattern.extend(arg_strings_pattern[start_index:])
+            extras_pattern = ''.join(extras_pattern)
+            assert len(extras_pattern) == len(extras)
+            # consume all positionals
+            arg_strings = [s for s, c in zip(extras, extras_pattern) if c != 'O']
+            arg_strings_pattern = extras_pattern.replace('O', '')
+            stop_index = consume_positionals(0)
+            # leave unknown optionals and non-consumed positionals in extras
+            for i, c in enumerate(extras_pattern):
+                if not stop_index:
+                    break
+                if c != 'O':
+                    stop_index -= 1
+                    extras[i] = None
+            extras = [s for s in extras if s is not None]
+    
+        # make sure all required actions were present and also convert
+        # action defaults which were not given as arguments
+        required_actions = []
+        for action in self._actions:
+            if action not in seen_actions:
+                if action.required:
+                    required_actions.append(_get_action_name(action))
+                else:
+                    # Convert action default now instead of doing it before
+                    # parsing arguments to avoid calling convert functions
+                    # twice (which may fail) if the argument was given, but
+                    # only if it was defined already in the namespace
+                    if (action.default is not None and
+                        isinstance(action.default, str) and
+                        hasattr(namespace, action.dest) and
+                        action.default is getattr(namespace, action.dest)):
+                        setattr(namespace, action.dest,
+                                self._get_value(action, action.default))
+    
+        if required_actions:
+&gt;           raise ArgumentError(None, _('the following arguments are required: %s') %
+                       ', '.join(required_actions))
+E           argparse.ArgumentError: the following arguments are required: key_id
+
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:2230: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+db = WindowsPath('C:/Users/29682/AppData/Local/Temp/pytest-of-29682/pytest-26/test_local_admin_create_list_r0/test.db')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x00000216F81D7C20&gt;
+
+    def test_local_admin_create_list_revoke_rotate_and_no_secret_recovery(db,capsys):
+        assert main(["--db",str(db),"create","--label","Test-only phone","--scope","sensor:write","--scope","alerts:read"])==0
+        token=capsys.readouterr().out.strip().splitlines()[-1]
+        old_id=token.split(".")[0]
+        assert main(["--db",str(db),"list"])==0
+        listing=capsys.readouterr().out
+        assert old_id in listing and token not in listing and token.split(".")[1] not in listing
+        assert main(["--db",str(db),"rotate",old_id,"--label","Test-only replacement"])==0
+        new_token=capsys.readouterr().out.strip().splitlines()[-1]
+        with connect(db) as conn:
+            assert lookup(conn,token,int(time.time())) is None
+            active=lookup(conn,new_token,int(time.time()))
+            assert active is not None and active.scopes=={"sensor:write","alerts:read"}
+&gt;       assert main(["--db",str(db),"revoke",new_token.split(".")[0]])==0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+..\..\care_monitor_server\tests\test_security_api.py:249: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+care_monitor_server\admin.py:31: in main
+    args = parser.parse_args(argv)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:1904: in parse_args
+    args, argv = self.parse_known_args(args, namespace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:1914: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:1943: in _parse_known_args2
+    namespace, args = self._parse_known_args(args, namespace, intermixed)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:2165: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:2141: in consume_positionals
+    take_action(action, args)
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:2018: in take_action
+    action(self, namespace, argument_values, option_string)
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:1272: in __call__
+    subnamespace, arg_strings = parser.parse_known_args(arg_strings, None)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:1914: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:1945: in _parse_known_args2
+    self.error(str(err))
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:2650: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = ArgumentParser(prog='__main__.py revoke', usage=None, description=None, formatter_class=&lt;class 'argparse.HelpFormatter'&gt;, conflict_handler='error', add_help=True)
+status = 2
+message = '__main__.py revoke: error: the following arguments are required: key_id\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+&gt;       _sys.exit(status)
+E       SystemExit: 2
+
+C:\Users\29682\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\argparse.py:2637: SystemExit</failure></testcase><testcase classname="care_monitor_server.tests.test_security_api" name="test_alert_api_acknowledgement_durable_and_scoped" time="0.318" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_client_submitted_alert_and_ml_label_ignored" time="0.098" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_duplicate_key_headers_are_not_accepted" time="0.066" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_internal_error_redacts_exception_and_payload" time="0.095" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_parallel_rate_updates_are_atomic" time="0.230" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_query_does_not_echo_input[/alerts?after_revision=-1]" time="0.057" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_query_does_not_echo_input[/alerts?after_revision=99999999999999999999999]" time="0.055" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_query_does_not_echo_input[/alerts?limit=101]" time="0.055" /><testcase classname="care_monitor_server.tests.test_security_api" name="test_invalid_query_does_not_echo_input[/sensor-data?limit=0]" time="0.056" /></testsuite></testsuites>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="830" viewBox="0 0 1440 830" role="img" aria-labelledby="title desc"><title id="title">Isolated assessment candidate — software tested</title><desc id="desc">252 server tests (6 subtests included); 6 separate ML tests. Not deployed to the phone or live server.</desc><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#526477"/></marker><style>text{font-family:Arial,sans-serif;fill:#183047}.title{font-size:30px;font-weight:700}.sub{font-size:18px;fill:#51677d}.head{font-size:21px;font-weight:700}.body{font-size:18px}.small{font-size:16px;fill:#51677d}.label{font-size:16px;font-weight:700;fill:#34546c}</style></defs><rect width="1440" height="830" fill="#f7f9fc"/><text id="pageTitle" x="40" y="55" class="title">Isolated assessment candidate — software tested</text><text x="40" y="88" class="sub">252 server tests (6 subtests included); 6 separate ML tests. Not deployed to the phone or live server.</text>
+<rect x="40" y="180" width="275" height="230" rx="16" fill="#fff4df" stroke="#ba8b30" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="60" y="216" class="head" text-anchor="start">Dataset / comparison</text>
+<text x="60" y="250" class="body" text-anchor="start">Existing synthetic CSV</text>
+<text x="60" y="277" class="body" text-anchor="start">Provenance not confirmed</text>
+<text x="60" y="304" class="body" text-anchor="start">DT / RF compared</text>
+<text x="60" y="331" class="body" text-anchor="start">Binary target labels only</text>
+<rect x="365" y="180" width="285" height="230" rx="16" fill="#eef1ff" stroke="#6e78b8" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="385" y="216" class="head" text-anchor="start">Isolated test client</text>
+<text x="385" y="250" class="body" text-anchor="start">252 server tests</text>
+<text x="385" y="277" class="body" text-anchor="start">6 subtests included</text>
+<text x="385" y="304" class="body" text-anchor="start">6 separate ML tests</text>
+<text x="385" y="331" class="body" text-anchor="start">Not a phone demonstration</text>
+<rect x="700" y="180" width="335" height="230" rx="16" fill="#eef1ff" stroke="#6e78b8" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="720" y="216" class="head" text-anchor="start">Candidate API</text>
+<text x="720" y="250" class="body" text-anchor="start">POST /ml/classify</text>
+<text x="720" y="277" class="body" text-anchor="start">Backend accounts + roles</text>
+<text x="720" y="304" class="body" text-anchor="start">Transactional access gates</text>
+<text x="720" y="331" class="body" text-anchor="start">Software-tested only</text>
+<text x="720" y="358" class="body" text-anchor="start">Not deployed</text>
+<rect x="1085" y="180" width="310" height="230" rx="16" fill="#fff4df" stroke="#ba8b30" stroke-width="2" stroke-dasharray="8 5"/>
+<text x="1105" y="216" class="head" text-anchor="start">JSON response</text>
+<text x="1105" y="250" class="body" text-anchor="start">Classification + confidence</text>
+<text x="1105" y="277" class="body" text-anchor="start">Binary class output</text>
+<text x="1105" y="304" class="body" text-anchor="start">Uncalibrated leaf proportion</text>
+<text x="1105" y="331" class="body" text-anchor="start">Not medical certainty</text>
+<text x="1105" y="358" class="body" text-anchor="start">No Warning/Critical labels</text>
+<path d="M315 285 L362 285" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M650 285 L697 285" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M1035 285 L1082 285" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<path d="M1240 410 L1240 485 L510 485 L510 412" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="875" y="471" class="label" text-anchor="middle">Return JSON to isolated client</text>
+<rect x="40" y="565" width="1355" height="100" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="60" y="601" class="head" text-anchor="start">Further evidence required</text>
+<text x="60" y="635" class="body" text-anchor="start">Integrated Android role UI; three-class labels/output; complete phone workflow; FCM push configuration.</text>
+<rect x="40" y="705" width="1355" height="85" rx="16" fill="#fff4df" stroke="#ba8b30" stroke-width="2"/>
+<text x="60" y="741" class="head" text-anchor="start">Do not transfer status across boundaries</text>
+<text x="60" y="775" class="body" text-anchor="start">Candidate code or isolated test success does not update the verified baseline or establish a new physical deployment.</text>
+</svg>

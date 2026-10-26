@@ -1,0 +1,5 @@
+# Tested together with Python 3.12. Server dependencies only.
+fastapi==0.159.1
+starlette==1.9.0
+pydantic==2.14.1
+uvicorn==0.54.0

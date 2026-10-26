@@ -1,0 +1,9 @@
+task,classifier,selected_depth,validation_macro_f1,test_rows,accuracy,macro_precision,macro_recall,macro_f1,abnormal_recall,false_abnormal_rate,missed_abnormal_rate
+heart_rate,decision_tree,2,1.0,12002,1.0,1.0,1.0,1.0,1.0,0.0,0.0
+heart_rate,random_forest,2,1.0,12002,1.0,1.0,1.0,1.0,1.0,0.0,0.0
+oxygen,decision_tree,1,1.0,12002,1.0,1.0,1.0,1.0,1.0,0.0,0.0
+oxygen,random_forest,2,1.0,12002,1.0,1.0,1.0,1.0,1.0,0.0,0.0
+blood_pressure,decision_tree,3,1.0,12002,1.0,1.0,1.0,1.0,1.0,0.0,0.0
+blood_pressure,random_forest,4,1.0,12002,1.0,1.0,1.0,1.0,1.0,0.0,0.0
+body_temperature,decision_tree,1,1.0,12002,1.0,1.0,1.0,1.0,1.0,0.0,0.0
+body_temperature,random_forest,2,1.0,12002,1.0,1.0,1.0,1.0,1.0,0.0,0.0

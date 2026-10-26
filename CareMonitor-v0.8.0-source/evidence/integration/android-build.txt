@@ -1,0 +1,178 @@
+Compile resource ic_back.xml
+Compile resource ic_bluetooth.xml
+Compile resource ic_buzzer.xml
+Compile resource ic_care_monitor.xml
+Compile resource ic_fall.xml
+Compile resource ic_heart.xml
+Compile resource ic_light.xml
+Compile resource ic_more.xml
+Compile resource ic_motion.xml
+Compile resource ic_nav_alerts.xml
+Compile resource ic_nav_overview.xml
+Compile resource ic_nav_profile.xml
+Compile resource ic_nav_sensors.xml
+Compile resource ic_nav_settings.xml
+Compile resource ic_oxygen.xml
+Compile resource ic_pressure.xml
+Compile resource ic_status_attention.xml
+Compile resource ic_status_ok.xml
+Compile resource ic_status_unknown.xml
+Compile resource ic_temperature.xml
+Compile resource ic_watch.xml
+Compile resource ic_water.xml
+Compile resource strings.xml
+Compile resource styles.xml
+Compile resource network_security_config.xml
+Link Android resources and manifest
+Compile Java application
+Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+3 warnings
+
+Convert application classes to Android DEX
+Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
+
+Align ZIP entries to four-byte boundaries
+Verify unsigned APK alignment
+Sign the development APK
+Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
+
+Verify APK signature
+Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Android Debug, O=Care Monitor Demo, C=CN
+Signer #1 certificate SHA-256 digest: be0b46f60ca5871751697124a0ba4b50d5dff22bc2e9b560468bb321201d54af
+Signer #1 certificate SHA-1 digest: db7418fb6ce7ddf23b30438b922798869e63778f
+Signer #1 certificate MD5 digest: f60690bd1d4bbf05d7289d3ac66e3d17
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 2048
+Signer #1 public key SHA-256 digest: 9619dde8051f97dff93039e52c93b561ffd2021f0e13ec24c7e03c823d637171
+Signer #1 public key SHA-1 digest: 7253e9822cdbe679cc60242289e6107ad200db36
+Signer #1 public key MD5 digest: 098ad17043aa554113faec277482a107
+
+Verify APK alignment
+Inspect packaged Android metadata
+package: name='org.caremonitor.demo' versionCode='17' versionName='0.8.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'
+minSdkVersion:'24'
+targetSdkVersion:'36'
+uses-permission: name='android.permission.BLUETOOTH' maxSdkVersion='30'
+uses-permission: name='android.permission.BLUETOOTH_ADMIN' maxSdkVersion='30'
+uses-permission: name='android.permission.ACCESS_FINE_LOCATION' maxSdkVersion='30'
+uses-permission: name='android.permission.BLUETOOTH_SCAN' usesPermissionFlags='neverForLocation'
+uses-permission: name='android.permission.BLUETOOTH_CONNECT'
+uses-permission: name='android.permission.INTERNET'
+uses-permission: name='android.permission.ACCESS_NETWORK_STATE'
+uses-permission: name='android.permission.FOREGROUND_SERVICE'
+uses-permission: name='android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE'
+uses-permission: name='android.permission.POST_NOTIFICATIONS'
+application-label:'Care Monitor'
+application-icon-160:'res/drawable/ic_care_monitor.xml'
+application: label='Care Monitor' icon='res/drawable/ic_care_monitor.xml'
+launchable-activity: name='org.caremonitor.demo.MainActivity'  label='' icon=''
+feature-group: label=''
+  uses-feature-not-required: name='android.hardware.bluetooth'
+  uses-feature-not-required: name='android.hardware.bluetooth_le'
+  uses-feature: name='android.hardware.faketouch'
+  uses-implied-feature: name='android.hardware.faketouch' reason='default feature for all apps'
+  uses-feature: name='android.hardware.location'
+  uses-implied-feature: name='android.hardware.location' reason='requested android.permission.ACCESS_FINE_LOCATION permission'
+main
+other-activities
+other-services
+supports-screens: 'small' 'normal' 'large' 'xlarge'
+supports-any-density: 'true'
+locales: '--_--'
+densities: '160'
+
+{
+  "result": "APK compiled, aligned, signed and verified",
+  "apk": "CareMonitor-demo-debug.apk",
+  "bytes": 371211,
+  "sha256": "7ff943405f6a780d350f648838c9d210647c1e2212c9fe8b05d9906d8e116ff7",
+  "application_id": "org.caremonitor.demo",
+  "version_name": "0.8.0",
+  "version_code": 17,
+  "min_api": 24,
+  "target_api": 36,
+  "input_sha256": {
+    "app/src/main/AndroidManifest.xml": "c68574dfa9cd769d1c839e8176ea0278488270380b44e62f7dbb510708ed863b",
+    "app/src/main/assets/sample_alerts.json": "d9b8dd1ee0ae0857d566b5573bed2d620a435e50e20e8fcd9bf8778098a0368e",
+    "app/src/main/assets/sample_sensor_data.json": "1eec4d7b2096e0a55fdad3b14d996e5de601adb2d236c4d89a7436ab6ac04d38",
+    "app/src/main/assets/sample_sensor_history.json": "5dcad690247da00ab9cca2d7f58566ab4b760b91fbc02e370fb5f7b5de485bce",
+    "app/src/main/assets/server_ca.crt": "2d8b32b5c4cb1a4fe25a1b202f8022fa1a87ea523e3f894373f4762cbfc363c1",
+    "app/src/main/java/org/caremonitor/demo/AccountActivity.java": "10ea4e367541dc0cf193ebaee84506b471bbfc9fc740bf0088852ce6b0d104f0",
+    "app/src/main/java/org/caremonitor/demo/AccountApiClient.java": "2e001488cdd00c7fb7b98b67969fee176010dd0dcb883e42bf515309aa1c3fcf",
+    "app/src/main/java/org/caremonitor/demo/AccountPresentationPolicy.java": "bb67195dd7ecd402e0edc10bdba3247e58f45855a034e2c5964f1289ba0fc36c",
+    "app/src/main/java/org/caremonitor/demo/AccountSessionStore.java": "48f678c86b99090cd9ccd93576c045fb33d62d8aee8a9316d4a3dd735096bbc6",
+    "app/src/main/java/org/caremonitor/demo/AlertCatalog.java": "4bcc9a92ec046af9ecdc8e0f492465b3bbd61bca0f43e5629d31db8a79253ccf",
+    "app/src/main/java/org/caremonitor/demo/AlertInbox.java": "6ba05653ebf5e1d7f9934dd333659e7abfd838e36cffb0d3b779af79fb509ed0",
+    "app/src/main/java/org/caremonitor/demo/BleSensorClient.java": "84bbe3def843b96fd15afdd80f55e95dfc508cb582900e890f424a17f4afb4a2",
+    "app/src/main/java/org/caremonitor/demo/CarePalette.java": "823e96722ab359a55d89e507453066c86bc3f5b51f9782fd993692f17f9aa75c",
+    "app/src/main/java/org/caremonitor/demo/LiveMonitorService.java": "1954263472183aa8263cdfb2ec7b21efb4cd7b4ea012d5b05bd1d964e38f50df",
+    "app/src/main/java/org/caremonitor/demo/LiveSampleFreshness.java": "b6f465f7ef09219b319d4415b16ec2c51562d7ba0f61ec2b2729bcb6cb5269bb",
+    "app/src/main/java/org/caremonitor/demo/MainActivity.java": "31cc8a415b1eaf5cace514c6e41fe8495876cf9a63cce8ab1eff17a31b76d350",
+    "app/src/main/java/org/caremonitor/demo/NdjsonFramer.java": "a344a31644a6a2124917ce6f1364d574d46f7918b39f8ae1133297b3fd149557",
+    "app/src/main/java/org/caremonitor/demo/OpticalEstimatePolicy.java": "e9b5ce621ae4c13f87eb119f60063abac6e81c9b6e9678f451459c30c69412b1",
+    "app/src/main/java/org/caremonitor/demo/ReadingSummary.java": "7a3eec0970ed79a2a1b470538ef02f9dcd3de198f5e53cc3c5fda34b9cf3ba63",
+    "app/src/main/java/org/caremonitor/demo/RelayPolicy.java": "4b03a24a1fda7db824c045fbab645e025f864f02d45ae7beb9fa0abcd2b8901a",
+    "app/src/main/java/org/caremonitor/demo/RelaySecureSettings.java": "136e1dd6b0e4953491517f92bf2a6995346642e4f3a963b03baf32ef1db33f84",
+    "app/src/main/java/org/caremonitor/demo/RemoteAlertClient.java": "fcedf0e0afa83cb06b0898d7fbf9e121644ebcf41a04eec82dc08d0c03ccab27",
+    "app/src/main/java/org/caremonitor/demo/RemoteAlertInbox.java": "b89853e4a4f3307ce1ebd6a6b66e1ddcc99bc18a5e17152d75d189e9d539b2fc",
+    "app/src/main/java/org/caremonitor/demo/SecureConnectionSetup.java": "bdab52bb0882c607235f3f8d64d82e0005fd049d486d4e3f09f85273cb38208d",
+    "app/src/main/java/org/caremonitor/demo/SecureSetupPolicy.java": "c679e87373ae644a63baf13ac5b7526a887fab714e73afe4c9ac41d1813cbba1",
+    "app/src/main/java/org/caremonitor/demo/SensorChartView.java": "4b1952762539ea364ab895b1089a695414fa320b971a8e614d8689a8a7b1c4d7",
+    "app/src/main/java/org/caremonitor/demo/SensorModuleNavigation.java": "d8d3dbff3f424d5274e579a2d70c4f047d95df5e67ca66e3034a524b174803ae",
+    "app/src/main/java/org/caremonitor/demo/SensorTransport.java": "f28996d1491e3e06a63cf640ea7214a7f067bb77b9f1cee589482203460c559c",
+    "app/src/main/java/org/caremonitor/demo/ServerAuthWire.java": "91e7016ef42d507fca82291e357c892057bb1d5f439d10db0895dce1410b2365",
+    "app/src/main/java/org/caremonitor/demo/ServerCredentialState.java": "ea6d4acf30bc87113d4b52233270698c3cd1d8fd44feeeef76b1d31c2d87c9e7",
+    "app/src/main/java/org/caremonitor/demo/ServerEndpointMigration.java": "047cb87587db02ad555a183fc47c399134adc0e6a9133f05c9eba8a783024b02",
+    "app/src/main/java/org/caremonitor/demo/ServerRelay.java": "551d7fc5bf2b7e28658028cb44c1b76415cf455998b4056bd6f04e198bd21512",
+    "app/src/main/java/org/caremonitor/demo/SessionLineBuffer.java": "71593a166ec3db445bfa796208310174c59e0e9a5278cb39e7e2ab98edd6951e",
+    "app/src/main/java/org/caremonitor/demo/SppSensorClient.java": "84a506d6356a96b0586d590b48f2dce734121ddc3c37f474ac5d4198a2541241",
+    "app/src/main/res/drawable/ic_back.xml": "c6c03790cb2a8e2672447da56bb82fbe5223f8a4f9423ca0580205d832f099b3",
+    "app/src/main/res/drawable/ic_bluetooth.xml": "0e5ffb31c22d4e724e33eafd8c9ce710a5e83c3f8c2dff32785c21e63a455680",
+    "app/src/main/res/drawable/ic_buzzer.xml": "331f5f45099855fbc4f36891ee16ea985b223e6f2603d8284fd9468277b70edc",
+    "app/src/main/res/drawable/ic_care_monitor.xml": "8a71916a80b092ce0c49e45f22aa150dd4f43df485e7917110ca311c41e9546c",
+    "app/src/main/res/drawable/ic_fall.xml": "a88bf39a1d21e67e6edd43b4387da405ef90f26259040aac5d44d38b93bc04a7",
+    "app/src/main/res/drawable/ic_heart.xml": "3440730e350886c348482b672a47d485cbf8a267d37a28b56c35b1d9da69c1f0",
+    "app/src/main/res/drawable/ic_light.xml": "88d8a1bbd7d70c413ab1760f889f9bec0feebe22fc2ade63e07f81c4765e4c0d",
+    "app/src/main/res/drawable/ic_more.xml": "ec35429e1576f58679123a6f25679486e190455bf301b3d7b4b0ea8c8112de31",
+    "app/src/main/res/drawable/ic_motion.xml": "ae4a717d2f90f391407b488f56e8a60ba8cb47f3055e93e71c96be924ce3b716",
+    "app/src/main/res/drawable/ic_nav_alerts.xml": "c4cadd89954fe5923ffe329cfab88234319775f7251185d5df505c6d76da5121",
+    "app/src/main/res/drawable/ic_nav_overview.xml": "17c8558e9b8474f14b7c45a72e2db7883ecf7be5ee88ffd2fee360f6974c30ca",
+    "app/src/main/res/drawable/ic_nav_profile.xml": "2b215be8de40a9701ee6e71a2ceec0bacbb67cf4730a86caacb5977789195e39",
+    "app/src/main/res/drawable/ic_nav_sensors.xml": "63af5f53adf98c9034d8b5437da34fc1bffada5cd842e4287275949a542c4884",
+    "app/src/main/res/drawable/ic_nav_settings.xml": "9a8838a1efb42a827589eb33a7caf38cfe6521dabb00aba0e71d10c36f7eba90",
+    "app/src/main/res/drawable/ic_oxygen.xml": "4968c63735b2e28525c798e666d90a1f273d5234707b78ac75c5e50481d5971a",
+    "app/src/main/res/drawable/ic_pressure.xml": "873162bdca3a970827684edb2b8b37bca3ab0e9317b91b8bce1ce3b9a224d5de",
+    "app/src/main/res/drawable/ic_status_attention.xml": "708bedfea9b0037969e6b06d55f14b06d559149da831b8e036b521b1f874e293",
+    "app/src/main/res/drawable/ic_status_ok.xml": "e0e9bc8dd1f28de3a9b5ad0458342f842ed105d3fdbf6d09eb27504847da4215",
+    "app/src/main/res/drawable/ic_status_unknown.xml": "24d464e931512b077e3260f2906bb23e695cec8a151b17c940240357c0096ce0",
+    "app/src/main/res/drawable/ic_temperature.xml": "0a2708d855d6e4e81ce6b8063563150e08a40a09ff163ded951de8eebd549966",
+    "app/src/main/res/drawable/ic_watch.xml": "2104a4e93e03c51321d85ff139530ca457262450ea30fca7312fd0d35ff671ce",
+    "app/src/main/res/drawable/ic_water.xml": "ebbbfb19a4a037cfe890a14cc341c8964bae7e45e6a185764409c76135e05d18",
+    "app/src/main/res/values/strings.xml": "be83615542df9a445e62f841042fddaff305355f4a3237b67dab9e8caef9b9a2",
+    "app/src/main/res/values/styles.xml": "e2efb2c9fad5ef9423dc9623a45acb876df8f796a864df6081cb4045d8fca959",
+    "app/src/main/res/xml/network_security_config.xml": "dea35ebed76536c24c13f74036f02dc874f944147cb3a49c2ad0550f71e3e0c7",
+    "scripts/build_apk.py": "b74277fbd85a6a1fcd39fbf9c1f2948d03d8df4577e8cfb23ee193edbc23446c"
+  },
+  "framework": "Native Android Java, no WebView",
+  "manifest_compiler": "Official Android SDK aapt2",
+  "resource_table": true,
+  "phone_or_emulator_tested": false,
+  "data_source": "Live Classic SPP or BLE sensor reception with a separate bundled demo entrance",
+  "transport": "Secure Classic SPP/RFCOMM or BLE/GATT UTF-8 NDJSON to phone; Wi-Fi-only HTTPS forwarding",
+  "physical_spp_pairing_tested": false,
+  "physical_ble_or_server_delivery_tested": false
+}

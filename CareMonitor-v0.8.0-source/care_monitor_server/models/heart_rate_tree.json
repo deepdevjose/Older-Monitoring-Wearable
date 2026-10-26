@@ -1,0 +1,57 @@
+{
+  "format": "care-monitor-offline-tree-v1",
+  "synthetic_only": true,
+  "deployed": false,
+  "comparison_input_type": "float32",
+  "features": [
+    "Heart Rate (bpm)"
+  ],
+  "classes": [
+    "ABNORMAL",
+    "NORMAL"
+  ],
+  "supported_training_ranges": {
+    "Heart Rate (bpm)": [
+      50.0,
+      139.0
+    ]
+  },
+  "nodes": [
+    {
+      "left": 1,
+      "right": 4,
+      "feature": 0,
+      "threshold": 100.5,
+      "predicted_class": "NORMAL"
+    },
+    {
+      "left": 2,
+      "right": 3,
+      "feature": 0,
+      "threshold": 59.5,
+      "predicted_class": "NORMAL"
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "ABNORMAL"
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "NORMAL"
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "ABNORMAL"
+    }
+  ],
+  "output_meaning": "Agreement with a supplied synthetic alert label, not clinical normality"
+}

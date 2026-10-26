@@ -1,0 +1,1206 @@
+{
+  "run_utc": "2026-10-26T04:49:21.097604+00:00",
+  "model_version": "synthetic-vitals-dt-rf-20261026",
+  "dataset": "Synthetic_patient-HealthCare-Monitoring_dataset.csv",
+  "dataset_sha256": "35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb",
+  "synthetic_only": true,
+  "seed": 20261020,
+  "input_rows": 60000,
+  "usable_rows": 60000,
+  "rejected_rows": 0,
+  "split_rows": {
+    "train": 35993,
+    "validation": 12005,
+    "test": 12002
+  },
+  "split_groups": {
+    "train": 35367,
+    "validation": 11789,
+    "test": 11790
+  },
+  "unique_five_vital_groups": 58946,
+  "duplicate_five_vital_rows": 1054,
+  "cross_split_identical_five_vital_groups": 0,
+  "recorded_split_exact_match": true,
+  "recorded_split_sha256": "c26ef042301a48315461fbdc59b7808032bb252698c615acc5578149075b72fb",
+  "real_subject_disjoint_validation": false,
+  "split_method": "Exact previous GroupShuffleSplit membership by complete five-vital vector",
+  "test_used_for_model_selection": false,
+  "selection_policy": "Select depth by validation macro-F1, tie favouring lower depth; select family by validation macro-F1, tie favouring interpretable Decision Tree. Refit each family's selected depth on train+validation; test never selects models.",
+  "same_task_two_classifier_comparison": true,
+  "excluded_predictors": [
+    "Patient Number",
+    "Predicted Disease",
+    "Data Accuracy (%)",
+    "Fall Detection",
+    "all target-label columns"
+  ],
+  "limitations": [
+    "Only supplied synthetic NORMAL/ABNORMAL targets are evaluated; Warning/Critical labels do not exist here.",
+    "Perfect scores can reflect deterministic supplied labels rather than physiological generalisation.",
+    "Exact five-vital groups are separated, but individual input values repeat across partitions.",
+    "The synthetic Patient Number is a row identifier, not verified participant identity.",
+    "No independent assessment hidden set, clinical validation, paired-reference training or physical-sensor test is performed.",
+    "Probability values are uncalibrated model outputs; low synthetic error does not establish real-device calibration.",
+    "Artifacts are an isolated assessment candidate and do not replace working v0.7.4 models or firmware."
+  ],
+  "deployed_to_working_app_or_server": false,
+  "versions": {
+    "scikit-learn": "1.9.1",
+    "numpy": "2.3.5",
+    "pandas": "3.0.1",
+    "matplotlib": "3.11.2"
+  },
+  "python": "3.12.14",
+  "command_arguments": [
+    "--csv",
+    "C:\\Users\\29682\\Documents\\ChatGPT\\Mobile Phone\\incoming\\iot_app_ml_20261020\\Synthetic_patient-HealthCare-Monitoring_dataset.csv",
+    "--reference-split",
+    "C:\\Users\\29682\\Documents\\ChatGPT\\Mobile Phone\\outputs\\ml\\vitals\\split_membership.csv",
+    "--out",
+    "C:\\Users\\29682\\Documents\\ChatGPT\\Mobile Phone\\work\\assessment_candidate_20261026\\evidence\\ml"
+  ],
+  "tasks": {
+    "heart_rate": {
+      "features": [
+        "Heart Rate (bpm)"
+      ],
+      "target": "Heart Rate Alert",
+      "classes": [
+        "NORMAL",
+        "ABNORMAL"
+      ],
+      "selected_classifier": "decision_tree",
+      "selection_reason": "Validation macro-F1 tie; prefer the simpler interpretable Decision Tree",
+      "label_counts_by_split": {
+        "train": {
+          "NORMAL": 22205,
+          "ABNORMAL": 13788
+        },
+        "validation": {
+          "NORMAL": 7374,
+          "ABNORMAL": 4631
+        },
+        "test": {
+          "NORMAL": 7413,
+          "ABNORMAL": 4589
+        }
+      },
+      "single_feature_test_values_also_in_development": {
+        "Heart Rate (bpm)": {
+          "test_unique": 90,
+          "overlap_unique": 90
+        }
+      },
+      "classifiers": {
+        "decision_tree": {
+          "validation_candidates": [
+            {
+              "max_depth": 1,
+              "validation_accuracy": 0.9902540608079967,
+              "validation_macro_f1": 0.9896676430134745
+            },
+            {
+              "max_depth": 2,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 3,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            }
+          ],
+          "selected_max_depth": 2,
+          "selected_validation_macro_f1": 1.0,
+          "parameters": {
+            "ccp_alpha": 0.0,
+            "class_weight": null,
+            "criterion": "gini",
+            "max_depth": 2,
+            "max_features": null,
+            "max_leaf_nodes": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "random_state": 20261020,
+            "splitter": "best"
+          },
+          "final_refit_rows": 47998,
+          "test": {
+            "accuracy": 1.0,
+            "macro_f1": 1.0,
+            "macro_precision": 1.0,
+            "macro_recall": 1.0,
+            "abnormal_recall": 1.0,
+            "confusion_matrix_order": [
+              "NORMAL",
+              "ABNORMAL"
+            ],
+            "confusion_matrix": [
+              [
+                7413,
+                0
+              ],
+              [
+                0,
+                4589
+              ]
+            ],
+            "classification_report": {
+              "NORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 7413.0
+              },
+              "ABNORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 4589.0
+              },
+              "accuracy": 1.0,
+              "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              },
+              "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              }
+            },
+            "false_abnormal_rate": 0.0,
+            "missed_abnormal_rate": 0.0,
+            "critical_recall": null,
+            "critical_recall_reason": "No Critical label exists in the supplied target",
+            "probability_diagnostics": {
+              "abnormal_brier_score": 0.0,
+              "log_loss": 2.2204460492503136e-16,
+              "mean_predicted_class_probability": 1.0,
+              "calibration_performed": false,
+              "interpretation": "Synthetic holdout diagnostics only; not evidence of real-device probability calibration"
+            }
+          }
+        },
+        "random_forest": {
+          "validation_candidates": [
+            {
+              "max_depth": 2,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 4,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 8,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            }
+          ],
+          "selected_max_depth": 2,
+          "selected_validation_macro_f1": 1.0,
+          "parameters": {
+            "bootstrap": true,
+            "ccp_alpha": 0.0,
+            "class_weight": null,
+            "criterion": "gini",
+            "max_depth": 2,
+            "max_features": 1.0,
+            "max_leaf_nodes": null,
+            "max_samples": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "n_estimators": 100,
+            "n_jobs": 2,
+            "oob_score": false,
+            "random_state": 20261020,
+            "verbose": 0,
+            "warm_start": false
+          },
+          "final_refit_rows": 47998,
+          "test": {
+            "accuracy": 1.0,
+            "macro_f1": 1.0,
+            "macro_precision": 1.0,
+            "macro_recall": 1.0,
+            "abnormal_recall": 1.0,
+            "confusion_matrix_order": [
+              "NORMAL",
+              "ABNORMAL"
+            ],
+            "confusion_matrix": [
+              [
+                7413,
+                0
+              ],
+              [
+                0,
+                4589
+              ]
+            ],
+            "classification_report": {
+              "NORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 7413.0
+              },
+              "ABNORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 4589.0
+              },
+              "accuracy": 1.0,
+              "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              },
+              "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              }
+            },
+            "false_abnormal_rate": 0.0,
+            "missed_abnormal_rate": 0.0,
+            "critical_recall": null,
+            "critical_recall_reason": "No Critical label exists in the supplied target",
+            "probability_diagnostics": {
+              "abnormal_brier_score": 0.0,
+              "log_loss": 2.2204460492503136e-16,
+              "mean_predicted_class_probability": 1.0,
+              "calibration_performed": false,
+              "interpretation": "Synthetic holdout diagnostics only; not evidence of real-device probability calibration"
+            }
+          }
+        }
+      },
+      "majority_baseline_test": {
+        "accuracy": 0.6176470588235294,
+        "macro_f1": 0.38181818181818183,
+        "macro_precision": 0.3088235294117647,
+        "macro_recall": 0.5,
+        "abnormal_recall": 0.0,
+        "confusion_matrix_order": [
+          "NORMAL",
+          "ABNORMAL"
+        ],
+        "confusion_matrix": [
+          [
+            7413,
+            0
+          ],
+          [
+            4589,
+            0
+          ]
+        ],
+        "classification_report": {
+          "NORMAL": {
+            "precision": 0.6176470588235294,
+            "recall": 1.0,
+            "f1-score": 0.7636363636363637,
+            "support": 7413.0
+          },
+          "ABNORMAL": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 4589.0
+          },
+          "accuracy": 0.6176470588235294,
+          "macro avg": {
+            "precision": 0.3088235294117647,
+            "recall": 0.5,
+            "f1-score": 0.38181818181818183,
+            "support": 12002.0
+          },
+          "weighted avg": {
+            "precision": 0.3814878892733564,
+            "recall": 0.6176470588235294,
+            "f1-score": 0.4716577540106952,
+            "support": 12002.0
+          }
+        },
+        "false_abnormal_rate": 0.0,
+        "missed_abnormal_rate": 1.0,
+        "critical_recall": null,
+        "critical_recall_reason": "No Critical label exists in the supplied target"
+      }
+    },
+    "oxygen": {
+      "features": [
+        "SpO2 Level (%)"
+      ],
+      "target": "SpO2 Level Alert",
+      "classes": [
+        "NORMAL",
+        "ABNORMAL"
+      ],
+      "selected_classifier": "decision_tree",
+      "selection_reason": "Validation macro-F1 tie; prefer the simpler interpretable Decision Tree",
+      "label_counts_by_split": {
+        "train": {
+          "NORMAL": 20934,
+          "ABNORMAL": 15059
+        },
+        "validation": {
+          "NORMAL": 6958,
+          "ABNORMAL": 5047
+        },
+        "test": {
+          "NORMAL": 6878,
+          "ABNORMAL": 5124
+        }
+      },
+      "single_feature_test_values_also_in_development": {
+        "SpO2 Level (%)": {
+          "test_unique": 17,
+          "overlap_unique": 17
+        }
+      },
+      "classifiers": {
+        "decision_tree": {
+          "validation_candidates": [
+            {
+              "max_depth": 1,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 2,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 3,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            }
+          ],
+          "selected_max_depth": 1,
+          "selected_validation_macro_f1": 1.0,
+          "parameters": {
+            "ccp_alpha": 0.0,
+            "class_weight": null,
+            "criterion": "gini",
+            "max_depth": 1,
+            "max_features": null,
+            "max_leaf_nodes": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "random_state": 20261020,
+            "splitter": "best"
+          },
+          "final_refit_rows": 47998,
+          "test": {
+            "accuracy": 1.0,
+            "macro_f1": 1.0,
+            "macro_precision": 1.0,
+            "macro_recall": 1.0,
+            "abnormal_recall": 1.0,
+            "confusion_matrix_order": [
+              "NORMAL",
+              "ABNORMAL"
+            ],
+            "confusion_matrix": [
+              [
+                6878,
+                0
+              ],
+              [
+                0,
+                5124
+              ]
+            ],
+            "classification_report": {
+              "NORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 6878.0
+              },
+              "ABNORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 5124.0
+              },
+              "accuracy": 1.0,
+              "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              },
+              "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              }
+            },
+            "false_abnormal_rate": 0.0,
+            "missed_abnormal_rate": 0.0,
+            "critical_recall": null,
+            "critical_recall_reason": "No Critical label exists in the supplied target",
+            "probability_diagnostics": {
+              "abnormal_brier_score": 0.0,
+              "log_loss": 2.2204460492503136e-16,
+              "mean_predicted_class_probability": 1.0,
+              "calibration_performed": false,
+              "interpretation": "Synthetic holdout diagnostics only; not evidence of real-device probability calibration"
+            }
+          }
+        },
+        "random_forest": {
+          "validation_candidates": [
+            {
+              "max_depth": 2,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 4,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 8,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            }
+          ],
+          "selected_max_depth": 2,
+          "selected_validation_macro_f1": 1.0,
+          "parameters": {
+            "bootstrap": true,
+            "ccp_alpha": 0.0,
+            "class_weight": null,
+            "criterion": "gini",
+            "max_depth": 2,
+            "max_features": 1.0,
+            "max_leaf_nodes": null,
+            "max_samples": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "n_estimators": 100,
+            "n_jobs": 2,
+            "oob_score": false,
+            "random_state": 20261020,
+            "verbose": 0,
+            "warm_start": false
+          },
+          "final_refit_rows": 47998,
+          "test": {
+            "accuracy": 1.0,
+            "macro_f1": 1.0,
+            "macro_precision": 1.0,
+            "macro_recall": 1.0,
+            "abnormal_recall": 1.0,
+            "confusion_matrix_order": [
+              "NORMAL",
+              "ABNORMAL"
+            ],
+            "confusion_matrix": [
+              [
+                6878,
+                0
+              ],
+              [
+                0,
+                5124
+              ]
+            ],
+            "classification_report": {
+              "NORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 6878.0
+              },
+              "ABNORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 5124.0
+              },
+              "accuracy": 1.0,
+              "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              },
+              "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              }
+            },
+            "false_abnormal_rate": 0.0,
+            "missed_abnormal_rate": 0.0,
+            "critical_recall": null,
+            "critical_recall_reason": "No Critical label exists in the supplied target",
+            "probability_diagnostics": {
+              "abnormal_brier_score": 0.0,
+              "log_loss": 2.2204460492503136e-16,
+              "mean_predicted_class_probability": 1.0,
+              "calibration_performed": false,
+              "interpretation": "Synthetic holdout diagnostics only; not evidence of real-device probability calibration"
+            }
+          }
+        }
+      },
+      "majority_baseline_test": {
+        "accuracy": 0.5730711548075321,
+        "macro_f1": 0.36430084745762714,
+        "macro_precision": 0.28653557740376606,
+        "macro_recall": 0.5,
+        "abnormal_recall": 0.0,
+        "confusion_matrix_order": [
+          "NORMAL",
+          "ABNORMAL"
+        ],
+        "confusion_matrix": [
+          [
+            6878,
+            0
+          ],
+          [
+            5124,
+            0
+          ]
+        ],
+        "classification_report": {
+          "NORMAL": {
+            "precision": 0.5730711548075321,
+            "recall": 1.0,
+            "f1-score": 0.7286016949152543,
+            "support": 6878.0
+          },
+          "ABNORMAL": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 5124.0
+          },
+          "accuracy": 0.5730711548075321,
+          "macro avg": {
+            "precision": 0.28653557740376606,
+            "recall": 0.5,
+            "f1-score": 0.36430084745762714,
+            "support": 12002.0
+          },
+          "weighted avg": {
+            "precision": 0.3284105484724384,
+            "recall": 0.5730711548075321,
+            "f1-score": 0.4175406146998099,
+            "support": 12002.0
+          }
+        },
+        "false_abnormal_rate": 0.0,
+        "missed_abnormal_rate": 1.0,
+        "critical_recall": null,
+        "critical_recall_reason": "No Critical label exists in the supplied target"
+      }
+    },
+    "blood_pressure": {
+      "features": [
+        "Systolic Blood Pressure (mmHg)",
+        "Diastolic Blood Pressure (mmHg)"
+      ],
+      "target": "Blood Pressure Alert",
+      "classes": [
+        "NORMAL",
+        "ABNORMAL"
+      ],
+      "selected_classifier": "decision_tree",
+      "selection_reason": "Validation macro-F1 tie; prefer the simpler interpretable Decision Tree",
+      "label_counts_by_split": {
+        "train": {
+          "ABNORMAL": 20139,
+          "NORMAL": 15854
+        },
+        "validation": {
+          "ABNORMAL": 6639,
+          "NORMAL": 5366
+        },
+        "test": {
+          "ABNORMAL": 6692,
+          "NORMAL": 5310
+        }
+      },
+      "single_feature_test_values_also_in_development": {
+        "Systolic Blood Pressure (mmHg)": {
+          "test_unique": 110,
+          "overlap_unique": 110
+        },
+        "Diastolic Blood Pressure (mmHg)": {
+          "test_unique": 81,
+          "overlap_unique": 81
+        }
+      },
+      "classifiers": {
+        "decision_tree": {
+          "validation_candidates": [
+            {
+              "max_depth": 1,
+              "validation_accuracy": 0.9266139108704706,
+              "validation_macro_f1": 0.9264433996366863
+            },
+            {
+              "max_depth": 2,
+              "validation_accuracy": 0.992253227821741,
+              "validation_macro_f1": 0.9921516129004366
+            },
+            {
+              "max_depth": 3,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            }
+          ],
+          "selected_max_depth": 3,
+          "selected_validation_macro_f1": 1.0,
+          "parameters": {
+            "ccp_alpha": 0.0,
+            "class_weight": null,
+            "criterion": "gini",
+            "max_depth": 3,
+            "max_features": null,
+            "max_leaf_nodes": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "random_state": 20261020,
+            "splitter": "best"
+          },
+          "final_refit_rows": 47998,
+          "test": {
+            "accuracy": 1.0,
+            "macro_f1": 1.0,
+            "macro_precision": 1.0,
+            "macro_recall": 1.0,
+            "abnormal_recall": 1.0,
+            "confusion_matrix_order": [
+              "NORMAL",
+              "ABNORMAL"
+            ],
+            "confusion_matrix": [
+              [
+                5310,
+                0
+              ],
+              [
+                0,
+                6692
+              ]
+            ],
+            "classification_report": {
+              "NORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 5310.0
+              },
+              "ABNORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 6692.0
+              },
+              "accuracy": 1.0,
+              "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              },
+              "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              }
+            },
+            "false_abnormal_rate": 0.0,
+            "missed_abnormal_rate": 0.0,
+            "critical_recall": null,
+            "critical_recall_reason": "No Critical label exists in the supplied target",
+            "probability_diagnostics": {
+              "abnormal_brier_score": 0.0,
+              "log_loss": 2.2204460492503136e-16,
+              "mean_predicted_class_probability": 1.0,
+              "calibration_performed": false,
+              "interpretation": "Synthetic holdout diagnostics only; not evidence of real-device probability calibration"
+            }
+          }
+        },
+        "random_forest": {
+          "validation_candidates": [
+            {
+              "max_depth": 2,
+              "validation_accuracy": 0.992253227821741,
+              "validation_macro_f1": 0.9921516129004366
+            },
+            {
+              "max_depth": 4,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 8,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            }
+          ],
+          "selected_max_depth": 4,
+          "selected_validation_macro_f1": 1.0,
+          "parameters": {
+            "bootstrap": true,
+            "ccp_alpha": 0.0,
+            "class_weight": null,
+            "criterion": "gini",
+            "max_depth": 4,
+            "max_features": 1.0,
+            "max_leaf_nodes": null,
+            "max_samples": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "n_estimators": 100,
+            "n_jobs": 2,
+            "oob_score": false,
+            "random_state": 20261020,
+            "verbose": 0,
+            "warm_start": false
+          },
+          "final_refit_rows": 47998,
+          "test": {
+            "accuracy": 1.0,
+            "macro_f1": 1.0,
+            "macro_precision": 1.0,
+            "macro_recall": 1.0,
+            "abnormal_recall": 1.0,
+            "confusion_matrix_order": [
+              "NORMAL",
+              "ABNORMAL"
+            ],
+            "confusion_matrix": [
+              [
+                5310,
+                0
+              ],
+              [
+                0,
+                6692
+              ]
+            ],
+            "classification_report": {
+              "NORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 5310.0
+              },
+              "ABNORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 6692.0
+              },
+              "accuracy": 1.0,
+              "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              },
+              "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              }
+            },
+            "false_abnormal_rate": 0.0,
+            "missed_abnormal_rate": 0.0,
+            "critical_recall": null,
+            "critical_recall_reason": "No Critical label exists in the supplied target",
+            "probability_diagnostics": {
+              "abnormal_brier_score": 0.0,
+              "log_loss": 2.2204460492503136e-16,
+              "mean_predicted_class_probability": 1.0,
+              "calibration_performed": false,
+              "interpretation": "Synthetic holdout diagnostics only; not evidence of real-device probability calibration"
+            }
+          }
+        }
+      },
+      "majority_baseline_test": {
+        "accuracy": 0.5575737377103817,
+        "macro_f1": 0.35797582111907567,
+        "macro_precision": 0.27878686885519083,
+        "macro_recall": 0.5,
+        "abnormal_recall": 1.0,
+        "confusion_matrix_order": [
+          "NORMAL",
+          "ABNORMAL"
+        ],
+        "confusion_matrix": [
+          [
+            0,
+            5310
+          ],
+          [
+            0,
+            6692
+          ]
+        ],
+        "classification_report": {
+          "NORMAL": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 5310.0
+          },
+          "ABNORMAL": {
+            "precision": 0.5575737377103817,
+            "recall": 1.0,
+            "f1-score": 0.7159516422381513,
+            "support": 6692.0
+          },
+          "accuracy": 0.5575737377103817,
+          "macro avg": {
+            "precision": 0.27878686885519083,
+            "recall": 0.5,
+            "f1-score": 0.35797582111907567,
+            "support": 12002.0
+          },
+          "weighted avg": {
+            "precision": 0.3108884729843254,
+            "recall": 0.5575737377103817,
+            "f1-score": 0.399195833182612,
+            "support": 12002.0
+          }
+        },
+        "false_abnormal_rate": 1.0,
+        "missed_abnormal_rate": 0.0,
+        "critical_recall": null,
+        "critical_recall_reason": "No Critical label exists in the supplied target"
+      }
+    },
+    "body_temperature": {
+      "features": [
+        "Body Temperature (°C)"
+      ],
+      "target": "Temperature Alert",
+      "classes": [
+        "NORMAL",
+        "ABNORMAL"
+      ],
+      "selected_classifier": "decision_tree",
+      "selection_reason": "Validation macro-F1 tie; prefer the simpler interpretable Decision Tree",
+      "label_counts_by_split": {
+        "train": {
+          "NORMAL": 26847,
+          "ABNORMAL": 9146
+        },
+        "validation": {
+          "NORMAL": 8911,
+          "ABNORMAL": 3094
+        },
+        "test": {
+          "NORMAL": 8898,
+          "ABNORMAL": 3104
+        }
+      },
+      "single_feature_test_values_also_in_development": {
+        "Body Temperature (°C)": {
+          "test_unique": 43,
+          "overlap_unique": 42
+        }
+      },
+      "classifiers": {
+        "decision_tree": {
+          "validation_candidates": [
+            {
+              "max_depth": 1,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 2,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 3,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            }
+          ],
+          "selected_max_depth": 1,
+          "selected_validation_macro_f1": 1.0,
+          "parameters": {
+            "ccp_alpha": 0.0,
+            "class_weight": null,
+            "criterion": "gini",
+            "max_depth": 1,
+            "max_features": null,
+            "max_leaf_nodes": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "random_state": 20261020,
+            "splitter": "best"
+          },
+          "final_refit_rows": 47998,
+          "test": {
+            "accuracy": 1.0,
+            "macro_f1": 1.0,
+            "macro_precision": 1.0,
+            "macro_recall": 1.0,
+            "abnormal_recall": 1.0,
+            "confusion_matrix_order": [
+              "NORMAL",
+              "ABNORMAL"
+            ],
+            "confusion_matrix": [
+              [
+                8898,
+                0
+              ],
+              [
+                0,
+                3104
+              ]
+            ],
+            "classification_report": {
+              "NORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 8898.0
+              },
+              "ABNORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 3104.0
+              },
+              "accuracy": 1.0,
+              "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              },
+              "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              }
+            },
+            "false_abnormal_rate": 0.0,
+            "missed_abnormal_rate": 0.0,
+            "critical_recall": null,
+            "critical_recall_reason": "No Critical label exists in the supplied target",
+            "probability_diagnostics": {
+              "abnormal_brier_score": 0.0,
+              "log_loss": 2.2204460492503136e-16,
+              "mean_predicted_class_probability": 1.0,
+              "calibration_performed": false,
+              "interpretation": "Synthetic holdout diagnostics only; not evidence of real-device probability calibration"
+            }
+          }
+        },
+        "random_forest": {
+          "validation_candidates": [
+            {
+              "max_depth": 2,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 4,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            },
+            {
+              "max_depth": 8,
+              "validation_accuracy": 1.0,
+              "validation_macro_f1": 1.0
+            }
+          ],
+          "selected_max_depth": 2,
+          "selected_validation_macro_f1": 1.0,
+          "parameters": {
+            "bootstrap": true,
+            "ccp_alpha": 0.0,
+            "class_weight": null,
+            "criterion": "gini",
+            "max_depth": 2,
+            "max_features": 1.0,
+            "max_leaf_nodes": null,
+            "max_samples": null,
+            "min_impurity_decrease": 0.0,
+            "min_samples_leaf": 20,
+            "min_samples_split": 2,
+            "min_weight_fraction_leaf": 0.0,
+            "monotonic_cst": null,
+            "n_estimators": 100,
+            "n_jobs": 2,
+            "oob_score": false,
+            "random_state": 20261020,
+            "verbose": 0,
+            "warm_start": false
+          },
+          "final_refit_rows": 47998,
+          "test": {
+            "accuracy": 1.0,
+            "macro_f1": 1.0,
+            "macro_precision": 1.0,
+            "macro_recall": 1.0,
+            "abnormal_recall": 1.0,
+            "confusion_matrix_order": [
+              "NORMAL",
+              "ABNORMAL"
+            ],
+            "confusion_matrix": [
+              [
+                8898,
+                0
+              ],
+              [
+                0,
+                3104
+              ]
+            ],
+            "classification_report": {
+              "NORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 8898.0
+              },
+              "ABNORMAL": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 3104.0
+              },
+              "accuracy": 1.0,
+              "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              },
+              "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 12002.0
+              }
+            },
+            "false_abnormal_rate": 0.0,
+            "missed_abnormal_rate": 0.0,
+            "critical_recall": null,
+            "critical_recall_reason": "No Critical label exists in the supplied target",
+            "probability_diagnostics": {
+              "abnormal_brier_score": 0.0,
+              "log_loss": 2.2204460492503136e-16,
+              "mean_predicted_class_probability": 1.0,
+              "calibration_performed": false,
+              "interpretation": "Synthetic holdout diagnostics only; not evidence of real-device probability calibration"
+            }
+          }
+        }
+      },
+      "majority_baseline_test": {
+        "accuracy": 0.7413764372604565,
+        "macro_f1": 0.42574162679425837,
+        "macro_precision": 0.37068821863022827,
+        "macro_recall": 0.5,
+        "abnormal_recall": 0.0,
+        "confusion_matrix_order": [
+          "NORMAL",
+          "ABNORMAL"
+        ],
+        "confusion_matrix": [
+          [
+            8898,
+            0
+          ],
+          [
+            3104,
+            0
+          ]
+        ],
+        "classification_report": {
+          "NORMAL": {
+            "precision": 0.7413764372604565,
+            "recall": 1.0,
+            "f1-score": 0.8514832535885167,
+            "support": 8898.0
+          },
+          "ABNORMAL": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 3104.0
+          },
+          "accuracy": 0.7413764372604565,
+          "macro avg": {
+            "precision": 0.37068821863022827,
+            "recall": 0.5,
+            "f1-score": 0.42574162679425837,
+            "support": 12002.0
+          },
+          "weighted avg": {
+            "precision": 0.5496390217250077,
+            "recall": 0.7413764372604565,
+            "f1-score": 0.6312696209323965,
+            "support": 12002.0
+          }
+        },
+        "false_abnormal_rate": 0.0,
+        "missed_abnormal_rate": 1.0,
+        "critical_recall": null,
+        "critical_recall_reason": "No Critical label exists in the supplied target"
+      }
+    }
+  }
+}

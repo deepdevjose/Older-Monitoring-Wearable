@@ -1,0 +1,154 @@
+{
+  "audited_at_utc": "2026-10-26T05:39:26.242215+00:00",
+  "scope": "integration_v080_20261026 copied ML source and stored evidence; no retraining or test rerun",
+  "dataset": {
+    "file": "Synthetic_patient-HealthCare-Monitoring_dataset.csv",
+    "sha256": "35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb",
+    "rows": 60000,
+    "columns": [
+      "Patient Number",
+      "Heart Rate (bpm)",
+      "SpO2 Level (%)",
+      "Systolic Blood Pressure (mmHg)",
+      "Diastolic Blood Pressure (mmHg)",
+      "Body Temperature (°C)",
+      "Fall Detection",
+      "Predicted Disease",
+      "Data Accuracy (%)",
+      "Heart Rate Alert",
+      "SpO2 Level Alert",
+      "Blood Pressure Alert",
+      "Temperature Alert"
+    ],
+    "labels": {
+      "Fall Detection": {
+        "No": 56926,
+        "Yes": 3074
+      },
+      "Predicted Disease": {
+        "Diabetes Mellitus": 12167,
+        "Heart Disease": 12044,
+        "Asthma": 11888,
+        "Hypertension": 11928,
+        "Healthy": 11973
+      },
+      "Heart Rate Alert": {
+        "NORMAL": 36992,
+        "ABNORMAL": 23008
+      },
+      "SpO2 Level Alert": {
+        "NORMAL": 34770,
+        "ABNORMAL": 25230
+      },
+      "Blood Pressure Alert": {
+        "NORMAL": 26530,
+        "ABNORMAL": 33470
+      },
+      "Temperature Alert": {
+        "ABNORMAL": 15344,
+        "NORMAL": 44656
+      }
+    },
+    "approved_three_class_labels_found": false,
+    "dataset_original_provenance_confirmed": false
+  },
+  "assessment_doc": {
+    "file": "IOT308TC_Assessment_2and_Rubric rv.docx",
+    "sha256": "2e732f037ed3f72b9c74e2e20b51f60b20b31f55b53034517182fc7236467bad",
+    "duplicate_copy_same_sha256": true,
+    "three_class_output_required": true,
+    "warning_critical_label_definitions_found": false
+  },
+  "source_verification": {
+    "care_monitor_ml/vitals/compare_classifiers.py": {
+      "sha256": "547777f55794c4b2fe968398aeb3dde7b814ee1b85a3594fcd70dd98cf875783",
+      "historical_verification_sha256": "547777f55794c4b2fe968398aeb3dde7b814ee1b85a3594fcd70dd98cf875783",
+      "matches": true
+    },
+    "care_monitor_ml/vitals/test_comparison.py": {
+      "sha256": "cbab88653c9cfa31c8a3e9e7e80b2ea13c574c98ed2b2db4c73bdd0201882ce2",
+      "historical_verification_sha256": "cbab88653c9cfa31c8a3e9e7e80b2ea13c574c98ed2b2db4c73bdd0201882ce2",
+      "matches": true
+    },
+    "care_monitor_ml/vitals/train_vitals.py": {
+      "sha256": "76fdde4d7f78356d4da763cbbfa0ae1bf114ac7f3b99747c34326b5dc216eabd",
+      "historical_verification_sha256": "76fdde4d7f78356d4da763cbbfa0ae1bf114ac7f3b99747c34326b5dc216eabd",
+      "matches": true
+    }
+  },
+  "artifact_verification": {
+    "metrics.json": {
+      "sha256": "5cd64d3a1fa517660b09aed83b62e1e08cc4455a10db74e21fe915d6ea5ceccc",
+      "matches_previous_candidate": true
+    },
+    "comparison.csv": {
+      "sha256": "52ad1bd384a341e9c677a73ad107b5806abcf175e05eb72dae885abe8dac89a1",
+      "matches_previous_candidate": true
+    },
+    "split_membership.csv": {
+      "sha256": "c26ef042301a48315461fbdc59b7808032bb252698c615acc5578149075b72fb",
+      "matches_previous_candidate": true
+    },
+    "split_manifest.json": {
+      "sha256": "9db8f2f4d799bb74dd6bd60d40a297b610aa422a66fb07f7b372176429bc6165",
+      "matches_previous_candidate": true
+    },
+    "manifest.json": {
+      "sha256": "93f2ab696da2338bd059536cdf1f84b71eb98d4d7af290ce2e6c1515adceee7b",
+      "matches_previous_candidate": true
+    },
+    "export_verification.json": {
+      "sha256": "9b64ef6cd23438893c65f8834c616c22cb6f87ccf49842c7919744cdce6bf330",
+      "matches_previous_candidate": true
+    },
+    "RUN_EVIDENCE.json": {
+      "sha256": "8f618bda4bdc886e55b421e3cd831f1c0f37917d74ddaa42320e67dcb55c1b54",
+      "matches_previous_candidate": true
+    }
+  },
+  "model_storage_size_observation": {
+    "heart_rate": {
+      "filename": "heart_rate_tree.json",
+      "sha256": "442af45bec9e8e81cf99f8a4f8f07301194ca9cf702fab77c74303bcd0c1d2e4",
+      "matches_manifest": true,
+      "bytes": 2087,
+      "nodes": 5,
+      "leaves": 3
+    },
+    "oxygen": {
+      "filename": "oxygen_tree.json",
+      "sha256": "987909803bb7423b0fca2cf5927e1cfc519f137bad185ac19df171fd708d4a23",
+      "matches_manifest": true,
+      "bytes": 1581,
+      "nodes": 3,
+      "leaves": 2
+    },
+    "blood_pressure": {
+      "filename": "blood_pressure_tree.json",
+      "sha256": "629fcf95970108d7d1c883408f6a5a421b9725005348c49192cda7978759a60b",
+      "matches_manifest": true,
+      "bytes": 3224,
+      "nodes": 9,
+      "leaves": 5
+    },
+    "body_temperature": {
+      "filename": "body_temperature_tree.json",
+      "sha256": "dc7ccf69aaa8e139f171604b3f6a27d156e2767d7f2b82dcb949aba08470b9c0",
+      "matches_manifest": true,
+      "bytes": 1618,
+      "nodes": 3,
+      "leaves": 2
+    }
+  },
+  "stored_training_run_utc": "2026-10-26T04:49:21.097604+00:00",
+  "model_inference_microbenchmark_performed": false,
+  "retraining_performed": false,
+  "new_tests_performed": false,
+  "live_deployment_changed": false,
+  "status": "UNRESOLVED — THREE-CLASS TARGET DEFINITION REQUIRES HUMAN/TUTOR CONFIRMATION",
+  "rest_of_integration_can_continue": true,
+  "preserved_classes": [
+    "NORMAL",
+    "ABNORMAL"
+  ]
+}

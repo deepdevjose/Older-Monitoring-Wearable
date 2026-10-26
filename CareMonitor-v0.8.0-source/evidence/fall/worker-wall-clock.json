@@ -1,0 +1,15 @@
+{
+  "test_scope": "real_clock_synthetic_software_workflow_only",
+  "actual_fall_test": false,
+  "phone_push_tested": false,
+  "push_configured": false,
+  "configured_window_seconds": 15,
+  "worker_sweep_interval_seconds": 0.25,
+  "observation_poll_interval_seconds": 0.05,
+  "observed_to_queued_seconds": 15.198875899994164,
+  "scheduled_deadline": "2026-10-26T05:01:19.715789+00:00",
+  "escalated_at": "2026-10-26T05:01:19.846119+00:00",
+  "queue_status": "queued",
+  "runs": 1,
+  "limitation": "Single local wall-clock observation; not a latency guarantee or end-to-end phone delivery measurement"
+}

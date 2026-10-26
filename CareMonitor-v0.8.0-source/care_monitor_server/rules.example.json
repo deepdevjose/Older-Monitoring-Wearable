@@ -1,0 +1,44 @@
+{
+  "enabled": false,
+  "operator_acknowledged": false,
+  "version": "demo-unvalidated-v1",
+  "label": "DEMONSTRATION ONLY: arbitrary unvalidated thresholds; review and explicitly opt in before use",
+  "freshness_seconds": 30,
+  "future_tolerance_seconds": 5,
+  "max_gap_seconds": 3,
+  "shadow_retention_rows": 10000,
+  "quality_alerts": false,
+  "quality_persistence_seconds": 3,
+  "quality_recovery_seconds": 3,
+  "quality_min_samples": 3,
+  "rules": [
+    {
+      "id": "heart_rate_high", "enabled": false, "metric": "heart_rate_bpm", "direction": "high",
+      "trigger": 100, "recover": 95, "persistence_seconds": 10, "recovery_seconds": 10, "min_samples": 5, "severity": "warning"
+    },
+    {
+      "id": "heart_rate_low", "enabled": false, "metric": "heart_rate_bpm", "direction": "low",
+      "trigger": 60, "recover": 65, "persistence_seconds": 10, "recovery_seconds": 10, "min_samples": 5, "severity": "warning"
+    },
+    {
+      "id": "oxygen_low", "enabled": false, "metric": "spo2_percent", "direction": "low",
+      "trigger": 94, "recover": 96, "persistence_seconds": 10, "recovery_seconds": 10, "min_samples": 5, "severity": "warning"
+    },
+    {
+      "id": "surface_temp_high", "enabled": false, "metric": "surface_temp_c", "direction": "high",
+      "trigger": 40, "recover": 38, "persistence_seconds": 10, "recovery_seconds": 10, "min_samples": 5, "severity": "warning"
+    },
+    {
+      "id": "surface_temp_low", "enabled": false, "metric": "surface_temp_c", "direction": "low",
+      "trigger": 25, "recover": 27, "persistence_seconds": 10, "recovery_seconds": 10, "min_samples": 5, "severity": "info"
+    },
+    {
+      "id": "ambient_temp_high", "enabled": false, "metric": "ambient_temp_c", "direction": "high",
+      "trigger": 30, "recover": 28, "persistence_seconds": 10, "recovery_seconds": 10, "min_samples": 5, "severity": "warning"
+    },
+    {
+      "id": "ambient_temp_low", "enabled": false, "metric": "ambient_temp_c", "direction": "low",
+      "trigger": 10, "recover": 12, "persistence_seconds": 10, "recovery_seconds": 10, "min_samples": 5, "severity": "warning"
+    }
+  ]
+}

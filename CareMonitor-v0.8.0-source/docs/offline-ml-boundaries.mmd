@@ -1,0 +1,15 @@
+flowchart LR
+    subgraph vitals["Offline vital-sign label experiment"]
+      csv["Existing synthetic-named vital CSV<br/>generator / module provenance unverified"] --> prep["pandas preparation<br/>group identical predictor vectors<br/>train / validation / test"]
+      prep --> tree["Binary DecisionTree targets<br/>label agreement and metrics<br/>no clinical validation"]
+      tree --> json["Exported JSON trees<br/>HR / oxygen loaded by baseline<br/>shadow-only; no care alarms"]
+    end
+    subgraph fall["Separate external SisFall experiment"]
+      sis["Published external motion dataset<br/>not group physical fall trials"] --> features["trial features<br/>subject-separated evaluation"]
+      features --> rf["Offline Random Forest<br/>fall / ADL trial classification<br/>not deployed to live 1 Hz snapshots"]
+    end
+    subgraph adaptation["Separate target-device adaptation workflow"]
+      reference["Approved paired reference data required<br/>no validated target-device training claimed"] --> workflow["Quality / contact gates<br/>session-device separation<br/>offline candidate evaluation"]
+    end
+    boundary["Assessment data permission and three-class labels remain unresolved.<br/>No automatic bridge from offline results to production alarms."]
+    vitals ~~~ boundary

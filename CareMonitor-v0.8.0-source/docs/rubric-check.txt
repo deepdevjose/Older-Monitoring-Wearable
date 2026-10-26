@@ -1,0 +1,86 @@
+IOT308TC Assessment 2: verified requirements audit
+Prepared: 26 October 2026. Scope: source-document review and implementation evidence, not a new test run.
+
+SOURCE IDENTITY
+Both supplied Word files were read, including the copy open in another application, without editing them:
+  C:\Users\29682\Downloads\IOT308TC_Assessment_2and_Rubric rv.docx
+  C:\Users\29682\Downloads\IOT308TC_Assessment_2and_Rubric rv (1).docx
+They are byte-identical. SHA-256: 2e732f037ed3f72b9c74e2e20b51f60b20b31f55b53034517182fc7236467bad.
+Extracted paragraph-text SHA-256: 227bd7f3e5cc77c973c9d0a9620b507e4599efe368e67f57970b4ac10327b31d.
+There are 145 body paragraphs, including paragraphs inside table cells. P-numbers below are extraction references, not printed page numbers. Exact source wording is quoted. Requirements are evidence for the project; they are not instructions to alter devices or data.
+
+CONFIRMED REQUIREMENTS AND THEIR IMPLICATIONS
+1. Task, P13: "Develop and demonstrate a functioning mobile application that processes simulated health-sensor data and classifies readings as normal, warning or critical."
+   The required output has THREE classes. A binary NORMAL/ABNORMAL endpoint is partial progress; it must not be relabelled as a completed three-class assessment system.
+
+2. Required technologies, P16: "Mobile framework approved for the module"; P17-P20 specify Python, pandas, scikit-learn, matplotlib, Flask or FastAPI, REST/JSON and Git.
+   Native Java Android is established in the current code. Tutor approval of this framework is unknown and must be confirmed; this document does not automatically approve it.
+
+3. Core implementation, P22: "Prepare the supplied synthetic dataset using pandas; train and compare two introductory scikit-learn classifiers; deploy the selected model."
+   This requires two appropriate classifiers. The isolated candidate now compares Decision Tree and Random Forest on each of the same four binary targets using the recorded split. The earlier baseline workflow alone did not establish that comparison. IsolationForest is an outlier detector, and its score is not automatically a class probability. The provenance/generator and module-supplied status of the existing CSV are not established by its filename; Warning/Critical labels remain absent.
+
+4. Core implementation, P23: "Evaluate accuracy, precision, recall, F1-score and the confusion matrix."
+   Report all measures with class labels, averaging choices, counts and split definition. Synthetic-label agreement does not establish clinical accuracy or cheaper-sensor accuracy.
+
+5. Core implementation, P24: "Provide one working Flask or FastAPI endpoint that returns classification and confidence as JSON."
+   The isolated candidate POST /ml/classify passed software checks but is not deployed to the verified phone/server baseline. It returns binary classification and confidence; this does not meet the three-class task by itself. Confidence is the empirical training-leaf class proportion assigned to the predicted class, is uncalibrated, and is not medical certainty. JSON classifications and probabilities matched scikit-learn in 240,000 source-row/task comparisons.
+
+6. Core implementation, P25: "Build patient and caregiver views showing readings, history, charts, classifications, confidence and settings." P27: "Implement basic authentication and role-based access."
+   Excellent mobile-interface criterion (25%), P80 additionally says: "Both roles can navigate readings, charts, confidence scores and settings."
+   The verified v0.7.4 App has local demo account forms, not connected account services. Device-bound API scopes do not establish authenticated patient/caregiver roles. The isolated candidate now has server-side account authentication, patient/caregiver roles, assignment checks and transactional revalidation, with software test evidence. Integrated Android account/role screens remain pending; backend tests do not establish the complete mobile role workflow. Actual student roles and individual contribution allocations are unknown.
+
+7. Core implementation, P26: "Store and retrieve readings and alerts; provide alert history and prevent duplicate unresolved alerts."
+   Baseline server persistence and alert-episode handling exist, with live numeric rules disabled by default. Successful synchronization of an empty alert list is not evidence of every abnormal scenario, acknowledgement workflow or push-notification delivery.
+
+8. Core implementation, P28: "Handle missing data, invalid readings and network failure."
+   The baseline has optical validity/freshness gates, bounded relay behavior and explicit error states. These controls must be tested for the candidate path as well; source code or unit checks alone do not prove the entire phone/network demonstration.
+
+9. Core implementation, P29: "Apply MVC, MVVM or another justified design pattern."
+   Excellent programming/architecture criterion (20%), P87 is narrower: "Consistent MVC/MVVM; clear separation of interface, logic, data and API layers. Code is modular, maintainable, tested and documented."
+   The baseline is accurately described as a layered Activity/foreground-service implementation with callbacks and separate policy/transport/security classes. It does not use ViewModel/LiveData and must not be falsely called MVVM. Another justified pattern is permitted by the core wording, but whether it meets the Excellent descriptor requires tutor interpretation or a real architectural change.
+
+10. Core implementation, P30: "Provide a responsive, consistent and accessible interface with legible text, clear navigation and status cues that do not rely on colour alone."
+    Code provides labels with icons, content descriptions, scalable text and minimum touch targets. A completed native multi-device, orientation, TalkBack or 200% font-size test has not been established.
+
+11. Testing and measurable outcomes, P35: "Test normal, deteriorating, critical, missing-data, invalid-data, network-failure and unauthorised-access scenarios."
+    P36-P39 require classification accuracy/precision/recall/F1, missed-critical-alert and false-warning rates, API response time and alert latency, and number of functional tests passed. P40: "Compare an initial version with an improved final version and provide measured evidence of improvement."
+    The baseline 859 JVM checks and 146 server tests are historical evidence. The isolated candidate server suite now reports 252 passed tests with 6 subtests; those subtests are included, not six additional tests. A separate ML unittest suite reports 6 tests passed. These results do not establish every required mobile end-to-end scenario, three-class performance or physical validity. No physical fall trials were performed. Software fall-response events and worker timings are distinct from detecting a real fall.
+
+12. Excellent REST/data integration criterion (10%), P101: "Reliable end-to-end flow from simulated readings to API, model and app. JSON validation, asynchronous processing and error handling are correctly implemented."
+    The working hardware -> phone -> server -> Dashboard/CSV path and the App's separate local demo are not proof of this required integrated simulated-data path. An isolated candidate test is not yet a phone demonstration.
+
+13. Excellent security criterion (10%), P108: "Effective authentication, role access, secure communication, credential protection and configuration separation. Git shows controlled collaboration."
+    Core P31 also requires Git evidence. Existing HTTPS/device credential controls contribute, but do not replace account roles or authentic collaboration history. Do not backdate commits or assign contributions without evidence.
+
+14. Submission, P42-P49: installable mobile application and complete source; Git history; Python AI/ML scripts/notebook; trained model and REST API; technical report of 3,000 words +/-10% with architecture and data-flow diagrams; test/evaluation results; demonstration; individual contribution statements.
+    P50 excludes the title page, references, diagrams, tables, test evidence and appendices from word count, and excludes code listings from the main report. Evidence required for marking, P57, specifically includes hidden test-set results. An internal held-out split must not automatically be described as a tutor-provided hidden test set.
+
+15. Ethical considerations, P52: "Use only supplied synthetic or approved fully anonymised data. No participants, real health measurements, clinical records or healthcare deployment are permitted. The application must state that it is an educational prototype and must not be used for diagnosis, treatment or clinical decision-making."
+    This is explicit wording in the actual brief. The user directly reports that the tutor verbally approved group-member sensor self-tests; no written exception was supplied. Record that specific reported approval alongside the written restriction, rather than overriding the user or claiming blanket approval. It does not establish permission for external participants, clinical deployment or unperformed fall tests. Do not erase history or describe human measurements as synthetic. The external dataset and scope beyond the reported self-test approval remain separate unresolved matters.
+
+16. Minimum requirements, P59: "A Nonfunctioning mobile application: overall mark capped at 39%." P60 says missing/non-functioning AI integration receives no marks for affected AI/integration criteria, not an additional overall cap. P62 states that unauthorised human participation or real health data must be referred under university procedures.
+    These are source rules, not a prediction of the group's grade or an adjudication of misconduct.
+
+EVIDENCE BOUNDARIES
+Verified baseline: existing v0.7.4 APK/code 16; team_sparkfun_baseline firmware; native Java Activity/service architecture; physical readings historically reached the local database; Dashboard capture/CSV functionality was reported working. This review did not repeat hardware tests.
+Offline ML: vital-sign binary decision-tree workflow and external SisFall Random Forest experiment are separate from live fall detection. JSON HR/oxygen trees loaded by the baseline server are shadow-only. No clinically calibrated model or validated live fall detector is claimed.
+Candidate: separate work directory and isolated test path. Binary POST /ml/classify, backend patient/caregiver accounts, transactional access checks and the server fall-response state machine have software evidence. Pending fall-response events use a detection-time-based 15-second deadline; cancellation before the deadline and immediate help are handled, and escalations enter the caregiver notification queue. FCM is not configured. There is no integrated candidate Android role UI, three-class output or new physical deployment. This remains separate from the installed v0.7.4 App.
+Unknowns requiring the group/tutor: approved framework; supplied-dataset origin; genuine three-class labels and target definitions; hidden test set; data permission beyond the reported verbal self-test approval; student IDs, actual role allocations and contribution evidence; availability of a phone to demonstrate a later candidate.
+
+LOCAL IMPLEMENTATION REFERENCES
+care_monitor_native/app/src/main/AndroidManifest.xml
+care_monitor_native/app/src/main/java/org/caremonitor/demo/MainActivity.java
+care_monitor_native/app/src/main/java/org/caremonitor/demo/LiveMonitorService.java
+care_monitor_native/firmware/team_spp_no_sound/team_spp_no_sound.ino
+care_monitor_native/firmware/team_spp_no_sound/PPG_BUILD_EVIDENCE.json
+care_monitor_native/artifacts/JVM_TEST_EVIDENCE.json
+care_monitor_server/artifacts/TEST_EVIDENCE.json
+care_monitor_ml/vitals/train_vitals.py and MODEL_CARD.md
+care_monitor_ml/fall/train.py
+care_monitor_ml/device_adaptation/README.md
+
+CURRENT CANDIDATE EVIDENCE (26 OCTOBER 2026)
+Server: evidence/final-server-tests.txt and .xml: 252 top-level tests passed; pytest separately reported 6 subtests (258 JUnit entries). Do not describe all 258 entries as independent functional test cases. One existing TestClient dependency deprecation warning.
+ML: evidence/ml/TEST_RESULTS.txt: 6 distinct unittest checks passed. evidence/ml/MODEL_CARD.txt documents the same-task Decision Tree / Random Forest comparison and uncalibrated confidence. evidence/ml/export_verification.json records 240,000 JSON/scikit-learn output comparisons.
+Fall: care_monitor_server/fall_events.py and fall_routes.py; evidence/fall/worker-wall-clock.json records a software-worker timing observation. This is not physical fall detection or phone push delivery.
+No software tests were rerun by this documentation refresh.

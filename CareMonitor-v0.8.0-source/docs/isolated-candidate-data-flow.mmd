@@ -1,0 +1,13 @@
+flowchart LR
+    input["Existing synthetic CSV<br/>provenance not established<br/>same-task DT / RF comparison completed"]
+    client["Isolated software test client<br/>temporary database<br/>not the installed phone App"]
+    api["Candidate POST /ml/classify<br/>binary output<br/>backend account roles and access gates"]
+    result["JSON classification + confidence<br/>empirical training-leaf class proportion<br/>uncalibrated; not medical certainty"]
+    input --> client
+    client --> api
+    api --> result
+    result --> client
+    pending["Still pending: integrated Android role UI;<br/>three-class labels/output; full phone workflow;<br/>FCM push configuration"]
+    scope["252 server tests including 6 subtests; 6 separate ML tests;<br/>240,000 JSON/model comparisons; not deployed"]
+    result ~~~ pending
+    pending ~~~ scope

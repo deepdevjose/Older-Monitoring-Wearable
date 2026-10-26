@@ -1,0 +1,63 @@
+{
+  "scope": "synthetic_in_process_software_only",
+  "is_real_network_latency": false,
+  "is_phone_alert_latency": false,
+  "clock": "time.perf_counter_ns",
+  "warmup_requests": 10,
+  "timed_requests": 100,
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "source_app_sha256": "b3ae7ae68b063aa1feca1601005dfb4eeb27e7513e76df1e55d4bc64a0ed632a",
+  "mode": "candidate",
+  "routes": {
+    "/sensor-data": {
+      "samples": 100,
+      "median_ms": 28.991549999999997,
+      "p95_ms": 34.1558,
+      "min_ms": 24.473,
+      "max_ms": 35.9929,
+      "mean_ms": 29.364368
+    },
+    "/ml/classify": {
+      "samples": 100,
+      "median_ms": 14.71185,
+      "p95_ms": 17.1239,
+      "min_ms": 12.5747,
+      "max_ms": 21.9899,
+      "mean_ms": 14.947885
+    }
+  },
+  "classification_example": {
+    "status": "experimental_prediction",
+    "device_id": "elder-demo-01",
+    "task": "heart_rate",
+    "input_source": "synthetic_dataset",
+    "classification": "NORMAL",
+    "confidence": 1.0,
+    "class_probabilities": {
+      "NORMAL": 1.0,
+      "ABNORMAL": 0.0
+    },
+    "confidence_semantics": "Uncalibrated empirical training-leaf class proportion; not medical certainty",
+    "confidence_calibrated": false,
+    "three_class_supported": false,
+    "clinical_validation": false,
+    "care_alert_created": false,
+    "mode": "assessment_candidate",
+    "model": {
+      "version": "synthetic-vitals-dt-rf-20261026",
+      "estimator": "DecisionTreeClassifier",
+      "sha256": "442af45bec9e8e81cf99f8a4f8f07301194ca9cf702fab77c74303bcd0c1d2e4",
+      "manifest_sha256": "93f2ab696da2338bd059536cdf1f84b71eb98d4d7af290ce2e6c1515adceee7b",
+      "dataset_sha256": "35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb",
+      "synthetic_training": true
+    },
+    "supported_training_ranges": {
+      "Heart Rate (bpm)": [
+        50.0,
+        139.0
+      ]
+    }
+  },
+  "isolated_reading_count": 110,
+  "isolated_alert_count": 0
+}

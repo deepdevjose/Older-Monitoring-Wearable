@@ -1,0 +1,111 @@
+{
+  "status": "passed",
+  "recorded_at_utc": "2026-10-26T04:53:27.716341+00:00",
+  "scope": "isolated synthetic software integration; temporary SQLite and in-process ASGI TestClient",
+  "physical_sensor_test": false,
+  "android_phone_test": false,
+  "wifi_or_push_delivery_test": false,
+  "production_database_accessed": false,
+  "live_policy_changed": false,
+  "clinical_validation": false,
+  "temporary_database_deleted_after_run": true,
+  "input": {
+    "kind": "synthetic",
+    "snapshots": 8,
+    "abnormal_snapshots": 5,
+    "recovery_snapshots": 3,
+    "synthetic_timestamp_persistence_seconds": 2,
+    "wall_clock_sleep_used": false
+  },
+  "checks": {
+    "generate": true,
+    "store": true,
+    "review_via_api": true,
+    "duplicate_episode_suppression": true,
+    "acknowledge": true,
+    "duplicate_ack_idempotent": true,
+    "ack_not_recovery": true,
+    "recover": true,
+    "persist_across_app_restart": true
+  },
+  "stored_readings": 8,
+  "stored_episodes": 1,
+  "generated_episodes": 1,
+  "final_episode_status": "resolved",
+  "measurements": {
+    "meaning": "Software processing/round-trip only; excludes real-time persistence waiting, radio, phone polling and notification delivery",
+    "trigger_request_ms": 30.952,
+    "generation_response_to_api_review_ms": 79.924,
+    "mean_measured_request_ms": 28.073,
+    "requests": [
+      {
+        "operation": "POST /sensor-data",
+        "milliseconds": 32.253,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /sensor-data",
+        "milliseconds": 31.529,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /sensor-data",
+        "milliseconds": 30.952,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /sensor-data",
+        "milliseconds": 29.956,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /sensor-data",
+        "milliseconds": 29.897,
+        "http_status": 200
+      },
+      {
+        "operation": "GET /alerts",
+        "milliseconds": 19.987,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /alerts/1/acknowledge",
+        "milliseconds": 30.203,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /alerts/1/acknowledge",
+        "milliseconds": 27.44,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /sensor-data",
+        "milliseconds": 28.299,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /sensor-data",
+        "milliseconds": 28.991,
+        "http_status": 200
+      },
+      {
+        "operation": "POST /sensor-data",
+        "milliseconds": 29.866,
+        "http_status": 200
+      },
+      {
+        "operation": "GET /alerts",
+        "milliseconds": 17.5,
+        "http_status": 200
+      }
+    ]
+  },
+  "source_sha256": {
+    "app.py": "b3ae7ae68b063aa1feca1601005dfb4eeb27e7513e76df1e55d4bc64a0ed632a",
+    "classification.py": "23a2e5c1ba4cd405b51048e289f49f3c0e52e01201377206edc625eeb46575bb",
+    "alert_engine.py": "dd53fc60cd71b95948106fcb5ec7c476b58fdd42c8736c837d39d2710e32f6f2",
+    "database.py": "7e5b8f399e967f97ba3bd8da1f6e19ea1494b821ae80f8497343120034c588c2",
+    "security.py": "c072ee5efd3b18d821ab47c3187fc8f5c2d667394f9240003296aaef1433fc3a",
+    "measure_alert_integration.py": "fad54b7efb0c4e89b325b74a639024951d58265076c0c0b59ca09969e28d3f86"
+  }
+}

@@ -1,0 +1,123 @@
+Care Monitor v0.8.0 integration candidate: account-bound stored classification
+
+Scope
+The new account API reads the exact stored observation selected in the account
+history view. It does not use a separately uploaded value, create an alert, alter
+readings, or enable the live numeric policy. The model remains a binary,
+synthetic-data-trained Decision Tree. NORMAL/ABNORMAL are dataset labels, not a
+diagnosis. Confidence is the uncalibrated training-leaf class proportion, not a
+probability of clinical safety. Warning/Critical classification is unavailable.
+
+Entry point
+Use python run_candidate.py --certfile PATH --keyfile PATH --database PATH
+from the package root, with existing matching TLS files. See START-HERE.md.
+The legacy care_monitor_server.app:app entry point has no account routes.
+
+Authentication and selection
+GET /accounts/readings?device_id=DEVICE&limit=20
+GET /accounts/classification?device_id=DEVICE&reading_id=123
+Both use Authorization: Bearer SESSION from POST /accounts/login.
+The machine upload key remains separate and cannot authenticate an account.
+Patient and assigned caregiver accounts can read. The account, its current
+assignment and the row's stored patient_id are checked in the action transaction.
+Absent/expired/revoked sessions return 401; an unassigned device returns 403.
+An explicit reading_id not belonging to that device/current patient returns 404.
+The same response is used for a nonexistent ID and a different patient's ID.
+Without reading_id, the latest ID for the current patient/device is selected.
+No readings, offline/invalid/stale readings and missing models return HTTP 200
+with unavailable results rather than a fabricated normal label.
+
+Compatible readings response
+The existing device_id and readings[{id,received_at,data}] fields remain.
+New envelope field: server_time (UTC ISO 8601).
+New fields on each row: measurement_at, measurement_time_source, freshness.
+freshness = {status: fresh|stale|unavailable, reason: string|null,
+age_seconds: number|null, freshness_seconds:10, future_tolerance_seconds:2}.
+Raw historical data remains historical; a fresh clock does not prove valid
+sensor contact. Combine freshness with the existing per-channel quality flags.
+Clients should pass the displayed row ID to /accounts/classification, so a
+new arrival cannot silently make the model result refer to another observation.
+
+Classification response
+{device_id, reading_id, received_at, measurement_at, measurement_time_source,
+server_time, freshness, status: available|partial|unavailable,
+results:{heart_rate:{...},oxygen:{...}},three_class_supported:false,
+confidence_calibrated:false,clinical_validation:false,care_alert_created:false,
+mode:experimental_stored_reading,synthetic_training:true}
+Each available result contains status=available, reason=null, value, unit,
+classification, confidence, class_probabilities, input_source=prototype_sensor,
+confidence_semantics, model provenance including pinned hashes and training
+dataset hash, supported_training_ranges and quality_coverage. Unavailable
+results have a reason and null value/classification/confidence/probabilities.
+One unavailable channel does not suppress the other valid channel (partial).
+There is no body-temperature or blood-pressure inference from surface
+temperature, no accelerometer classifier in this endpoint, and no imputation.
+
+Technical freshness and quality policy
+The existing database stores received_at, sensor_timestamp and payload_json;
+payload_json may contain phone_received_at. Uptime is never interpreted as UTC.
+The oldest supplied device/phone timezone-aware timestamp is measurement_at.
+All supplied timestamps must parse. At least one observation timestamp is
+required; a recent server receipt alone cannot make queued data current.
+The maximum age across receipt and supplied observation clocks must be at most
+10 seconds. A supplied clock more than 2 seconds in the future, relative to now
+or server receipt, fails. These are prototype technical freshness settings,
+not medically validated timing limits. A selected historical row is still gated
+against current server time, so its previous valid label is not reused as live.
+Timezone-aware phone-only timestamps support the existing firmware relay.
+
+MAX30102 requires status ok/partial, literal finger_detected=true and the
+specific channel's literal validity flag. Supplied online must be literal true.
+Supplied sample_age_ms must be numeric, finite, >=0 and <500; result_age_ms
+must be numeric, finite, >=0 and <2500. Legacy missing online/age fields are
+permitted in line with the retained optical policy, but quality_coverage exposes
+their absence. It is not a claim that those missing checks were performed.
+Bools/strings/non-finite/null measurements are rejected. HR must be 1..300 bpm,
+SpO2 1..100%; exceeding 100% is invalid input, not high-oxygen disease.
+The exported training domains further limit HR to 50..139 and oxygen to 84..100.
+Outside-domain measurements remain visible as stored measurements; classification
+is unavailable (outside_training_domain), not normal and not an emergency rule.
+
+Stable unavailability reason codes
+missing_reading; invalid_payload; invalid_receipt_time;
+missing_measurement_time; invalid_measurement_time; future_receipt_time;
+future_measurement_time; stale_reading; optical_missing; optical_offline;
+invalid_optical_online; optical_not_ready; finger_not_detected;
+stale_or_invalid_optical_age; channel_invalid; missing_or_non_numeric;
+outside_physical_range; outside_training_domain; model_disabled; model_unavailable.
+
+Local provisioning examples (no credentials included)
+Use the same explicit database as run_candidate.py. For a new isolated database,
+the built-in demo mapping is elder-demo-01 -> demo-patient-001. Do not silently
+reassign a device with historical data. For a genuinely new device, create its
+mapping through a local upload credential; the token is printed once locally:
+python -m care_monitor_server.admin --db /private/path/candidate.db create --label "Local phone upload" --device-id NEW_DEVICE_ID --patient-id NEW_PATIENT_ID --scope sensor:write
+
+For the existing demo mapping, create accounts with hidden password prompts:
+python -m care_monitor_server.accounts_admin --database /private/path/candidate.db create --username patient.demo --role patient --patient-id demo-patient-001
+python -m care_monitor_server.accounts_admin --database /private/path/candidate.db create --username caregiver.demo --role caregiver
+python -m care_monitor_server.accounts_admin --database /private/path/candidate.db assign --username caregiver.demo --patient-id demo-patient-001
+These usernames are examples, not preinstalled logins. Set actual passwords
+locally when prompted. Never put passwords/tokens in source, URLs or screenshots.
+No public self-registration or self-assigned caregiver permissions exist.
+
+Evidence boundary
+test_stored_classification.py uses synthetic observations and temporary databases.
+Its 50 checks passed on 2026-10-26, recorded in
+evidence/backend/stored-classification.xml. The complete backend regression
+run passed 302 tests plus 6 subtests; see
+evidence/backend/v080-backend-regressions.xml. These are software checks,
+not real-phone, sensor-accuracy or clinical trials.
+
+The actual HTTPS loopback runner passed 22 requests on 2026-10-26, with a
+temporary localhost certificate, certificate/hostname verification enabled,
+ephemeral accounts/credentials, and a temporary SQLite database. Five synthetic
+uploads generated one deduplicated fixture alert. The run verified account
+login, assigned history, exact-row binary classification/probability, caregiver
+review/acknowledgement, patient acknowledgement denial, duplicate acknowledgement,
+logout and session expiry. Evidence: evidence/backend/v080-https-loopback.json.
+This checks real local TCP/TLS sockets; it does not check Android, Wi-Fi, physical
+sensors or caregiver push delivery. The fixture policy exists only in the
+temporary database and the runner removes its DB/certificate/keys afterward.
+It can be repeated with an existing Python interpreter that has cryptography:
+python -m care_monitor_server.measure_https_integration --certificate-python PATH_TO_THAT_PYTHON --output evidence/backend/v080-https-loopback.json

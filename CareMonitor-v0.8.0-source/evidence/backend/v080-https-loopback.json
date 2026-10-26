@@ -1,0 +1,174 @@
+{
+  "status": "passed",
+  "recorded_at_utc": "2026-10-26T05:45:33.867002+00:00",
+  "scope": "actual localhost TCP HTTPS with certificate and hostname verification; synthetic temporary data",
+  "physical_sensor_test": false,
+  "android_phone_test": false,
+  "wifi_test": false,
+  "production_database_accessed": false,
+  "live_policy_changed": false,
+  "clinical_validation": false,
+  "temporary_database_and_credentials_removed": true,
+  "tls_verification_disabled": false,
+  "model_manifest_sha256": "93f2ab696da2338bd059536cdf1f84b71eb98d4d7af290ce2e6c1515adceee7b",
+  "synthetic_readings": 5,
+  "stored_episodes": 1,
+  "checks": [
+    "login",
+    "me",
+    "machine_ingest",
+    "current_patient_history",
+    "exact_reading_classification",
+    "probability_and_provenance",
+    "alert_generation",
+    "duplicate_episode_suppression",
+    "caregiver_review",
+    "caregiver_only_acknowledgement",
+    "duplicate_acknowledgement",
+    "unassigned_device_denial",
+    "machine_key_not_account",
+    "logout",
+    "expired_session"
+  ],
+  "operations": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "milliseconds": 57.911
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/login",
+      "status": 200,
+      "milliseconds": 216.673
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/login",
+      "status": 200,
+      "milliseconds": 218.45
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/me",
+      "status": 200,
+      "milliseconds": 40.33
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/me",
+      "status": 200,
+      "milliseconds": 48.147
+    },
+    {
+      "method": "POST",
+      "path": "/sensor-data",
+      "status": 200,
+      "milliseconds": 58.074
+    },
+    {
+      "method": "POST",
+      "path": "/sensor-data",
+      "status": 200,
+      "milliseconds": 32.214
+    },
+    {
+      "method": "POST",
+      "path": "/sensor-data",
+      "status": 200,
+      "milliseconds": 44.649
+    },
+    {
+      "method": "POST",
+      "path": "/sensor-data",
+      "status": 200,
+      "milliseconds": 49.947
+    },
+    {
+      "method": "POST",
+      "path": "/sensor-data",
+      "status": 200,
+      "milliseconds": 60.211
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/readings",
+      "status": 200,
+      "milliseconds": 25.427
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/classification",
+      "status": 200,
+      "milliseconds": 23.812
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/alerts",
+      "status": 200,
+      "milliseconds": 22.622
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/alerts/1/acknowledge",
+      "status": 403,
+      "milliseconds": 36.858
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/alerts/1/acknowledge",
+      "status": 200,
+      "milliseconds": 44.081
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/alerts/1/acknowledge",
+      "status": 200,
+      "milliseconds": 47.058
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/classification",
+      "status": 403,
+      "milliseconds": 21.438
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/classification",
+      "status": 401,
+      "milliseconds": 31.489
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/logout",
+      "status": 200,
+      "milliseconds": 33.223
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/me",
+      "status": 401,
+      "milliseconds": 18.822
+    },
+    {
+      "method": "POST",
+      "path": "/accounts/login",
+      "status": 200,
+      "milliseconds": 193.097
+    },
+    {
+      "method": "GET",
+      "path": "/accounts/classification",
+      "status": 401,
+      "milliseconds": 17.014
+    }
+  ],
+  "latency_meaning": "Local software/TLS round trips only; excludes physical acquisition, phone, Wi-Fi and notification delivery",
+  "sources_sha256": {
+    "measure_https_integration.py": "037e6411945670413ecb453de372340022e38ef87b9e4c7973a7f9ca7e541c91",
+    "account_routes.py": "0ea83f7b3f70226e0bb62f86be42aa4589a70ecc39c3657dcb05bb2518070f42",
+    "stored_classification.py": "502b2fb2f34b39517a26dd6eb1d4f19adfbd05caa9b66c89816500c483193b79",
+    "classification.py": "23a2e5c1ba4cd405b51048e289f49f3c0e52e01201377206edc625eeb46575bb"
+  }
+}

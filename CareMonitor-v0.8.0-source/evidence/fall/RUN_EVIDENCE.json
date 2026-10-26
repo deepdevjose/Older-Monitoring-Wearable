@@ -1,0 +1,26 @@
+{
+  "recorded_at": "2026-10-26T04:58:35.3267195Z",
+  "description": "Candidate possible-fall response software workflow only; caregiver backfill and device reassignment safeguards included",
+  "tests_passed": 26,
+  "test_seconds": 2.152,
+  "exit_code": 0,
+  "database": "Temporary SQLite fixtures",
+  "deadline": "detected_at +15 seconds; no reset on delayed arrival",
+  "command": "python -m unittest discover -s care_monitor_server/tests -p test_fall_events.py -v",
+  "physical_fall_validation": false,
+  "push_delivery_verified": false,
+  "live_worker_started_by_this_test_run": false,
+  "working_deployment_changed": false,
+  "source_sha256": {
+    "fall_events": "78573579b6810744b5b36dfbcdcc99f4324238066f2cf9615aebd99a1bb92037",
+    "test_fall_events": "454ba145a1040cf8eb326146dba4cab62f1521df6bf328cdb199d712f5435b79"
+  },
+  "additional_cases": [
+    "late assigned caregiver backfill after restart and uniqueness",
+    "newly activated caregiver plus acknowledgement readiness counts",
+    "pending/escalated patient reassignment rejected by SQLite trigger",
+    "reassignment allowed after cancellation/resolution",
+    "old outbox scoped to current device/patient mapping",
+    "no backfill for cancelled/resolved episodes"
+  ]
+}

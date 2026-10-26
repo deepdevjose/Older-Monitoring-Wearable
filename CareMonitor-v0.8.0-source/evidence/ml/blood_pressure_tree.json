@@ -1,0 +1,142 @@
+{
+  "format": "care-monitor-assessment-probability-tree-v1",
+  "model_version": "synthetic-vitals-dt-rf-20261026",
+  "task": "blood_pressure",
+  "estimator": "DecisionTreeClassifier",
+  "synthetic_only": true,
+  "clinical_validation": false,
+  "confidence_calibrated": false,
+  "deployed": false,
+  "dataset_sha256": "35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb",
+  "comparison_input_type": "float32",
+  "features": [
+    "Systolic Blood Pressure (mmHg)",
+    "Diastolic Blood Pressure (mmHg)"
+  ],
+  "classes": [
+    "NORMAL",
+    "ABNORMAL"
+  ],
+  "supported_training_ranges": {
+    "Systolic Blood Pressure (mmHg)": [
+      90.0,
+      199.0
+    ],
+    "Diastolic Blood Pressure (mmHg)": [
+      50.0,
+      130.0
+    ]
+  },
+  "confidence_semantics": "Empirical training-leaf class proportion; not a calibrated clinical probability",
+  "output_meaning": "Agreement with supplied synthetic binary labels, not clinical normality",
+  "nodes": [
+    {
+      "left": 1,
+      "right": 4,
+      "feature": 1,
+      "threshold": 89.5,
+      "predicted_class": "ABNORMAL",
+      "probabilities": [
+        0.44210175423976,
+        0.55789824576024
+      ],
+      "training_samples": 47998
+    },
+    {
+      "left": 2,
+      "right": 3,
+      "feature": 0,
+      "threshold": 140.5,
+      "predicted_class": "NORMAL",
+      "probabilities": [
+        0.870654843678448,
+        0.12934515632155197
+      ],
+      "training_samples": 24021
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "NORMAL",
+      "probabilities": [
+        1.0,
+        0.0
+      ],
+      "training_samples": 20914
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "ABNORMAL",
+      "probabilities": [
+        0.0,
+        1.0
+      ],
+      "training_samples": 3107
+    },
+    {
+      "left": 5,
+      "right": 8,
+      "feature": 1,
+      "threshold": 90.5,
+      "predicted_class": "ABNORMAL",
+      "probabilities": [
+        0.012762230470867915,
+        0.9872377695291321
+      ],
+      "training_samples": 23977
+    },
+    {
+      "left": 6,
+      "right": 7,
+      "feature": 0,
+      "threshold": 140.5,
+      "predicted_class": "ABNORMAL",
+      "probabilities": [
+        0.36823104693140796,
+        0.631768953068592
+      ],
+      "training_samples": 831
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "NORMAL",
+      "probabilities": [
+        1.0,
+        0.0
+      ],
+      "training_samples": 306
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "ABNORMAL",
+      "probabilities": [
+        0.0,
+        1.0
+      ],
+      "training_samples": 525
+    },
+    {
+      "left": -1,
+      "right": -1,
+      "feature": -2,
+      "threshold": -2.0,
+      "predicted_class": "ABNORMAL",
+      "probabilities": [
+        0.0,
+        1.0
+      ],
+      "training_samples": 23146
+    }
+  ]
+}

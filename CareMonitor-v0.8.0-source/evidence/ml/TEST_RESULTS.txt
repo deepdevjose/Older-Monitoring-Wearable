@@ -1,0 +1,22 @@
+Synthetic-only comparison regression checks, 26 October 2026
+
+Command (working directory: work/assessment_candidate_20261026):
+work/ml_venv/Scripts/python.exe -m unittest discover -s care_monitor_ml/vitals -p test_comparison.py -v
+(The executable was invoked by its absolute project path.)
+
+test_float32_boundary_traversal_matches_sklearn ... ok
+test_non_pure_leaf_probability_order_matches_sklearn ... ok
+test_nonfinite_json_is_rejected ... ok
+test_probability_metrics_use_correct_class_order ... ok
+test_tied_leaf_preserves_sklearn_label_order ... ok
+test_unknown_dataset_rejected_before_split_or_training ... ok
+
+Ran 6 tests in 0.051s
+OK
+
+Training and export validation, separate from these six checks:
+- Dataset hash matched the previously audited supplied synthetic CSV.
+- Regenerated split membership exactly matched all rows of the original recorded split.
+- Decision Tree and Random Forest compared on each of the same four binary tasks.
+- Selected DT JSON classifications and probabilities matched scikit-learn for 60,000 rows per task, 240,000 comparisons in total.
+- No real sensor collection, real server database access, physical validation, or working deployment update was performed by this ML subtask.

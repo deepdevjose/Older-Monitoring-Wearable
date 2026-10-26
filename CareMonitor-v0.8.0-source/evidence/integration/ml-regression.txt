@@ -1,0 +1,11 @@
+test_float32_boundary_traversal_matches_sklearn (test_comparison.ProbabilityExportChecks.test_float32_boundary_traversal_matches_sklearn) ... ok
+test_non_pure_leaf_probability_order_matches_sklearn (test_comparison.ProbabilityExportChecks.test_non_pure_leaf_probability_order_matches_sklearn) ... ok
+test_nonfinite_json_is_rejected (test_comparison.ProbabilityExportChecks.test_nonfinite_json_is_rejected) ... ok
+test_probability_metrics_use_correct_class_order (test_comparison.ProbabilityExportChecks.test_probability_metrics_use_correct_class_order) ... ok
+test_tied_leaf_preserves_sklearn_label_order (test_comparison.ProbabilityExportChecks.test_tied_leaf_preserves_sklearn_label_order) ... ok
+test_unknown_dataset_rejected_before_split_or_training (test_comparison.ProbabilityExportChecks.test_unknown_dataset_rejected_before_split_or_training) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.114s
+
+OK

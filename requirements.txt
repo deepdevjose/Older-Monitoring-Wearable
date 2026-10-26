@@ -1,2 +1,0 @@
-# Single dependency definition: pyproject.toml.
--e .[ml,dev]

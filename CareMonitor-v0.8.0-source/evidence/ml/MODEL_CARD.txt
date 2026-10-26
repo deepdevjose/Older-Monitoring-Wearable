@@ -1,0 +1,17 @@
+SYNTHETIC SAME-TASK MODEL COMPARISON
+
+Select depth by validation macro-F1, tie favouring lower depth; select family by validation macro-F1, tie favouring interpretable Decision Tree. Refit each family's selected depth on train+validation; test never selects models.
+
+Only supplied synthetic NORMAL/ABNORMAL targets are evaluated; Warning/Critical labels do not exist here.
+Perfect scores can reflect deterministic supplied labels rather than physiological generalisation.
+Exact five-vital groups are separated, but individual input values repeat across partitions.
+The synthetic Patient Number is a row identifier, not verified participant identity.
+No independent assessment hidden set, clinical validation, paired-reference training or physical-sensor test is performed.
+Probability values are uncalibrated model outputs; low synthetic error does not establish real-device calibration.
+Artifacts are an isolated assessment candidate and do not replace working v0.7.4 models or firmware.
+
+Dataset SHA256: 35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb
+Exact previous split verified: {'train': 35993, 'validation': 12005, 'test': 12002}
+
+Confidence is the model probability assigned to the predicted class, not probability of clinical safety.
+Decision Tree exports use empirical leaf proportions; pure synthetic leaves may return 1.0. No probability calibration was fitted.

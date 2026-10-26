@@ -1,0 +1,36 @@
+{
+  "recorded_at_utc": "2026-10-26T04:54:00.256130+00:00",
+  "scope": "isolated candidate, synthetic software and temporary SQLite only",
+  "status": "passed",
+  "total_checks": 197,
+  "existing_backend_checks": 146,
+  "new_classification_security_checks": 51,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "duration_seconds": 11.441,
+  "junit_evidence": "classification-and-regression.xml",
+  "python_version": "3.12.14",
+  "dependencies": {
+    "fastapi": "0.159.1",
+    "starlette": "1.9.0",
+    "httpx": "0.28.1",
+    "pytest": "9.1.1"
+  },
+  "physical_sensor_test": false,
+  "android_phone_test": false,
+  "production_database_accessed": false,
+  "live_alert_policy_changed": false,
+  "clinical_validation": false,
+  "artifact_manifest_sha256": "93f2ab696da2338bd059536cdf1f84b71eb98d4d7af290ce2e6c1515adceee7b",
+  "source_sha256": {
+    "app.py": "b3ae7ae68b063aa1feca1601005dfb4eeb27e7513e76df1e55d4bc64a0ed632a",
+    "classification.py": "23a2e5c1ba4cd405b51048e289f49f3c0e52e01201377206edc625eeb46575bb",
+    "alert_engine.py": "dd53fc60cd71b95948106fcb5ec7c476b58fdd42c8736c837d39d2710e32f6f2",
+    "rules.example.json": "f686ae281769274a945da8fcfa57c949968b0fb0bfa34e58ff870d4bab723e29",
+    "measure_alert_integration.py": "fad54b7efb0c4e89b325b74a639024951d58265076c0c0b59ca09969e28d3f86",
+    "tests/test_classification_api.py": "873cd3351b46327869c7b7fed2ea3cbd1751a262a5ed50164517459b7c7dca04",
+    "tests/test_alert_engine.py": "072793ea3f81d5276395641faef86a328c06fb3000dedbae3c494bbe61abad9c",
+    "tests/test_security_api.py": "155bfe2b4d58988ac55f884c8219d215ed283b6eb9258120fbf0d2b9a1fba07c"
+  }
+}

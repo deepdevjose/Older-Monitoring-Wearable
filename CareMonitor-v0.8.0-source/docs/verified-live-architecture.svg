@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="830" viewBox="0 0 1440 830" role="img" aria-labelledby="title desc"><title id="title">Verified live architecture — v0.7.4 fixed baseline</title><desc id="desc">Historical engineering operation; this documentation review did not repeat device or network tests.</desc><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#526477"/></marker><style>text{font-family:Arial,sans-serif;fill:#183047}.title{font-size:30px;font-weight:700}.sub{font-size:18px;fill:#51677d}.head{font-size:21px;font-weight:700}.body{font-size:18px}.small{font-size:16px;fill:#51677d}.label{font-size:16px;font-weight:700;fill:#34546c}</style></defs><rect width="1440" height="830" fill="#f7f9fc"/><text id="pageTitle" x="40" y="55" class="title">Verified live architecture — v0.7.4 fixed baseline</text><text x="40" y="88" class="sub">Historical engineering operation; this documentation review did not repeat device or network tests.</text>
+<rect x="40" y="180" width="250" height="210" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="60" y="216" class="head" text-anchor="start">Four sensor modules</text>
+<text x="60" y="250" class="body" text-anchor="start">MAX30102: red / IR</text>
+<text x="60" y="277" class="body" text-anchor="start">MPU6050: XYZ motion</text>
+<text x="60" y="304" class="body" text-anchor="start">GY906: surface / ambient</text>
+<text x="60" y="331" class="body" text-anchor="start">Photoresistor: raw / %</text>
+<rect x="345" y="180" width="290" height="210" rx="16" fill="#e7f3ee" stroke="#3b8268" stroke-width="2"/>
+<text x="365" y="216" class="head" text-anchor="start">ESP32 firmware</text>
+<text x="365" y="250" class="body" text-anchor="start">team_sparkfun_baseline</text>
+<text x="365" y="277" class="body" text-anchor="start">Optical rolling window</text>
+<text x="365" y="304" class="body" text-anchor="start">Validity / freshness flags</text>
+<text x="365" y="331" class="body" text-anchor="start">1,000 ms JSON reports</text>
+<text x="365" y="358" class="body" text-anchor="start">Buzzer output held LOW</text>
+<rect x="690" y="180" width="290" height="210" rx="16" fill="#e7f3ee" stroke="#3b8268" stroke-width="2"/>
+<text x="710" y="216" class="head" text-anchor="start">Native Android</text>
+<text x="710" y="250" class="body" text-anchor="start">v0.7.4 · code 16</text>
+<text x="710" y="277" class="body" text-anchor="start">SPP worker + framing</text>
+<text x="710" y="304" class="body" text-anchor="start">Foreground service</text>
+<text x="710" y="331" class="body" text-anchor="start">Freshness gates / charts</text>
+<text x="710" y="358" class="body" text-anchor="start">Bounded server relay</text>
+<rect x="1035" y="180" width="360" height="210" rx="16" fill="#e7f3ee" stroke="#3b8268" stroke-width="2"/>
+<text x="1055" y="216" class="head" text-anchor="start">FastAPI server</text>
+<text x="1055" y="250" class="body" text-anchor="start">Scoped HTTPS access</text>
+<text x="1055" y="277" class="body" text-anchor="start">Validation / persistence</text>
+<text x="1055" y="304" class="body" text-anchor="start">Configured alert episodes</text>
+<text x="1055" y="331" class="body" text-anchor="start">HR + oxygen JSON trees</text>
+<text x="1055" y="358" class="body" text-anchor="start">Shadow only; no ML care alarms</text>
+<path d="M290 275 L342 275" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="316" y="258" class="label" text-anchor="middle">I2C / ADC</text>
+<path d="M635 275 L687 275" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="661" y="258" class="label" text-anchor="middle">SPP</text>
+<path d="M980 275 L1032 275" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="1007" y="258" class="label" text-anchor="middle">HTTPS</text>
+<path d="M1100 390 L1100 438 L840 438 L840 392" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="970" y="426" class="label" text-anchor="middle">Alert sync / scoped acknowledgement</text>
+<rect x="1070" y="505" width="300" height="145" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="1090" y="541" class="head" text-anchor="start">SQLite</text>
+<text x="1090" y="575" class="body" text-anchor="start">Readings and alert state</text>
+<text x="1090" y="602" class="body" text-anchor="start">Original validity retained</text>
+<rect x="650" y="505" width="330" height="145" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="670" y="541" class="head" text-anchor="start">Loopback Dashboard</text>
+<text x="670" y="575" class="body" text-anchor="start">Real-time browser view</text>
+<text x="670" y="602" class="body" text-anchor="start">Start / Stop valid capture</text>
+<rect x="245" y="505" width="300" height="145" rx="16" fill="#ffffff" stroke="#8196aa" stroke-width="2"/>
+<text x="265" y="541" class="head" text-anchor="start">CSV export</text>
+<text x="265" y="575" class="body" text-anchor="start">Fresh, valid HR + SpO2</text>
+<text x="265" y="602" class="body" text-anchor="start">and XYZ in the same record</text>
+<path d="M1255 390 L1255 502" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="1290" y="470" class="label" text-anchor="middle">Commit</text>
+<path d="M1070 575 L983 575" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="1026" y="558" class="label" text-anchor="middle">Local read</text>
+<path d="M650 575 L548 575" fill="none" stroke="#526477" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="598" y="558" class="label" text-anchor="middle">Export</text>
+<rect x="40" y="710" width="1355" height="85" rx="16" fill="#fff4df" stroke="#ba8b30" stroke-width="2"/>
+<text x="60" y="746" class="head" text-anchor="start">Scope boundary</text>
+<text x="60" y="780" class="body" text-anchor="start">No authenticated patient/caregiver accounts; no live fall detector; numeric alert rules disabled by default.</text>
+</svg>

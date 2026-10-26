@@ -1,0 +1,49 @@
+{
+  "format": "care-monitor-assessment-probability-manifest-v1",
+  "model_version": "synthetic-vitals-dt-rf-20261026",
+  "synthetic_only": true,
+  "clinical_validation": false,
+  "confidence_calibrated": false,
+  "classes": [
+    "NORMAL",
+    "ABNORMAL"
+  ],
+  "dataset_sha256": "35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb",
+  "comparison_evidence": "metrics.json",
+  "confidence_semantics": "Empirical training-leaf class proportion; not a calibrated clinical probability",
+  "models": {
+    "heart_rate": {
+      "file": "heart_rate_tree.json",
+      "sha256": "442af45bec9e8e81cf99f8a4f8f07301194ca9cf702fab77c74303bcd0c1d2e4",
+      "estimator": "DecisionTreeClassifier",
+      "features": [
+        "Heart Rate (bpm)"
+      ]
+    },
+    "oxygen": {
+      "file": "oxygen_tree.json",
+      "sha256": "987909803bb7423b0fca2cf5927e1cfc519f137bad185ac19df171fd708d4a23",
+      "estimator": "DecisionTreeClassifier",
+      "features": [
+        "SpO2 Level (%)"
+      ]
+    },
+    "blood_pressure": {
+      "file": "blood_pressure_tree.json",
+      "sha256": "629fcf95970108d7d1c883408f6a5a421b9725005348c49192cda7978759a60b",
+      "estimator": "DecisionTreeClassifier",
+      "features": [
+        "Systolic Blood Pressure (mmHg)",
+        "Diastolic Blood Pressure (mmHg)"
+      ]
+    },
+    "body_temperature": {
+      "file": "body_temperature_tree.json",
+      "sha256": "dc7ccf69aaa8e139f171604b3f6a27d156e2767d7f2b82dcb949aba08470b9c0",
+      "estimator": "DecisionTreeClassifier",
+      "features": [
+        "Body Temperature (°C)"
+      ]
+    }
+  }
+}

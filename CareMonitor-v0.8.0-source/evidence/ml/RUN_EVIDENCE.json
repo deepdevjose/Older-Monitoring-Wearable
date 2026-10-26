@@ -1,0 +1,16 @@
+{
+  "recorded_at": "2026-10-26T04:51:27.5812848Z",
+  "synthetic_only": true,
+  "training_exit_code": 0,
+  "unit_test_exit_code": 0,
+  "unit_tests_passed": 6,
+  "unit_tests_seconds": 0.051,
+  "export_parity_checks": 240000,
+  "physical_sensor_testing": false,
+  "working_deployment_changed": false,
+  "source_sha256": {
+    "compare_classifiers": "547777f55794c4b2fe968398aeb3dde7b814ee1b85a3594fcd70dd98cf875783",
+    "test_comparison": "cbab88653c9cfa31c8a3e9e7e80b2ea13c574c98ed2b2db4c73bdd0201882ce2"
+  },
+  "manifest_sha256": "93f2ab696da2338bd059536cdf1f84b71eb98d4d7af290ce2e6c1515adceee7b"
+}

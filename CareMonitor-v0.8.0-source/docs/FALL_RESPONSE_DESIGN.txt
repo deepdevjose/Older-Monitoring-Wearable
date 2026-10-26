@@ -1,0 +1,35 @@
+15-second possible-fall response — candidate design and implementation
+26 October 2026
+
+This is a response workflow, not a validated fall detector. No group fall trials have been performed. The unchanged v0.7.4 phone and ESP32 do not automatically execute this candidate workflow.
+
+Wearer interaction to integrate into the Android app
+1. At a future detector's possible-fall event, immediately show a prominent warning, vibration/sound and a countdown. Show two large actions: "I'm OK — cancel" and "Get help now". This Android screen is NOT implemented in the current candidate package.
+2. Send a unique event ID, registered device ID and the original timezone-aware detection time immediately. Keep a local monotonic countdown for display. Device and server clocks must be synchronised for the current server contract. A timestamp in the future is rejected with an explicit error; this must not be shown as a successfully armed alert.
+3. Cancellation is confirmed only after the server accepts it. A local tap awaiting network delivery must say "Cancellation pending". A cancellation that reaches the server at or after the deadline does not erase the escalated event.
+4. "Get help now" skips the remaining countdown. It does not wait for model confidence or a second sensor reading. The candidate wearer_help event source can exercise this path with an authenticated wearer account.
+
+Implemented candidate server behavior
+- The deadline is original detected_at + 15 seconds. A delayed upload does not restart a 15-second window; an already expired event escalates on receipt.
+- The server checks deadlines about every 250 ms. This is a scheduling target, not a real-time guarantee. Database contention, a stopped server or clock errors can delay processing.
+- Pending, cancelled, escalated and resolved states persist in SQLite. On restart the worker processes overdue events.
+- Deadline/cancellation decisions are made within a transaction. At exactly the deadline escalation wins. Duplicate immutable events do not create duplicate incidents; only one unresolved incident is allowed per device.
+- The server creates one notification-inbox entry per active assigned caregiver. The event is retained if no caregiver is configured; adding an eligible caregiver later can fill the still-open incident's notification queue.
+- Patient/device reassignment is blocked while an incident remains pending/escalated, avoiding an orphaned emergency record.
+- A caregiver reading an inbox entry, explicitly acknowledging it, and resolving an incident are different states. A "seen" acknowledgement does not resolve the event.
+- Notification records are not proof that a phone displayed a notification. The current candidate has no Firebase/push transport.
+
+Push delivery still required
+The assigned caregiver should receive a high-priority Android push as soon as the server escalates, including event time, device identity and a clear possible-fall label. Firebase project configuration, server-side send credentials, Android push integration and real-device delivery tests are still required. No provider acknowledgement should be reported as proof that a caregiver saw the alert. The Firebase project question is pending.
+
+Failure behavior required in the Android integration
+Offline wearer: keep the local warning visible, show that caregiver delivery is not confirmed, persist/retry the event with the ORIGINAL ID/time. Never display "caregiver notified" merely because the event was queued.
+Offline caregiver: keep the durable incident and retry through the configured push transport. A network service cannot guarantee instantaneous delivery to an offline phone.
+No caregiver configured: prominently show the setup problem and preserve the incident; do not claim successful notification.
+After escalation: allow explicit caregiver review/resolution; do not silently delete a sent alert if the wearer later presses cancel.
+
+Explicit limits
+Current routes accept manual_test or wearer_help sources. They reject a claimed ML detector source because no validated live fall detector is connected. Phone alarms, countdown UI, FCM transport and end-to-end caregiver notification are unfinished. No automatic emergency-service call or unrequested contact escalation has been implemented.
+
+Software evidence
+See evidence/fall for isolated state-machine checks, authenticated route checks and one real-clock software run. These use test events in temporary databases, not a person falling, not live hardware and not phone push delivery.

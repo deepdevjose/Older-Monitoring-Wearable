@@ -1,0 +1,172 @@
+HISTORICAL BACKEND-ONLY CHECKLIST — READ docs/INTEGRATION_STATUS.md FOR v0.8.0
+The account Android integration described below as pending was subsequently implemented and compiled in v0.8.0. Physical-phone validation is still pending. Preserve the historical test scope and dates below.
+
+ASSESSMENT CANDIDATE — VERIFIED 16-ITEM STATUS
+26 October 2026
+Candidate software verification completed; Android integration and deployment remain pending.
+
+VERSION BOUNDARY
+This is an isolated assessment candidate, not a replacement for the working
+Care Monitor v0.7.4 release or its ppg-team-sparkfun-baseline-20261023 firmware.
+Candidate code and software evidence do not demonstrate deployment to the
+running server or successful operation on a physical phone. Keep the successful
+v0.7.4 hardware/CSV observations separate from these new results.
+
+1. TWO CLASSIFIERS ON THE SAME TASK — IMPLEMENTED AND EVALUATED OFFLINE
+Decision Tree and Random Forest were compared on each of the same four supplied
+binary synthetic-vitals tasks, using the exact previously recorded partitions:
+35,993 training, 12,005 validation and 12,002 held-out test rows. Hyperparameters
+and family selection use validation macro-F1, not the test set. Ties select the
+simpler Decision Tree. Both selected families scored 1.0 held-out macro-F1 on
+these deterministic synthetic labels. This does not establish real-sensor or
+clinical accuracy.
+Evidence: evidence/ml/metrics.json, comparison.csv, split_manifest.json,
+split_membership.csv and the four confusion-matrix figures.
+
+2. CLASSIFICATION + CONFIDENCE JSON ENDPOINT — IMPLEMENTED IN CANDIDATE
+POST /ml/classify requires HTTPS, a sensor:read API credential and matching
+device_id. It returns NORMAL/ABNORMAL, numeric confidence, class probabilities,
+model/dataset hashes and explicit provenance. JSON artifacts and the manifest
+are pinned by SHA-256 and require explicit operator configuration. Unknown,
+missing, extra, non-finite and out-of-domain input is rejected. Confidence is an
+uncalibrated training-leaf class proportion; 1.0 is not medical certainty.
+Evidence: care_monitor_server/classification.py, app.py,
+CLASSIFICATION_API_CANDIDATE.txt and evidence/backend/classification-api-checks.json.
+Not established: a physical-phone classification screen or live clinical model.
+
+3. NORMAL / WARNING / CRITICAL — BLOCKED BY MISSING TARGET DEFINITIONS
+The supplied targets are NORMAL/ABNORMAL; the user confirmed that three-class
+labels are unavailable. The API therefore returns three_class_supported:false.
+Do not invent Warning/Critical labels, map ABNORMAL to Critical, or present an
+arbitrary rule-derived label as ground truth. An agreed labelling scheme and
+appropriately labelled evaluation data are required.
+
+4. PATIENT / CAREGIVER AUTHENTICATION — BACKEND IMPLEMENTED; PHONE INTEGRATION PENDING
+The optional candidate wrapper introduces account login/session management,
+patient/caregiver roles and assignment-based access. Account access is separate
+from machine-upload API keys. Protected actions revalidate the current account
+and assignment in the action transaction. Backend role controls alone do not
+establish an integrated Android login/role workflow or a physical-phone test.
+Evidence: care_monitor_server/account_auth.py, account_routes.py,
+accounts_admin.py, candidate_app.py and tests/test_accounts.py.
+Final verification: 252 server tests plus 6 subtests passed. Android integration remains pending.
+
+5. ALERT GENERATION, STORAGE, REVIEW AND DUPLICATE CONTROL — SOFTWARE VERIFIED
+An isolated harness enabled an explicitly synthetic HR rule in a temporary
+SQLite database. Eight constructed snapshots generated one stored episode;
+repeated abnormal inputs did not duplicate it. API review, acknowledgement,
+duplicate acknowledgement, recovery and persistence across app restart passed.
+The working live policy remains disabled. This is software evidence, not a
+physical HR/SpO2/temperature alarm or caregiver-notification trial.
+Evidence: evidence/backend/alert-integration.json and
+care_monitor_server/measure_alert_integration.py.
+
+NEW FALL-RESPONSE REQUIREMENT
+The candidate adds a possible-fall response state machine with a persisted
+deadline 15 seconds after detected_at, not 15 seconds after polling or receipt.
+The wearer can cancel before the deadline; expiry escalates, and Help now
+bypasses the remaining delay. Cancellation/escalation and duplicate suppression
+are transactional. A worker checks due deadlines approximately every 250 ms.
+The accepted sources are explicitly manual_test and wearer_help; there is no
+validated live fall detector and no physical fall trial. The server queues
+assigned-caregiver inbox records, but push_configured remains false. An
+authenticated /seen acknowledgement means the caregiver client reported seeing
+the record; queueing alone is not delivery.
+Still required: Android countdown/cancel/help integration, a configured push
+transport such as FCM, delivery acknowledgements, network/restart/phone tests,
+and appropriate source timing. A correctly synchronised server clock and a
+reachable server are assumptions. A 250 ms sweep is not a guarantee of immediate
+delivery. Missing-caregiver status is explicit; still-open events backfill their outbox when a caregiver is assigned. A database trigger blocks patient reassignment until an incident is closed.
+Evidence: fall_events.py, fall_routes.py, candidate_app.py and associated tests.
+
+6. QUANTITATIVE TESTING — PARTIAL, WITH SCOPE LIMITS
+The classification/security component passed 197 isolated checks: 146 existing
+backend checks plus 51 new checks. Separate ML export checks passed, including
+probability class order and float32 boundary behaviour. The final integrated suite passed 252 tests plus 6 subtests; do not sum overlapping component runs.
+An in-process API benchmark used 100 timed requests after 10 warmups; see evidence/baseline_api_timing.json and evidence/candidate_api_timing.json for the recorded values and limits. The alert harness
+records software processing times, excluding radio, TLS handshake, Android
+polling and push delivery. Synthetic timestamps exercised persistence without
+real-time waiting.
+Unavailable: missed-Critical and false-Warning rates (no corresponding classes),
+clinical false/missed-event rates, physical notification latency and a controlled
+sensor before/after accuracy study. Binary false/missed-ABNORMAL dataset rates
+must not be relabelled as those missing measures.
+Evidence: evidence/backend/classification-and-regression.xml,
+classification-api-checks.json, alert-integration.json and evidence/ml/.
+
+7. GIT EVIDENCE — REPOSITORY CONFIRMED; RELEASE/CONTRIBUTIONS TO VERIFY
+Repository: https://github.com/deepdevjose/Older-Monitoring-Wearable
+A repository URL alone does not prove that fixed v0.7.4 or this candidate has been
+published, tagged or independently reviewed. Record the actual new commit/tag
+and genuine member contributions; do not reconstruct or back-date a history.
+
+8. ARCHITECTURE AND DATA-FLOW FIGURES — FOUR VERIFIED FIGURES AVAILABLE
+Show the live ESP32 → SPP → Android → HTTPS → FastAPI → SQLite/Dashboard path
+separately from offline DT/RF training and App demo fixtures. Show candidate
+classification/accounts/fall-response additions as candidate features until
+deployed. Do not imply that the offline SisFall model is a live 1 Hz detector.
+Four SVG/PNG diagrams and Mermaid sources are in docs/. They have not been inserted into the Google report by this candidate task.
+
+9. SCREENSHOTS / EVIDENCE — PARTIAL ARTIFACT SET
+Automated results, ML comparison CSV and confusion matrices are available.
+Curate dated physical hardware/App, authenticated upload, latest sensors, SQLite,
+invalid-key, chart and CSV screenshots from actual observations. Capture new
+role/notification UI only after implementation and testing. Label synthetic
+software examples; redact tokens, passwords and identifiable health data.
+
+10. REFERENCES AND IN-TEXT CITATIONS — VERIFIED SOURCE LIST AVAILABLE; REPORT INTEGRATION PENDING
+Use actual sensor datasheets, primary Android/FastAPI/scikit-learn documentation,
+algorithm publications and original dataset sources. Confirm the module's
+citation style and connect citations to specific claims. Source code is evidence
+of implementation; it does not replace clinical or dataset provenance references.
+
+11. STUDENT IDS AND RESPONSIBILITIES — NAMES CONFIRMED; OTHER FIELDS PENDING
+Confirmed names: Jose Manuel Cortes Ceron; Nathan Ratichon; Guannan Ge;
+Cheng Zhang. Student IDs, actual responsibilities and individual contribution
+evidence must come from the group. Do not assign roles from assumptions about
+who sent a file or message.
+
+12. DEMONSTRATION — SCRIPT AVAILABLE; EXECUTED VIDEO/LIVE EVIDENCE PENDING
+Demonstrate the functioning baseline and new candidate separately. A candidate
+sequence can show login permissions, binary classification/probability,
+synthetic rule lifecycle and the manual possible-fall response workflow.
+Describe unsupported three-class classification, unavailable push delivery and
+unperformed phone trials honestly. Add the real recording link only when made.
+
+13. NATIVE JAVA ANDROID APPROVAL — NOT CONFIRMED BY AVAILABLE EVIDENCE
+Ask the tutor whether native Java Android satisfies the approved-framework
+requirement. Permission for members to test their own sensor readings does not
+automatically establish framework approval.
+
+14. ACCESSIBILITY / RESPONSIVENESS — IMPLEMENTATION IS NOT TEST EVIDENCE
+The existing App uses labelled icons, text/status cues and accessibility-oriented
+controls. Record actual 200% text-scale, small/large screen and orientation checks
+with screenshots. Do not claim elderly-user usability testing or complete
+accessibility compliance from dimensions or code alone.
+
+15. DATASET PROVENANCE — FILE IDENTITY KNOWN; ORIGINAL ORIGIN PENDING
+The audited synthetic CSV SHA-256 is
+35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb.
+The reproducible file identity and split do not establish its original publisher,
+generation method, licence or consent. Obtain the source or tutor confirmation.
+The separate public SisFall experiment is not group-collected fall data.
+
+16. HIGH-SpO2 WORDING — CANDIDATE BACKEND CORRECTED
+The candidate rejects SpO2 above 100% as invalid input, removes oxygen_high from
+the demonstration rule file and refuses that high-rule direction. Previously
+stored unsupported policies fail closed on candidate startup. Low-SpO2 rule
+support remains configurable and disabled by default.
+Check Android demo labels and report figure text as well: backend changes alone
+do not prove every visible “high oxygen” label has been removed.
+
+READ-ONLY QC NOTE
+Training/export code correctly maps probability columns to NORMAL/ABNORMAL and
+preserves sklearn's tie resolution. Validation selects models before final
+reporting on the held-out partition. The API uses the same float32 comparisons
+and leaf probabilities. All four held-out feature sets fall within the exported
+training-domain bounds. No new tests or training were run for this QC review.
+
+
+FINAL VALIDATION SUMMARY
+252 server pytest cases and 6 included subtests passed; 6 separate ML unit tests passed; 240,000 exported class/probability comparisons matched. The initial integrated run exposed a hyphen-prefixed random key-ID CLI parsing defect, corrected in the candidate with two regression cases. Original v0.7.4 artifacts remain unchanged.
+One real-clock synthetic-event run observed the durable caregiver queue after 15.199 seconds. This is not a caregiver-phone latency measurement or guarantee.

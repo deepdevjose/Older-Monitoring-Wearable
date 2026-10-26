@@ -1,0 +1,77 @@
+{
+  "recorded_at_utc": "2026-10-26T05:52:08.783039+00:00",
+  "version": "0.8.0",
+  "release_kind": "integration_candidate",
+  "apk_sha256": "7ff943405f6a780d350f648838c9d210647c1e2212c9fe8b05d9906d8e116ff7",
+  "backend": {
+    "passed_tests": 302,
+    "additional_subtests": 6,
+    "new_stored_classification_tests_included": 50,
+    "evidence": "evidence/backend/v080-backend-regressions.xml"
+  },
+  "dashboard": {
+    "passed_tests": 70,
+    "evidence": "evidence/integration/dashboard-regression.xml"
+  },
+  "android_jvm": {
+    "unchanged_policy_checks_observed_this_integration": {
+      "ReadingSummary": 32,
+      "AlertInbox": 105,
+      "NdjsonFramer": 51,
+      "LiveSampleFreshness": 35,
+      "RelayPolicy": 97,
+      "ServerEndpointMigration": 21,
+      "SensorModuleNavigation": 20,
+      "SessionLineBuffer": 320,
+      "RemoteAlertInbox": 53,
+      "SecureSetupPolicy": 23,
+      "OpticalEstimatePolicy": 102
+    },
+    "unchanged_policy_total": 859,
+    "new_account_policy_checks": 140,
+    "note": "Plain Java checks only, not Android runtime/Keystore/network tests."
+  },
+  "ml": {
+    "unit_tests_passed_this_integration": 6,
+    "retrained_this_integration": false,
+    "same_task_comparison_historical_artifacts_verified": true,
+    "three_class_supported": false,
+    "clinical_validation": false
+  },
+  "https_loopback": {
+    "actual_tcp_tls_requests": 22,
+    "certificate_and_hostname_verification": true,
+    "temporary_synthetic_database": true,
+    "phone_or_wifi_path": false,
+    "evidence": "evidence/backend/v080-https-loopback.json"
+  },
+  "baseline_release_check": {
+    "verified_original_v074_saved_source_files": 138,
+    "original_apk_sha256": "f46cc4ee93c33d51743144578658a5ce74bd8d69ff94019766ae7bc67e4c7ba6",
+    "original_release_modified": false
+  },
+  "transport_source_sha256": {
+    "SppSensorClient.java": "84a506d6356a96b0586d590b48f2dce734121ddc3c37f474ac5d4198a2541241",
+    "BleSensorClient.java": "84bbe3def843b96fd15afdd80f55e95dfc508cb582900e890f424a17f4afb4a2",
+    "ServerRelay.java": "551d7fc5bf2b7e28658028cb44c1b76415cf455998b4056bd6f04e198bd21512",
+    "LiveMonitorService.java": "1954263472183aa8263cdfb2ec7b21efb4cd7b4ea012d5b05bd1d964e38f50df",
+    "NdjsonFramer.java": "a344a31644a6a2124917ce6f1364d574d46f7918b39f8ae1133297b3fd149557",
+    "OpticalEstimatePolicy.java": "e9b5ce621ae4c13f87eb119f60063abac6e81c9b6e9678f451459c30c69412b1"
+  },
+  "not_performed": [
+    "Android installation or UI runtime test",
+    "Android Keystore runtime test",
+    "Physical Bluetooth/Wi-Fi or sensor test for v0.8.0",
+    "Production server deployment",
+    "Firmware flash",
+    "Three-class model training",
+    "Clinical validation",
+    "Caregiver push delivery",
+    "Git contribution attribution"
+  ],
+  "known_nonfatal_build_test_warnings": [
+    "Java 8 source/target deprecation",
+    "Existing Android deprecated API usage",
+    "Starlette httpx TestClient deprecation"
+  ]
+}

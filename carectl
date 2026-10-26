@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-CAREMONITOR_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-cd "$CAREMONITOR_ROOT"
-export PYTHONPATH="$CAREMONITOR_ROOT/server${PYTHONPATH:+:$PYTHONPATH}"
-if [[ -x "$CAREMONITOR_ROOT/.venv/bin/python" ]]; then
-  exec "$CAREMONITOR_ROOT/.venv/bin/python" -m caremonitor.cli "$@"
-fi
-exec python3 -m caremonitor.cli "$@"
