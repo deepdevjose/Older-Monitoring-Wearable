@@ -1,0 +1,97 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{newtxtext,newtxmath}
+\usepackage[scaled=0.93]{helvet}
+\usepackage[a4paper,top=23mm,bottom=24mm,left=24mm,right=24mm,headheight=15pt]{geometry}
+\usepackage{microtype,graphicx,booktabs,tabularx,longtable,array}
+\usepackage[table]{xcolor}
+\usepackage{caption,subcaption,enumitem,fancyhdr,lastpage,float,placeins}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc,shapes.geometric}
+\usepackage{titlesec,listings,xurl}
+\usepackage[hidelinks,pdfusetitle]{hyperref}
+\definecolor{ink}{HTML}{16334A}
+\definecolor{accent}{HTML}{087E83}
+\definecolor{light}{HTML}{F0F4F6}
+\definecolor{muted}{HTML}{536573}
+\definecolor{warning}{HTML}{AC6518}
+\hypersetup{pdftitle={IndiCare Mobile IoT Monitoring Technical Report},pdfauthor={IndiCare project},pdfsubject={IOT308TC Assessment 2 evidence based technical report}}
+\graphicspath{{figures/}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5.5pt plus 1pt}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+\captionsetup{font=small,labelfont=bf,labelsep=period,skip=7pt}
+\captionsetup[subfigure]{font=small,labelfont=bf}
+\titleformat{\section}{\large\sffamily\bfseries}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\normalsize\sffamily\bfseries}{\thesubsection}{0.7em}{}
+\titlespacing*{\section}{0pt}{16pt}{7pt}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+\setlist{nosep,leftmargin=1.5em,topsep=5pt}
+\setcounter{tocdepth}{1}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.78}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily IndiCare}
+\fancyhead[R]{\small\sffamily IOT308TC Assessment 2}
+\fancyfoot[L]{\footnotesize Educational prototype}
+\fancyfoot[R]{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\newenvironment{reportprose}{}{}
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+\newcommand{\evidencebox}[2]{\begin{quote}\small\textbf{#1}\par #2\end{quote}}
+\lstset{basicstyle=\small\ttfamily,breaklines=true,columns=fullflexible,keepspaces=true,frame=single,rulecolor=\color{muted},backgroundcolor=\color{light},aboveskip=8pt,belowskip=8pt}
+\input{metadata}
+\input{evidence/wordcount}
+\input{sections/diagrams}
+\input{sections/tables}
+\newcommand{\HardwarePhotoFigure}{%
+\begin{figure}[htbp]\centering
+\includegraphics[width=.94\textwidth]{hardware_prototype.jpg}
+\caption{Physical prototype assembly supplied by the team. The ESP32 carrier is central, with jumper wiring to surrounding modules; the buzzer and light sensor boards are visible at the upper right and right. The photograph records the physical arrangement. Module runtime observations are evaluated separately.\cite{hardwarephoto}}\label{fig:hardware-photo}
+\end{figure}}
+\begin{document}
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+\thispagestyle{empty}
+{\sffamily\small IOT308TC\quad /\quad ASSESSMENT 2\par}
+\vspace{23mm}
+{\sffamily\bfseries\fontsize{36}{40}\selectfont IndiCare\par}
+\vspace{5mm}
+{\sffamily\fontsize{21}{26}\selectfont Mobile IoT monitoring\par}
+{\sffamily\fontsize{16}{22}\selectfont Technical report and evaluation\par}
+\vspace{12mm}
+{\large Synthetic health classification and\par consent based caregiver communication\par}
+\vspace{16mm}
+\begin{tabularx}{\textwidth}{@{}P{39mm}Y@{}}
+Team members & \ReportMembers\\
+Tutor & \ReportTutor\\
+Report date & \ReportDate\\
+Repository & \url{https://github.com/deepdevjose/Older-Monitoring-Wearable}\\
+\end{tabularx}
+\vfill
+\colorbox{light}{\parbox{\dimexpr\textwidth-2\fboxsep\relax}{\small\textbf{Educational use only}\par
+This prototype must not be used for diagnosis, treatment or clinical decision making. Evaluation uses synthetic fixtures. Results distinguish server experiments, Android interface tests and hardware observations.}}
+\end{titlepage}
+\pagenumbering{roman}
+\hypersetup{pageanchor=true}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+\input{sections/body}
+\FloatBarrier
+\clearpage
+\input{sections/references}
+\clearpage
+\appendix
+\input{sections/appendices}
+\end{document}

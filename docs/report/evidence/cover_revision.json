@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-26",
+  "client_timezone": "America/New_York",
+  "changes": [
+    "Removed group field and macro",
+    "Replaced administrative waiting statements with final evaluation prose",
+    "Inserted original physical assembly photograph",
+    "Updated Android release and on-device interface evidence",
+    "Revised diagrams, tables, team chronology and evaluation boundaries"
+  ],
+  "confirmed_tutor": "Matilda Isaac",
+  "cover_member_label": "Team members",
+  "removed_cover_rows": [
+    "Group",
+    "Implementation",
+    "Main prose"
+  ],
+  "confirmed_roster_entries_retained": 4,
+  "pdf_pages": 21,
+  "main_prose_words": 2926,
+  "main_body_sha256": "eb58b5f406732b5cb616c39633cd0bdf55f2aad11c6df9c7235b7611f15303c3",
+  "pdf_sha256": "468fadfb1046b50efc6b3559345e1d27490b8c02b207cc1e8994984da6e2f898",
+  "hardware_photo_sha256": "19db68e30e9d71d7ed3a7941d2d872351a7d09b52699f348f88c6792653bf4f5",
+  "android_version_code": 13,
+  "android_ui_checks": 709,
+  "visual_review": "All final pages rendered at 1400px and reviewed in a contact sheet; cover, architecture, hardware photograph, mobile diagram, verification tables, installation/hash, team roster and final evaluation inspected at full size. Final scenario heading and table reviewed together after pagination correction.",
+  "latex_overfull_boxes": 0,
+  "undefined_references": 0,
+  "scope": "Documentation, evidence copies and report package only; original photo, ODT, rubric, application, firmware and user gitignore preserved."
+}

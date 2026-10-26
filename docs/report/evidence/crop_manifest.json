@@ -1,0 +1,82 @@
+[
+  {
+    "asset": "adc_smoothing.png",
+    "source": "docs/steps_pictures/Screenshot From 2026-10-13 09-54-06.png",
+    "crop_xyxy": [
+      620,
+      177,
+      1420,
+      650
+    ],
+    "dimensions": [
+      800,
+      473
+    ],
+    "sha256_source": "30732cfdb1a124f02b5cd93f7f14df8262bc2b5f061eb77ad72eed600c7b7467",
+    "processing": "pixel-aligned crop only; no fabricated output, enhancement, overlays or redaction"
+  },
+  {
+    "asset": "centered_filter.png",
+    "source": "docs/steps_pictures/Screenshot From 2026-10-13 10-23-57.png",
+    "crop_xyxy": [
+      100,
+      64,
+      900,
+      530
+    ],
+    "dimensions": [
+      800,
+      466
+    ],
+    "sha256_source": "eaf612b5423eb009efab7ff280321a17cb410319cc5fbb552b8fac41c130de77",
+    "processing": "pixel-aligned crop only; no fabricated output, enhancement, overlays or redaction"
+  },
+  {
+    "asset": "api_health.png",
+    "source": "docs/steps_pictures/Screenshot From 2026-10-13 12-01-58.png",
+    "crop_xyxy": [
+      38,
+      35,
+      1150,
+      180
+    ],
+    "dimensions": [
+      1112,
+      145
+    ],
+    "sha256_source": "782abeddf451439d9a7180af699bcc55e39bfcc3394bb0093470ef32b5baf9da",
+    "processing": "pixel-aligned crop only; no fabricated output, enhancement, overlays or redaction"
+  },
+  {
+    "asset": "post_200_no_finger.png",
+    "source": "docs/steps_pictures/Screenshot From 2026-10-13 13-09-16.png",
+    "crop_xyxy": [
+      56,
+      302,
+      1252,
+      562
+    ],
+    "dimensions": [
+      1196,
+      260
+    ],
+    "sha256_source": "2b89556521dc3bc9e4ad222388976435c3707f681a33d1f0db80979fbd5975f0",
+    "processing": "pixel-aligned crop only; no fabricated output, enhancement, overlays or redaction"
+  },
+  {
+    "asset": "api_rejection.png",
+    "source": "docs/steps_pictures/Screenshot From 2026-10-15 11-58-37.png",
+    "crop_xyxy": [
+      0,
+      32,
+      925,
+      192
+    ],
+    "dimensions": [
+      925,
+      160
+    ],
+    "sha256_source": "4b23bf08df7746a8f2f7bcc5f52a67f39c4eadb3d9a4c7fd333417b0a954803c",
+    "processing": "pixel-aligned crop only; no fabricated output, enhancement, overlays or redaction"
+  }
+]

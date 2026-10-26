@@ -1,0 +1,41 @@
+{
+  "review_date": "2026-10-26",
+  "client_timezone": "Asia/Shanghai",
+  "source_commit": "5c650c16150a48ad20d0b41aaae9d435dfbdbf5f",
+  "source_inputs_sha256": {
+    "rubrik.docx": "2e732f037ed3f72b9c74e2e20b51f60b20b31f55b53034517182fc7236467bad",
+    "docs/reference-labs/IndiCare_Report_Rubric_Checked.odt": "9f65111cfb05fba7087fdf8f18462446781c73db96c8ce91b8c2e505688b4ad9",
+    "datasets/synthetic_health.csv": "35240b10eb5a1207d6404e1af06359706afb6796cca089a4e9c3d8b9613a7adb",
+    "models/synthetic-health-v1/metadata.json": "e35b587b544fb798f0479f61bb80a599a1c7a2423a2a650e0d1b99ece330d6c2",
+    "release/ANDROID_BUILD.json": "ecdc13af85fc0eaaadcf89aa8a6a956231ed2cc02f739207e92654fe236a274f",
+    "release/VALIDATION.json": "6f311b4d466722eb1ac6f21f33f9c070bd0b6f550d1c77b3482168d57b84bf67",
+    "release/INTEGRATION_EVIDENCE.json": "9f253c6861195ff1bbbe0b3dcba80f22d3db8502bf283a3039aceafcb52ea264"
+  },
+  "scope": "Documentation, selected historical image crops, stored-evidence audit and isolated synthetic software checks. No firmware upload or live-service changes.",
+  "claims_not_verified": [
+    "Current APK installation or Android UI runtime",
+    "Full Bluetooth to phone to server path",
+    "Mobile AI classification/confidence UI or reading charts",
+    "Physical accessibility or caregiver notification latency",
+    "Approved module dataset provenance and complete individual contributions"
+  ],
+  "roster_update": {
+    "date": "2026-10-26",
+    "client_timezone": "America/New_York",
+    "source": "Names and student IDs supplied directly by user",
+    "confirmed_members": 4,
+    "group_contribution_allocation": "Awaiting confirmation"
+  },
+  "cover_update": {
+    "date": "2026-10-26",
+    "client_timezone": "America/New_York",
+    "source": "Tutor name and requested title-page changes supplied directly by user",
+    "confirmed_tutor": "Matilda Isaac",
+    "team_roster": "Four previously confirmed names and student IDs retained unchanged",
+    "removed_cover_rows": [
+      "Implementation",
+      "Main prose"
+    ],
+    "member_label": "Team members"
+  }
+}

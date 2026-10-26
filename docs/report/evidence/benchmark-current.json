@@ -1,0 +1,159 @@
+{
+  "executed_at_utc": "2026-10-26T03:51:36.711346+00:00",
+  "python": "3.14.8",
+  "platform": "Linux-7.2.11-200.fc44.x86_64-x86_64-with-glibc2.43",
+  "transport": "In-process FastAPI TestClient ASGI; enforce_https=False in disposable test configuration; no socket/network/phone",
+  "changes": "No source, model, release, hardware or live service changed",
+  "classification": {
+    "endpoint": "POST /api/v1/ai/classify",
+    "cold_ms": 1059.291586,
+    "warm": {
+      "n": 25,
+      "mean_ms": 17.337706280000003,
+      "p50_ms": 16.85215,
+      "p95_ms": 19.870286399999998,
+      "min_ms": 13.509259,
+      "max_ms": 21.937045,
+      "percentile_method": "numpy.percentile linear"
+    },
+    "warm_raw_ms": [
+      19.880245,
+      17.547541,
+      17.51534,
+      19.830452,
+      16.85215,
+      19.453958,
+      15.994165,
+      16.508159,
+      19.039858,
+      16.663441,
+      14.814105,
+      13.509259,
+      19.263846,
+      17.24505,
+      15.868859,
+      16.583246,
+      16.972233,
+      15.613638,
+      15.9456,
+      21.937045,
+      19.531091,
+      16.128659,
+      16.378192,
+      16.372654,
+      17.993871
+    ],
+    "examples": [
+      {
+        "request": {
+          "source": "synthetic",
+          "features": {
+            "heart_rate_bpm": 75.0,
+            "spo2_percent": 98.0,
+            "body_temp_c": 36.5,
+            "sample_age_seconds": 0.0
+          }
+        },
+        "classification": "Normal",
+        "confidence": 0.999263
+      },
+      {
+        "request": {
+          "source": "synthetic",
+          "features": {
+            "heart_rate_bpm": 110.0,
+            "spo2_percent": 96.0,
+            "body_temp_c": 37.7,
+            "sample_age_seconds": 0.0
+          }
+        },
+        "classification": "Critical",
+        "confidence": 1.0
+      },
+      {
+        "request": {
+          "source": "synthetic",
+          "features": {
+            "heart_rate_bpm": 135.0,
+            "spo2_percent": 88.0,
+            "body_temp_c": 39.0,
+            "sample_age_seconds": 0.0
+          }
+        },
+        "classification": "Critical",
+        "confidence": 1.0
+      }
+    ],
+    "scope": "Authentication lookup, JSON validation, rate-limit transaction, prediction, JSON response; excludes account registration and any mobile/TLS/network transport"
+  },
+  "episode": {
+    "endpoint": "Third POST /api/v1/readings followed by GET /api/v1/notifications",
+    "third_ingestion": {
+      "n": 20,
+      "mean_ms": 7.0845292,
+      "p50_ms": 6.952038,
+      "p95_ms": 9.087327,
+      "min_ms": 5.699048,
+      "max_ms": 9.437079,
+      "percentile_method": "numpy.percentile linear"
+    },
+    "server_inbox_available": {
+      "n": 20,
+      "mean_ms": 12.241993099999998,
+      "p50_ms": 12.0193625,
+      "p95_ms": 15.016865050000002,
+      "min_ms": 10.20987,
+      "max_ms": 16.140412,
+      "percentile_method": "numpy.percentile linear"
+    },
+    "third_ingestion_raw_ms": [
+      9.068919,
+      5.850737,
+      7.529322,
+      7.5146,
+      5.699048,
+      9.437079,
+      7.690807,
+      6.93464,
+      6.260066,
+      7.661627,
+      6.950296,
+      6.043453,
+      5.796933,
+      8.7334,
+      7.220934,
+      6.308502,
+      6.700499,
+      6.042927,
+      7.293015,
+      6.95378
+    ],
+    "server_inbox_raw_ms": [
+      14.847246,
+      10.20987,
+      13.036112,
+      13.159016,
+      11.081152,
+      16.140412,
+      14.093583,
+      11.425749,
+      10.405357,
+      12.823778,
+      11.237567,
+      10.26863,
+      10.57504,
+      14.957731,
+      12.295791,
+      10.886866,
+      12.289781,
+      10.886755,
+      12.470482,
+      11.748944
+    ],
+    "episodes_created": 20,
+    "duplicate_unresolved_alerts": 0,
+    "duplicate_retry_checks_passed": 20,
+    "sustained_fourth_sample_checks_passed": 20,
+    "scope": "Synthetic pulse_high only; two prior valid samples already stored. Timer starts before third POST and ends after authenticated inbox GET. No sampling dwell time, long-poll delay, caregiver handset, OS notification or network/TLS latency. Each trial uses one fresh DB and fictional elder account; elder inbox used."
+  }
+}

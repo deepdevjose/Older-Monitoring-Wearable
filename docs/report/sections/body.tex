@@ -1,0 +1,129 @@
+\section{Purpose and assessment scope}
+\label{sec:purpose}
+\begin{reportprose}
+IndiCare examines how an Android gateway, a local REST service and introductory machine learning support an educational monitoring workflow. The application is named CareMonitor 1.0.0. Its evaluated capabilities include persistent synthetic alert episodes, consent based access, a reproducible classification service and native Android account navigation. The evidence combines software tests, isolated HTTPS integration, installation on a Samsung phone and targeted interface instrumentation. Each result is attributed to the layer actually exercised.
+
+The assessment covers patient and caregiver views, three class predictions, confidence, storage, alerts and measurable improvement. Mobile functionality and programming architecture carry 45\% of the rubric, making the distinction between server capabilities and visible application behaviour central to the evaluation. This report maps requirements to code, presents quantitative results and analyses the implemented system's coverage. The assessment uses the current versioned API and release records rather than treating historical development captures as proof of current behaviour.\cite{rubric,snapshot}
+
+Classification uses synthetic educational labels. Participant measurements, clinical records and induced falls are outside this study. Historical screenshots document technical development without presenting personal physiological values. A separate SisFall experiment is excluded from the reported classification results. The evaluated CSV is identified as a repository dataset; institutional approval or equivalence to a module supplied dataset is not inferred from its presence. This preserves the distinction between reproducibility, assessment provenance and clinical validity.
+\end{reportprose}
+
+\section{Requirements and system architecture}
+\label{sec:architecture}
+\begin{reportprose}
+The primary actors are an adult account, corresponding to the rubric's patient role, and an explicitly authorised caregiver. An adult can approve several caregivers and revoke their access independently. Requirements follow a reading through provenance, validation, transfer, persistence, presentation and alert review. Table~\ref{tab:requirements} associates these behaviours with implementation locations and the evidence available for each one.
+
+Figure~\ref{fig:architecture} distinguishes two implemented server paths. Synthetic snapshots enter the readings service and exercise transparent alert rules, persistent history and private notification inboxes. Synthetic feature vectors enter the classification endpoint and produce a model label and confidence. These services operate independently: the Android care interface retrieves readings and alerts, while its Activity does not consume the classification endpoint. Classification results therefore establish API behaviour, without establishing prediction or confidence presentation on the phone.
+
+A local FastAPI service keeps Python validation, models and account authorisation together. Central inference avoids distributing model updates to every phone but depends on server availability. SQLite offers transactional episode creation with modest deployment complexity. Its single writer architecture suits the evaluated scale; the experiments do not establish large deployment capacity. Native Android Java provides Bluetooth and foreground service access without introducing a cloud service. This describes the technical choice without inferring administrative approval of a particular framework.
+
+The optional ESP32 path supplies device diagnostics over Bluetooth Serial Port Profile to the Android gateway. Source labels distinguish diagnostics from synthetic assessment data. Server inference rejects device sources because synthetic body temperature is not interchangeable with the available surface temperature measurement. HTTPS protects phone to server communication; Bluetooth pairing forms a separate trust boundary. Account and resource authorisation apply independently of either transport.
+
+Observable invariants guide evaluation. A retry preserves one record per sample, and sustained abnormal input preserves one active episode per signal. Unauthorised requests disclose no patient data, while unavailable predictions retain an explicit unknown or error state. Accessibility evidence covers enlarged registration text and control geometry on the installed phone. Timing results are reported as measured baselines because the supplied specification defines no numeric response or delivery threshold. A measured value is consequently distinguished from a formally satisfied timing requirement.
+\end{reportprose}
+\RequirementsTable
+\ArchitectureDiagram
+\FloatBarrier
+
+\section{Hardware and data boundaries}
+\label{sec:hardware}
+\begin{reportprose}
+The wearable source integrates an ESP32, MAX30102 optical module, MPU6050 motion module, GY906 temperature module and photoresistor. Sensor status accompanies snapshots so that missing or warming signals need not become plausible numeric measurements. The light channel is an uncalibrated environmental indicator; darkness alone does not establish wear. Surface temperature cannot establish fever, and the installed modules do not measure blood pressure or hydration.
+
+The optical pipeline uses a rolling sample window and validity flags. These are signal handling choices rather than evidence of physiological accuracy. The recorded USB diagnostic contains 25 JSON messages at approximately one message per second, with optical no contact, the motion module offline and the temperature module online. It retains no physiological values. Firmware compilation and this diagnostic observation are separate evidence: neither identifies the installed binary by a verified hash.\cite{snapshot}
+
+Figure~\ref{fig:hardware-photo} presents the supplied photograph of the physical ESP32 assembly, modules and wiring. It documents the assembled hardware and complements the functional architecture diagram. Visible components and connections alone do not demonstrate sensor calibration, firmware identity or successful data delivery. The historical serial and HTTP captures in Appendix~\ref{app:images} similarly establish development activity under their displayed versions. Hardware is an extension of the synthetic monitoring study, whose classification results are evaluated separately from physical measurements.
+\end{reportprose}
+\HardwarePhotoFigure
+\FloatBarrier
+
+\section{Mobile behaviour and programming structure}
+\label{sec:mobile}
+\begin{reportprose}
+The Android application implements registration, login, adult and caregiver navigation, reading summaries, alert history and settings. Registration introduces the role before collecting name, email and password in four progressive steps. Server configuration belongs to authenticated Settings, keeping technical connection details outside the initial account form. Wearable setup is restricted to the adult role; caregivers use the relationship request and approval workflow. Separate accounts and server enforced revocation prevent shared credentials or locally hidden controls from becoming the access model.
+
+Progressive registration presents one category of information at a time and preserves the draft when the user moves backwards. The primary action stays available while the inputs scroll, making the current step and its completion control identifiable at enlarged text. Password visibility is an explicit user choice, with masking enabled initially. These are concrete interaction decisions supported by instrumentation, rather than a claim of measured preference or reduced cognitive burden. Role selection also determines the subsequent task: the adult configures a wearable, while the caregiver seeks authorised access to another account.
+
+The interface combines labelled cards, text status, icons and large controls. A Samsung SM-S948B running Android 17 hosted version 1.0.0, code 13. Its instrumentation passed 709 checks, including role selection, preserved registration drafts, password masking, navigation and authenticated connection settings. Registration forms were exercised with per Activity font scale 2.0, scrollable inputs and a visible fixed primary action with targets of at least 56 dp. These observations support that specific layout claim; they do not establish a manual TalkBack evaluation or every screen at enlarged text.\cite{accessibility,validation}
+
+Figure~\ref{fig:mobile-layers} shows a layered, MVC inspired arrangement. MainActivity constructs views and coordinates state, combining presentation control with view composition. ReadingSummary, LiveSampleFreshness and AlertInbox encapsulate behaviour testable outside Android. ApiClient and ApiSession manage requests and account state, SecureStore protects persistence, and SensorTransport separates Bluetooth implementations. This is partial separation of concerns rather than a complete MVVM architecture. Android's guidance provides a useful basis for assessing the boundary between interface orchestration and reusable data responsibilities.\cite{androidarch}
+
+Bluetooth acquisition and queued relay use dedicated services and workers. Network tasks run through an executor, with interface changes posted to the main thread. Session and lifecycle checks prevent callbacks from an earlier screen or account from becoming current state. Notification service activation uses an explicit user action and visible foreground notification. The interface instrumentation preserved permissions, preferences, session and outbox state and created no server accounts, separating controlled UI checks from a real authentication or Bluetooth campaign.
+
+The reading history endpoint and SensorChartView exist, but the Activity neither requests that history nor mounts the chart. The classification API likewise returns three classes and confidence without a corresponding mobile prediction widget. These are precise coverage boundaries for the rubric's mobile history and inference criteria. The installed application's verified navigation and registration behaviour are assessed alongside those boundaries, without promoting compilation or instrumentation into complete sensor to caregiver operation.
+\end{reportprose}
+\MobileLayersDiagram
+\RoleTable
+
+\section{REST integration storage and alert lifecycle}
+\label{sec:integration}
+\begin{reportprose}
+The API uses the prefix \code{/api/v1}. Users authenticate through account endpoints and send a Bearer session token. Readings carry a stable sample identifier, capture timestamp, source and structured payload. Pydantic contracts reject malformed or unsupported inputs, while account and resource checks enforce access. Appendix~\ref{app:api} records endpoint details and an observed synthetic prediction, making the current contract explicit.\cite{api}
+
+The phone queue retains snapshots during temporary upload failure. Reusing a sample identifier makes a retry idempotent: a lost response creates neither another sample nor another alert. The server writes reading state, alert state and private notification entries transactionally. SQLite isolation lets readers observe committed changes; it does not guarantee delivery to a disconnected handset.\cite{sqlite} Figure~\ref{fig:sequence} traces a qualifying upload through storage and fanout to two approved caregivers.
+
+The outbox stores each item before transmission and removes it after acknowledgement. Its capacity is two hundred items, so the design does not imply lossless indefinite disconnection. Items retain account and endpoint ownership to prevent relay across sessions. Authentication, permission and validation errors pause sending; transient failures use retry and backoff. Policy tests exercise these decisions. Actual process termination, AndroidKeyStore persistence and subsequent physical delivery form a different device execution boundary from those tests.
+
+Synthetic rule episodes require three recent valid samples with distinct timestamps separated by one to thirty seconds. Sustained abnormal input creates one unresolved episode per signal. Further abnormal samples update its evidence without repeatedly creating the same episode. Three eligible observations no longer triggering the rule recover it. Missing contact, disconnected sensors and invalid values cannot close an episode because unusable evidence does not establish recovery. Figure~\ref{fig:alert-state} makes these transitions explicit.
+
+Acknowledgement records caregiver specific review rather than recovery. One caregiver's action does not suppress another caregiver's history. Delivery acknowledgement is also distinct from review. A persistent private inbox and authenticated long polling support recovery after interruption, while the reported timing experiments measure server processing rather than Android notification arrival.
+
+The synchronous classification route runs through FastAPI's thread pool.\cite{fastapi} Two bounded inference slots and a per account request limit constrain work. A successfully loaded model is cached; an unavailable or busy model produces an explicit error instead of a fabricated normal prediction. JSON inference responds without creating a stored reading or alert. Model confidence therefore does not drive the rule episodes evaluated in this report.
+\end{reportprose}
+\SequenceDiagram
+\AlertStateDiagram
+
+\section{Synthetic classification and model evaluation}
+\label{sec:ml}
+\begin{reportprose}
+The experiment reads the 60,000 row repository CSV using pandas. It retains three numeric features: synthetic heart rate, oxygen saturation and body temperature. Identifiers, other measurements and alert columns are excluded from the feature matrix. Missing, nonnumeric or nonfinite values fail preparation instead of being interpreted as healthy. Targets count abnormal flags across the three alert columns: zero gives Normal, one Warning, and two or three Critical. These constructed educational categories have no independent clinical ground truth.\cite{mlartifact}
+
+Repeated feature tuples could place identical examples in training and evaluation. The training script groups the 18,939 unique feature tuples before a stratified split with seed 42. Every occurrence of one tuple stays in one partition. The resulting counts are 36,090 training, 12,143 validation and 11,767 test rows. This controls exact tuple leakage without creating external validation. The test partition is a local holdout, not an assessor controlled hidden test set.
+
+Two introductory supervised classifiers are compared. Logistic regression uses StandardScaler fitted within its training pipeline, balanced class weights and at most 2,000 iterations. Random Forest uses 120 trees, maximum depth fourteen, minimum leaf size two and balanced class weights. Validation macro F1 selects the model, with Critical recall as tie breaker. Test results are reported after selection rather than used to select. Random Forest reaches validation macro F1 of 1.0000 against logistic regression's 0.7534 and is saved for endpoint inference.
+
+Table~\ref{tab:metrics} reports accuracy and macro precision, recall and F1. Macro averaging weights categories equally; Critical recall also exposes missed critical classifications.\cite{sklearn} Figure~\ref{fig:confusion} presents both confusion matrices with true classes as rows. Logistic regression misclassifies 905 of 3,857 Critical examples and assigns Warning to 420 of 3,366 Normal examples. Random Forest makes no observed holdout errors. Table~\ref{tab:rates} defines the corresponding rates and denominators.
+
+The perfect forest result reflects reconstruction of deterministic synthetic boundaries rather than medical reliability. Robustness to another generator, sensor noise or distribution shift is outside this experiment. Confidence is the largest predict\_proba score, rounded to six decimals. It is not calibrated against real outcomes and cannot represent the probability of disease or emergency. The inference contract requires fresh synthetic features within recorded training ranges. Before deserialisation, the local model file is hash checked and its scikit learn version compared with metadata. This mechanism does not make untrusted model files safe to load.
+
+Logistic regression offers an interpretable baseline, but linear decision surfaces cannot readily represent every disconnected region created by combinations of threshold flags. A tree ensemble represents those combinations more directly. This interpretation is consistent with the matrices without establishing a unique explanation for each error. Reporting all classes prevents a favourable average from concealing weak Critical recall. The result is a reproducible local model comparison whose synthetic targets and dataset provenance delimit its interpretation.
+
+Evaluation keeps feature preparation, model selection and final reporting distinct. Scaling is learned from training data rather than the complete dataset, and validation guides selection before the holdout is inspected for the reported comparison. Grouping prevents duplicate feature tuples from inflating performance through exact repetition across partitions. It does not remove the shared rule generator behind all three partitions. The resulting high score is therefore informative about reconstruction of the supplied synthetic task, while generalisation to a new population is a separate scientific question.
+\end{reportprose}
+\DatasetFigure
+\MetricsTable
+\ConfusionFigure
+\RatesTable
+
+\section{Security configuration and development evidence}
+\label{sec:security}
+\begin{reportprose}
+Accounts use Argon2id password hashes and random session tokens with hashed server representations. Resource access requires the correct role and an active approved relationship to the adult. Invitation codes request access without independently authenticating caregivers or disclosing readings. Expiry, limited attempts and adult approval constrain guessing. Argon2id follows established storage guidance; its inclusion is an implementation property rather than evidence of a comprehensive security audit.\cite{owasp}
+
+HTTPS verifies certificate names. Sensitive server fields use authenticated AES GCM encryption, while Android protects stored state through its KeyStore backed store. Identifiers, timestamps and event types are visible database metadata. Private configuration, database state and signing material are excluded from version control. The checked in server certificate is public trust material, and backups use a passphrase with restoration invalidating sessions. These distinctions define the protection actually provided.
+
+Repository history records development under one contributor identity. It establishes versioned changes without identifying each student's personal responsibility, controlled peer review or agreed contribution factor. Appendix~\ref{app:contribution} presents the supplied four member roster and student IDs alongside the attribution basis. The report makes no individual authorship claim from a shared repository identity and does not infer equal effort from membership alone. This treats collaboration evidence as an attribution question separate from software correctness.\cite{git}
+\end{reportprose}
+
+\section{Testing measured outcomes and improvement}
+\label{sec:testing}
+\begin{reportprose}
+Current release records report 88 passing Python tests, 2,830 JVM assertions and seventeen passing HTTPS integration checks. Device instrumentation adds 709 targeted Android interface checks. These are different measurement units, reported separately in Table~\ref{tab:verification}. The HTTPS fixture uses fictional accounts, strict hostname verification and two authorised caregivers. It covers revocation, independent review, idempotent retry and model serving. The device campaign tests onboarding and navigation rather than extending that fixture through Bluetooth and the phone network.\cite{validation,integration}
+
+A reproducible benchmark uses disposable databases and an in process ASGI TestClient. Twenty five warm classification requests produce mean response time 17.34 milliseconds and p95 19.87 milliseconds. The first request takes 1,059.29 milliseconds, including lazy model loading. Twenty independent synthetic pulse episodes produce p95 9.09 milliseconds for third qualifying ingestion and 15.02 milliseconds from immediately before ingestion until an authenticated inbox read completes. All twenty retry and sustained sample checks retain one unresolved episode.\cite{benchmark}
+
+These measurements exclude TLS, network transport, the preceding sampling interval, long polling and Android rendering. They establish local server processing rather than caregiver alert latency. Table~\ref{tab:timing} records boundaries and sample counts. Likewise, classifier false warnings and missed Critical labels describe holdout prediction errors, not complete application delivery failures. Keeping these denominators distinct makes both performance and reliability claims interpretable.
+
+The forest improves test accuracy by 24.65 percentage points and macro F1 by 23.89 points over logistic regression. A separate chronological backend experiment compares the initial server at commit 6757c0a with the evaluated implementation. Both receive twenty distinct synthetic samples twice, representing a lost response and retry. The initial server stores forty rows; the evaluated server stores twenty, with every retry reusing its existing identifier. This removes twenty duplicate rows in the matched campaign. The adapter script documents the different contracts. The result demonstrates improved persistence semantics rather than faster operation or mobile inference integration.\cite{improvement}
+
+Scenario coverage distinguishes deterioration from malformed input. Valid synthetic sequences progress from normal values to sustained abnormal conditions and recovery. Missing fields, nonfinite values, stale timestamps and absent optical contact instead cause rejection or preserve unknown state. Retry policies and lost responses exercise network failure decisions; unlinked and revoked caregivers exercise authorisation. Appendix~\ref{app:repro} specifies the measurement protocol and separates executable software scenarios from physical transport and operating system behaviour.
+
+The combined evidence supports precise conclusions: server alerts persist without retry duplication, model results are reproducible, and progressive account setup renders on the installed Android release. Physical Bluetooth pairing, complete phone to server delivery, manual screen reader use and mobile prediction display are outside the demonstrated coverage. Those boundaries constrain the rubric interpretation without weakening the observed results or suggesting that one test layer substitutes for another.
+\end{reportprose}
+\VerificationTable
+\TimingTable
+
+\section{Conclusion}
+\begin{reportprose}
+IndiCare demonstrates a local architecture with persistent synthetic alerts, explicit access control, a reproducible two model comparison and verified Android onboarding. Random Forest reproduces the synthetic holdout labels, while idempotent ingestion halves stored rows in the matched retry campaign. The installed application's progressive role based registration is supported by targeted device evidence. Classification confidence is an API capability, and physical transport and clinical effectiveness are outside the demonstrated results. The report's contribution is a traceable educational evaluation that connects each quantitative claim to its actual data, implementation layer and measurement boundary.
+\end{reportprose}

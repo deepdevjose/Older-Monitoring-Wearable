@@ -1,0 +1,211 @@
+% Vector figures for the evidence-led IndiCare report.
+% Requires TikZ libraries arrows.meta, positioning, fit, backgrounds, calc,
+% shapes.geometric; graphicx; report colours ink, accent, light, muted, warning.
+
+\newcommand{\ArchitectureDiagram}{%
+\begin{figure}[htbp]
+\centering
+\resizebox{\ifdim\linewidth>15.6cm 15.6cm\else\linewidth\fi}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize, >=Stealth,
+  box/.style={draw=ink!45,fill=white,rounded corners=2pt,
+    text width=2.55cm,minimum height=1.35cm,align=center,inner sep=5pt},
+  flow/.style={->,thick,draw=accent},
+  optional/.style={->,draw=muted!80},
+  note/.style={font=\sffamily\scriptsize,text=muted,align=center},
+  band/.style={draw=none,fill=light,rounded corners=4pt}
+]
+\begin{scope}[on background layer]
+  \path[band] (-0.35,-1.0) rectangle (14.15,1.05);
+  \path[band] (-0.35,-6.6) rectangle (14.15,-4.3);
+\end{scope}
+\node[box,draw=muted!50,text=muted] (hardware) at (1.25,2.9)
+  {\textbf{Optional ESP32}\\Sensors + status flags\\Diagnostic input only};
+\node[box,draw=muted!50,text=muted] (relay) at (4.95,2.9)
+  {\textbf{Android relay}\\SPP/BLE reception\\Encrypted retry queue};
+\draw[optional] (hardware) -- node[above,note]{Bluetooth} (relay);
+\draw[optional] (relay.south) -- node[right,note]{HTTPS} (4.95,0.68);
+\node[box] (synthetic) at (1.25,0)
+  {\textbf{Synthetic scenarios}\\CLI / test fixture\\\texttt{source=synthetic}};
+\node[box] (readings) at (4.95,0)
+  {\textbf{POST /readings}\\Auth + JSON checks\\Deduplicate snapshot};
+\node[box] (rules) at (8.65,0)
+  {\textbf{Rule evaluation}\\Three eligible samples\\Persistent episodes};
+\node[box] (db) at (12.35,0)
+  {\textbf{SQLite storage}\\Encrypted readings\\Episodes + inboxes};
+\draw[flow] (synthetic) -- (readings);
+\draw[flow] (readings) -- (rules);
+\draw[flow] (rules) -- (db);
+\draw[optional] (readings.north east) -- ++(0,0.5) -|
+  node[pos=0.42,above,note]{Device diagnostics: store; no physiological rules} (db.north);
+\node[box,text width=3.2cm] (care) at (8.65,-2.4)
+  {\textbf{Android care interface}\\Current readings + alerts\\Patient + linked caregiver};
+\draw[flow] (db.south) |- (care.east);
+\node[note,text width=2.7cm] at (10.8,-1.45) {Authorised GET\\and long polling};
+\node[note,anchor=east] at (6.55,-2.4)
+  {Android code 13 installed;\\709 UI checks on Samsung};
+\node[box] (features) at (1.25,-5.3)
+  {\textbf{Synthetic features}\\Heart rate + SpO\textsubscript{2}\\Dataset body temp.};
+\node[box] (classify) at (4.95,-5.3)
+  {\textbf{POST /ai/classify}\\Synthetic-only input\\Validate ranges + age};
+\node[box] (forest) at (8.65,-5.3)
+  {\textbf{Random Forest}\\Server-side inference\\\texttt{predict\_proba}};
+\node[box] (json) at (12.35,-5.3)
+  {\textbf{JSON result}\\Three-class label\\Uncalibrated confidence};
+\draw[flow] (features) -- (classify);
+\draw[flow] (classify) -- (forest);
+\draw[flow] (forest) -- (json);
+\node[note,text width=4.5cm] at (10.55,-3.78)
+  {Separate interfaces:\\care views / model JSON};
+\node[note,anchor=west] at (-0.23,-0.82)
+  {STORED SCENARIOS AND RULE ALERTS};
+\node[note,anchor=west] at (-0.23,-6.43)
+  {SEPARATE CLASSIFICATION EXPERIMENT: no automatic link to stored rule episodes};
+\end{tikzpicture}}
+\caption{Current logical architecture. Solid teal paths describe implemented server and mobile-source responsibilities; grey paths describe the optional device diagnostic contract. The care interface retrieves readings and alerts, while the synthetic classifier exposes a separate JSON interface. The recorded phone campaign exercises native navigation and registration.}
+\label{fig:architecture}
+\end{figure}%
+}
+
+\newcommand{\SequenceDiagram}{%
+\begin{figure}[htbp]
+\centering
+\resizebox{\ifdim\linewidth>15.6cm 15.6cm\else\linewidth\fi}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,>=Stealth,
+  participant/.style={draw=ink!45,fill=light,rounded corners=2pt,
+    text width=2.25cm,minimum height=0.8cm,align=center,inner sep=4pt},
+  request/.style={->,thick,draw=accent},
+  reply/.style={->,draw=ink!65,dashed},
+  msg/.style={fill=white,inner sep=2pt,align=center,font=\sffamily\scriptsize},
+  note/.style={align=center,text=muted,font=\sffamily\scriptsize}
+]
+\node[participant] (sender) at (0,0) {\textbf{Synthetic sender}\\Stable snapshot};
+\node[participant] (api) at (3.35,0) {\textbf{FastAPI}\\Auth + validation};
+\node[participant] (store) at (6.7,0) {\textbf{SQLite + services}\\One transaction};
+\node[participant] (c1) at (10.05,0) {\textbf{Caregiver A}\\Private inbox};
+\node[participant] (c2) at (13.4,0) {\textbf{Caregiver B}\\Private inbox};
+\foreach \n in {sender,api,store,c1,c2}
+  \draw[draw=muted!55,densely dashed] (\n.south) -- ++(0,-10.0);
+\draw[request] (0,-1.0) -- node[msg,above]{POST /readings\\new \texttt{sample\_id}} (3.35,-1.0);
+\draw[request] (3.35,-1.75) -- node[msg,above]{Check unique key + digest;\\insert encrypted reading} (6.7,-1.75);
+\draw[request] (6.7,-2.35) -- ++(0.65,0) -- ++(0,-0.65) --
+  node[msg,right,anchor=west]{Third eligible abnormal sample:\\create one alert episode; enqueue\\A, B and adult in the same transaction} (6.7,-3.0);
+\draw[reply] (6.7,-3.65) -- node[msg,above]{COMMIT; record ID} (3.35,-3.65);
+\draw[reply] (3.35,-4.25) -- node[msg,above]{201; response lost\\at sender (retry scenario)} (0,-4.25);
+\draw[request] (0,-5.0) -- node[msg,above]{Retry identical envelope\\with same \texttt{sample\_id}} (3.35,-5.0);
+\draw[request] (3.35,-5.65) -- node[msg,above]{Existing key + identical digest} (6.7,-5.65);
+\draw[reply] (6.7,-6.2) -- node[msg,above]{Same record; no new episode/fanout} (3.35,-6.2);
+\draw[reply] (3.35,-6.75) -- node[msg,above]{201; \texttt{duplicate:true}} (0,-6.75);
+\draw[request] (10.05,-7.35) -- node[msg,above,pos=0.45]{A: authenticated long poll} (3.35,-7.35);
+\draw[reply] (3.35,-7.9) -- node[msg,above,pos=0.49]{A's durable inbox item} (10.05,-7.9);
+\draw[request] (13.4,-8.45) -- node[msg,above,pos=0.55]{B: independent long poll} (3.35,-8.45);
+\draw[reply] (3.35,-9.0) -- node[msg,above,pos=0.55]{B's durable inbox item} (13.4,-9.0);
+\draw[request] (10.05,-9.65) -- node[msg,above,pos=0.5]{A reviews alert: per-caregiver acknowledgement} (3.35,-9.65);
+\node[note,anchor=north,text width=14.4cm] at (6.7,-10.25)
+  {Changed content under an existing sample ID returns 409. Delivery acknowledgement, alert review and episode recovery are separate states.\\
+   Diagram shows the contract verified by loopback clients; no physical two-phone delivery is claimed.};
+\end{tikzpicture}}
+\caption{Reception, idempotent retry and two-recipient fanout. A new reading, any resulting rule alert and recipient inbox entries commit atomically. Replaying the same envelope returns the existing record and does not repeat alert creation. Caregivers retrieve separate inbox items; one caregiver's review does not mark another caregiver's alert as reviewed.}
+\label{fig:sequence}
+\end{figure}%
+}
+
+\newcommand{\AlertStateDiagram}{%
+\begin{figure}[htbp]
+\centering
+\resizebox{\ifdim\linewidth>15.6cm 15.6cm\else\linewidth\fi}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,>=Stealth,
+  state/.style={draw=ink!50,fill=white,rounded corners=4pt,
+    text width=3.25cm,minimum height=1.25cm,align=center,inner sep=6pt},
+  transition/.style={->,thick,draw=accent},
+  edge label/.style={font=\sffamily\scriptsize,align=center,fill=white,inner sep=3pt},
+  note/.style={font=\sffamily\scriptsize,align=center,text=muted}
+]
+\node[state] (idle) at (1.6,0)
+  {\textbf{No active episode}\\No active alert pointer\\Per patient and rule};
+\node[state,draw=accent,fill=accent!7] (open) at (7.25,0)
+  {\textbf{Open episode}\\One persistent alert ID\\Duplicates suppressed};
+\node[state] (recovered) at (12.9,0)
+  {\textbf{Recovered episode}\\\texttt{recovered\_at} recorded\\Active rule pointer cleared};
+\draw[transition] (idle) -- node[edge label,above,text width=1.8cm]{3 samples:\\rule triggered} (open);
+\draw[transition] (open) -- node[edge label,above,text width=1.8cm]{3 samples:\\rule absent} (recovered);
+\draw[transition] (recovered.north) -- ++(0,1.3) -|
+  node[edge label,pos=0.48,above]{New three-sample trigger: create a new alert ID} (open.north);
+\draw[transition] (open.south) -- (7.25,-1.55) -- (5.55,-1.55) -- (open.south west);
+\node[edge label,text width=3.1cm] at (3.65,-1.65)
+  {Continued trigger or\\ineligible input:\\keep episode open};
+\node[draw=warning!65,fill=warning!6,rounded corners=3pt,
+  text width=5.3cm,minimum height=1.05cm,align=center,inner sep=6pt] (review) at (11.15,-2.25)
+  {\textbf{Independent caregiver review}\\Insert \texttt{(alert\_id, user\_id)} acknowledgement.\\Does not close the episode or certify recovery.};
+\draw[->,dashed,draw=warning] (open.south east) -- (review.north west);
+\node[draw=none,fill=light,rounded corners=3pt,text width=14.3cm,
+  align=left,inner sep=8pt] at (7.25,-4.40)
+  {\textbf{Eligibility is a gate, not another clinical state.}
+   The latest three readings must be synthetic, fresh within the supported two-minute window,
+   ordered as the latest capture, and separated by 1--30 seconds. Rule-specific validity/contact
+   checks apply. Recovery requires valid non-triggering observations of that rule;
+   stale, missing, invalid or device-diagnostic input cannot establish recovery.};
+\end{tikzpicture}}
+\caption{Implemented educational episode lifecycle for one patient--rule pair, derived from \texttt{alerts.py} and the SQLite schema. The recovered alert remains in history while its active pointer is cleared. ``Recovered'' describes the synthetic rule episode; it is not a health outcome. Caregiver review is an independent per-user record.}
+\label{fig:alert-state}
+\end{figure}%
+}
+
+\newcommand{\MobileLayersDiagram}{%
+\begin{figure}[htbp]
+\centering
+\resizebox{\ifdim\linewidth>15.6cm 15.6cm\else\linewidth\fi}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\scriptsize,>=Stealth,
+  module/.style={draw=ink!40,fill=white,rounded corners=3pt,
+    text width=3.65cm,minimum height=1.65cm,align=center,inner sep=6pt},
+  link/.style={->,draw=accent,thick},
+  label/.style={font=\sffamily\scriptsize,text=muted,align=center},
+  region/.style={draw=none,fill=light,rounded corners=4pt}
+]
+\begin{scope}[on background layer]
+  \path[region] (-0.2,0.95) rectangle (14.45,-1.0);
+  \path[region] (-0.2,-1.8) rectangle (14.45,-4.1);
+  \path[region] (-0.2,-4.7) rectangle (14.45,-7.3);
+\end{scope}
+\node[module,text width=11.9cm,minimum height=1.1cm,draw=accent] (activity) at (7.12,0)
+  {\textbf{MainActivity: native screens + event handling + screen state}\\
+   Combined presentation/controller responsibility; programmatic native Views.\\
+   Main-thread rendering; network work dispatched to an executor.};
+\node[label,anchor=west] at (-0.06,-0.8) {PRESENTATION / CONTROLLER};
+\node[module] (helpers) at (2.2,-2.9)
+  {\textbf{Logic and state helpers}\\\texttt{ReadingSummary}\\\texttt{LiveSampleFreshness}\\
+   \texttt{RelayPolicy} / \texttt{AlertInbox}};
+\node[module] (api) at (7.12,-2.9)
+  {\textbf{API / account boundary}\\\texttt{ApiClient}: HTTPS + JSON\\
+   \texttt{ApiSession}: identity + session\\Server-side authorisation};
+\node[module] (store) at (12.05,-2.9)
+  {\textbf{Private persistence}\\\texttt{SecureStore}: AES-GCM files\\
+   AndroidKeyStore key\\Account-bound state};
+\draw[link] (activity.south west) -- (helpers.north);
+\draw[link] (activity.south) -- (api.north);
+\draw[link] (activity.south east) -- (store.north);
+\node[label,anchor=west] at (-0.06,-3.92) {LOGIC / DATA ACCESS / PRIVATE STATE};
+\node[module] (transport) at (2.2,-5.7)
+  {\textbf{Device reception service}\\\texttt{LiveMonitorService}\\
+   \texttt{SensorTransport} interface\\\texttt{SppSensorClient} / \texttt{BleSensorClient}};
+\node[module] (relay) at (7.12,-5.7)
+  {\textbf{Durable upload worker}\\\texttt{ServerRelay}\\
+   Persist before send; stable UUID\\Bounded queue and retry policy};
+\node[module] (notifications) at (12.05,-5.7)
+  {\textbf{Private inbox service}\\\texttt{NotificationChannel-}\\\texttt{Service}\\
+   \texttt{NotificationSync}\\\texttt{NotificationCursor}};
+\draw[link] (transport) -- node[above,label]{Snapshots} (relay);
+\draw[link] (relay.north) -- (api.south);
+\draw[link] (notifications.north) -- node[right,label]{Cursor} (store.south);
+\node[label,anchor=west] at (-0.06,-7.1) {BACKGROUND RECEPTION / DELIVERY};
+\node[label,text width=14.2cm] at (7.12,-7.95)
+  {Selected source responsibilities and dependencies; a layered, MVC-inspired structure with combined View/controller work.\\
+   \texttt{SensorChartView} exists but is not mounted in the active UI. No complete MVVM implementation is claimed.};
+\end{tikzpicture}}
+\caption{Actual mobile organization rather than a proposed MVVM architecture. Transport, HTTPS access, private storage and state helpers are separated from the activity, while the activity retains presentation and controller duties. Source-level separation and JVM checks do not establish Android lifecycle, accessibility, Bluetooth or background-delivery acceptance on a physical phone.}
+\label{fig:mobile-layers}
+\end{figure}%
+}
