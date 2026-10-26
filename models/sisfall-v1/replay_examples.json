@@ -1,0 +1,39 @@
+{
+  "educational_only": true,
+  "examples": [
+    {
+      "record_id": "D01_SA05_R01.txt",
+      "expected_dataset_label": "adl_record",
+      "split": "test",
+      "source": "dataset_replay",
+      "sample_rate_hz": 200,
+      "record_complete": true,
+      "features": {
+        "magnitude_max_g": 1.8029110574984002,
+        "magnitude_min_g": 0.5308621056313141,
+        "magnitude_mean_g": 0.9917907684242387,
+        "magnitude_std_g": 0.1795026131893661,
+        "magnitude_p95_g": 1.3263476132548997,
+        "jerk_rms_g_s": 11.14427173601432,
+        "orientation_change_deg": 2.6544003954463387
+      }
+    },
+    {
+      "record_id": "F01_SA05_R01.txt",
+      "expected_dataset_label": "fall_record",
+      "split": "test",
+      "source": "dataset_replay",
+      "sample_rate_hz": 200,
+      "record_complete": true,
+      "features": {
+        "magnitude_max_g": 10.42265168231292,
+        "magnitude_min_g": 0.16669209604181148,
+        "magnitude_mean_g": 1.0097198672949455,
+        "magnitude_std_g": 0.3619573928724937,
+        "magnitude_p95_g": 1.305629107620963,
+        "jerk_rms_g_s": 53.41229816641275,
+        "orientation_change_deg": 98.63232563438736
+      }
+    }
+  ]
+}

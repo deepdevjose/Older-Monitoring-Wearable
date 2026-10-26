@@ -1,30 +1,29 @@
-# Secretos y certificados
+# Runtime, personal data and private keys stay outside source/release.
+.local/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+node_modules/
+.env
 certs/
+*.db
+*.db-*
+*.sqlite*
 *.key
 *.pem
-.env
-secrets.h
-!secrets.example.h
 *.jks
 *.keystore
+**/secrets.h
+!**/secrets.example.h
 local.properties
-
-# Bases de datos locales
-*.db
-*.sqlite
-
-# Compilación y entornos
-build/
-__pycache__/
-*.pyc
-.venv/
-venv/
-node_modules/
-
-# Diagnósticos locales
-CareMonitor-problem-firmware-20261023/diagnostics/
-
-# Editor / SO
+release/*.apk
+release/*.zip
+mobile/artifacts/
+mobile/build/
 .vscode/
 .idea/
 .DS_Store

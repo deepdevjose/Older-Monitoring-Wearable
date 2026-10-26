@@ -1,0 +1,414 @@
+{
+  "schema_version": 1,
+  "model_id": "sisfall-v1",
+  "educational_only": true,
+  "allowed_source": "dataset_replay",
+  "task": "complete_record_classification",
+  "selected_model": "logistic_regression",
+  "feature_names": [
+    "magnitude_max_g",
+    "magnitude_min_g",
+    "magnitude_mean_g",
+    "magnitude_std_g",
+    "magnitude_p95_g",
+    "jerk_rms_g_s",
+    "orientation_change_deg"
+  ],
+  "classes": [
+    "adl_record",
+    "fall_record"
+  ],
+  "sample_rate_hz": 200,
+  "sensor": "ADXL345",
+  "mounting": "waist",
+  "seed": 42,
+  "adc_conversion": "acceleration_g = raw * (2*16)/(2**13) = raw/256; first three columns only",
+  "feature_definition": {
+    "magnitude": "Euclidean norm of raw/256 acceleration, including gravity; statistics over the entire record; std ddof=0; p95 linear quantile",
+    "jerk_rms_g_s": "sqrt(mean(sum((diff(acceleration_g,axis=0)*200)**2,axis=1)))",
+    "orientation_change_deg": "acos of normalized dot product of mean acceleration in first and last 200 samples, converted to degrees",
+    "preprocessing": "No filtering, resampling or event localization; all features require the complete record"
+  },
+  "dataset": {
+    "file": "sisfall.tar.gz",
+    "sha256": "91de73bb1ea5cc3499d80a97d063dc504b244cf5449f61fd29d7fae90db41571",
+    "records": 4500,
+    "subject_count": 38,
+    "excluded_ambiguous_records": [
+      {
+        "record_id": "D17_SE15_R01.txt",
+        "folder_subject": "SA15",
+        "filename_subject": "SE15",
+        "reason": "Conflicting participant IDs in filename and containing folder"
+      },
+      {
+        "record_id": "D17_SE15_R02.txt",
+        "folder_subject": "SA15",
+        "filename_subject": "SE15",
+        "reason": "Conflicting participant IDs in filename and containing folder"
+      },
+      {
+        "record_id": "D17_SE15_R03.txt",
+        "folder_subject": "SA15",
+        "filename_subject": "SE15",
+        "reason": "Conflicting participant IDs in filename and containing folder"
+      },
+      {
+        "record_id": "D17_SE15_R04.txt",
+        "folder_subject": "SA15",
+        "filename_subject": "SE15",
+        "reason": "Conflicting participant IDs in filename and containing folder"
+      },
+      {
+        "record_id": "D17_SE15_R05.txt",
+        "folder_subject": "SA15",
+        "filename_subject": "SE15",
+        "reason": "Conflicting participant IDs in filename and containing folder"
+      }
+    ],
+    "label_definition": "Filename prefix F=fall_record, D=adl_record; these label the full activity, not every sample or a precise event time",
+    "source_2017": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5298771/",
+    "source_2018": "https://www.mdpi.com/1424-8220/18/4/1101"
+  },
+  "split": {
+    "method": "GroupShuffleSplit 60/20/20 of subjects, seed42 twice, no subject overlap; no redraw based on metrics",
+    "train": {
+      "records": 2622,
+      "subjects": [
+        "SA01",
+        "SA02",
+        "SA03",
+        "SA04",
+        "SA06",
+        "SA08",
+        "SA11",
+        "SA12",
+        "SA15",
+        "SA19",
+        "SA21",
+        "SA22",
+        "SA23",
+        "SE01",
+        "SE03",
+        "SE06",
+        "SE07",
+        "SE09",
+        "SE10",
+        "SE12",
+        "SE13",
+        "SE15"
+      ],
+      "subject_count": 22,
+      "class_counts": {
+        "adl_record": 1572,
+        "fall_record": 1050
+      }
+    },
+    "validation": {
+      "records": 935,
+      "subjects": [
+        "SA09",
+        "SA10",
+        "SA13",
+        "SA16",
+        "SA17",
+        "SE02",
+        "SE05",
+        "SE14"
+      ],
+      "subject_count": 8,
+      "class_counts": {
+        "adl_record": 560,
+        "fall_record": 375
+      }
+    },
+    "test": {
+      "records": 943,
+      "subjects": [
+        "SA05",
+        "SA07",
+        "SA14",
+        "SA18",
+        "SA20",
+        "SE04",
+        "SE08",
+        "SE11"
+      ],
+      "subject_count": 8,
+      "class_counts": {
+        "adl_record": 570,
+        "fall_record": 373
+      }
+    }
+  },
+  "selection": "Highest validation macro F1, then fall_record recall; exact tie selects simpler logistic regression. Test is not used for model selection",
+  "excluded_features": [
+    "subject ID",
+    "trial ID",
+    "activity code",
+    "filename",
+    "record duration",
+    "sample count",
+    "demographics",
+    "other sensor columns"
+  ],
+  "artifact_sha256": {
+    "logistic_regression.joblib": "c08cd62cbf42e60c2415c68d2ee566065316fc1cb962989220f1637858e075c7",
+    "random_forest.joblib": "73d269ea9d04dfeb6c6ea3dd15fb07b5048db49971e2e4074ba4d0de1f39ef2e"
+  },
+  "metrics": {
+    "logistic_regression": {
+      "validation": {
+        "classification_report": {
+          "adl_record": {
+            "precision": 0.9982174688057041,
+            "recall": 1.0,
+            "f1-score": 0.9991079393398751,
+            "support": 560.0
+          },
+          "fall_record": {
+            "precision": 1.0,
+            "recall": 0.9973333333333333,
+            "f1-score": 0.9986648865153538,
+            "support": 375.0
+          },
+          "accuracy": 0.9989304812834224,
+          "macro avg": {
+            "precision": 0.999108734402852,
+            "recall": 0.9986666666666666,
+            "f1-score": 0.9988864129276145,
+            "support": 935.0
+          },
+          "weighted avg": {
+            "precision": 0.9989323877338976,
+            "recall": 0.9989304812834224,
+            "f1-score": 0.9989302443567784,
+            "support": 935.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            560,
+            0
+          ],
+          [
+            1,
+            374
+          ]
+        ]
+      },
+      "test": {
+        "classification_report": {
+          "adl_record": {
+            "precision": 0.9982486865148862,
+            "recall": 1.0,
+            "f1-score": 0.9991235758106923,
+            "support": 570.0
+          },
+          "fall_record": {
+            "precision": 1.0,
+            "recall": 0.9973190348525469,
+            "f1-score": 0.9986577181208054,
+            "support": 373.0
+          },
+          "accuracy": 0.9989395546129375,
+          "macro avg": {
+            "precision": 0.999124343257443,
+            "recall": 0.9986595174262735,
+            "f1-score": 0.9988906469657488,
+            "support": 943.0
+          },
+          "weighted avg": {
+            "precision": 0.998941411785244,
+            "recall": 0.9989395546129375,
+            "f1-score": 0.9989393076046182,
+            "support": 943.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            570,
+            0
+          ],
+          [
+            1,
+            372
+          ]
+        ]
+      }
+    },
+    "random_forest": {
+      "validation": {
+        "classification_report": {
+          "adl_record": {
+            "precision": 0.9982174688057041,
+            "recall": 1.0,
+            "f1-score": 0.9991079393398751,
+            "support": 560.0
+          },
+          "fall_record": {
+            "precision": 1.0,
+            "recall": 0.9973333333333333,
+            "f1-score": 0.9986648865153538,
+            "support": 375.0
+          },
+          "accuracy": 0.9989304812834224,
+          "macro avg": {
+            "precision": 0.999108734402852,
+            "recall": 0.9986666666666666,
+            "f1-score": 0.9988864129276145,
+            "support": 935.0
+          },
+          "weighted avg": {
+            "precision": 0.9989323877338976,
+            "recall": 0.9989304812834224,
+            "f1-score": 0.9989302443567784,
+            "support": 935.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            560,
+            0
+          ],
+          [
+            1,
+            374
+          ]
+        ]
+      },
+      "test": {
+        "classification_report": {
+          "adl_record": {
+            "precision": 0.9965034965034965,
+            "recall": 1.0,
+            "f1-score": 0.9982486865148862,
+            "support": 570.0
+          },
+          "fall_record": {
+            "precision": 1.0,
+            "recall": 0.9946380697050938,
+            "f1-score": 0.9973118279569892,
+            "support": 373.0
+          },
+          "accuracy": 0.9978791092258749,
+          "macro avg": {
+            "precision": 0.9982517482517482,
+            "recall": 0.9973190348525469,
+            "f1-score": 0.9977802572359378,
+            "support": 943.0
+          },
+          "weighted avg": {
+            "precision": 0.9978865249278822,
+            "recall": 0.9978791092258749,
+            "f1-score": 0.9978781157385388,
+            "support": 943.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            570,
+            0
+          ],
+          [
+            2,
+            371
+          ]
+        ]
+      }
+    }
+  },
+  "selected_test_subgroups": {
+    "adult_group": {
+      "records": 766,
+      "subjects": 5,
+      "class_counts": {
+        "adl_record": 393,
+        "fall_record": 373
+      },
+      "fall_recall_evaluable": true,
+      "unsupported_class_metrics": [],
+      "classification_report": {
+        "adl_record": {
+          "precision": 0.9974619289340102,
+          "recall": 1.0,
+          "f1-score": 0.9987293519695044,
+          "support": 393.0
+        },
+        "fall_record": {
+          "precision": 1.0,
+          "recall": 0.9973190348525469,
+          "f1-score": 0.9986577181208054,
+          "support": 373.0
+        },
+        "accuracy": 0.9986945169712794,
+        "macro avg": {
+          "precision": 0.998730964467005,
+          "recall": 0.9986595174262735,
+          "f1-score": 0.9986935350451549,
+          "support": 766.0
+        },
+        "weighted avg": {
+          "precision": 0.9986978303799818,
+          "recall": 0.9986945169712794,
+          "f1-score": 0.9986944702128926,
+          "support": 766.0
+        }
+      }
+    },
+    "older_group": {
+      "records": 177,
+      "subjects": 3,
+      "class_counts": {
+        "adl_record": 177
+      },
+      "fall_recall_evaluable": false,
+      "unsupported_class_metrics": [
+        "fall_record"
+      ],
+      "classification_report": {
+        "adl_record": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 177.0
+        },
+        "fall_record": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1-score": 0.0,
+          "support": 0.0
+        },
+        "accuracy": 1.0,
+        "macro avg": {
+          "precision": 0.5,
+          "recall": 0.5,
+          "f1-score": 0.5,
+          "support": 177.0
+        },
+        "weighted avg": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 177.0
+        }
+      }
+    }
+  },
+  "versions": {
+    "python": "3.14.8",
+    "sklearn": "1.8.0",
+    "numpy": "2.4.6",
+    "pandas": "2.3.3",
+    "joblib": "1.5.3",
+    "matplotlib": "3.10.9"
+  },
+  "limitations": [
+    "Offline classification of a complete public-dataset record; not an online fall detector or event timestamp.",
+    "Simulated falls and controlled ADLs do not establish accuracy for accidental falls or patients.",
+    "SisFall ADXL345 was waist-mounted at 200 Hz; the current wearable MPU6050 snapshots near 1 Hz are incompatible.",
+    "The score is uncalibrated class confidence, not probability of a person's fall, injury or emergency.",
+    "Age-group fall support is limited: most older participants did not simulate falls; no elder clinical claim is supported.",
+    "No real telemetry, raw patient audio, location or individual health data is accepted by this model."
+  ]
+}

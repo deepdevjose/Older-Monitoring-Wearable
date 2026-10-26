@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "archive": {
+    "name": "sisfall.tar.gz",
+    "size_bytes": 226226447,
+    "sha256": "91de73bb1ea5cc3499d80a97d063dc504b244cf5449f61fd29d7fae90db41571"
+  },
+  "maximum_part_bytes": 94371840,
+  "parts": [
+    {
+      "name": "sisfall.tar.gz.part01",
+      "size_bytes": 94371840,
+      "sha256": "801a88aa3b0c0218623d2a56c07be045122048bb9df6e58e2afecd2e37ac5fb6"
+    },
+    {
+      "name": "sisfall.tar.gz.part02",
+      "size_bytes": 94371840,
+      "sha256": "902e2990c634f35f210bd6beeadc365e41d289f68b3fcef32e054bcda4483423"
+    },
+    {
+      "name": "sisfall.tar.gz.part03",
+      "size_bytes": 37482767,
+      "sha256": "036b0f076cf75e3e11868208ac11951bcc5ae22d65f4d1aea7b85d7f8272d976"
+    }
+  ]
+}

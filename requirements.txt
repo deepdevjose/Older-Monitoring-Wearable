@@ -1,2 +1,2 @@
-fastapi>=0.115,<1
-uvicorn[standard]>=0.30,<1
+# Single dependency definition: pyproject.toml.
+-e .[ml,dev]
