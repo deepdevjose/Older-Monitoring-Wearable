@@ -68,6 +68,18 @@ ok(call('POST',f"/notifications/{item['id']}/ack",ft))
 checks['second_phone_can_fetch_acked_delivery']=any(i['id']==item['id'] for i in ok(call('GET','/notifications',ft))['items'])
 synthetic=ok(call('POST','/ai/classify',et,{'source':'synthetic','features':{'heart_rate_bpm':75.,'spo2_percent':98.,'body_temp_c':36.5,'sample_age_seconds':0.}}))
 checks['synthetic_model_served_over_tls']=synthetic['educational_only'] is True
+history=ok(call('GET',f'/patients/{patient}/metrics/heart_rate_bpm/history?period=day&source=synthetic',ft))
+checks['caregiver_history_has_exact_valid_aggregates']=history['summary']['count']==3 and history['summary']['average']==75 and history['coverage']['complete']
+diagnostic=ok(call('GET',f'/patients/{patient}/metrics/heart_rate_bpm/history?period=day',et))
+checks['history_keeps_device_and_synthetic_sources_separate']=diagnostic['source']=='device_diagnostic' and diagnostic['summary']['count']==0
+exercise={'sample_id':str(uuid.uuid4()),'source':'synthetic','features':{'heart_rate_bpm':68.,'spo2_percent':97.,'body_temp_c':36.5,'sample_age_seconds':0.}}
+learning_path=f'/patients/{patient}/learning/readings'
+learned=ok(call('POST',learning_path,et,exercise),201)
+checks['mobile_learning_persists_model_label_and_confidence']=learned['classification']=='Normal' and 0<=learned['confidence']<=1 and learned['educational_only'] is True
+shared=ok(call('GET',learning_path,st))
+checks['approved_caregiver_can_review_learning_read_only']=shared['can_add'] is False and shared['items']==[learned] and call('POST',learning_path,st,exercise).status_code==404
+retried=ok(call('POST',learning_path,et,exercise),201)
+checks['learning_lost_response_retry_is_idempotent']=retried==learned and len(ok(call('GET',learning_path,et))['items'])==1
 example=ok(call('GET','/ai/fall/examples',et))['examples'][1]
 replay=ok(call('POST','/ai/fall-classify',et,{key:example[key] for key in ['source','sample_rate_hz','record_complete','features']}))
 checks['fall_replay_model_served_over_tls']=replay['task']=='complete_record_classification'
@@ -80,6 +92,8 @@ ok(call('DELETE','/reminders/'+reminder['id'],ft))
 checks['cancelled_reminder_cannot_be_taken']=call('POST','/reminders/'+reminder['id']+'/taken',et).status_code in [404,409]
 ok(call('DELETE','/caregivers/'+first['user']['id'],et))
 checks['revocation_blocks_previous_caregiver']=call('GET','/patients/'+patient+'/overview',ft).status_code==404
+checks['revocation_blocks_metric_history']=call('GET',f'/patients/{patient}/metrics/heart_rate_bpm/history',ft).status_code==404
+checks['revocation_blocks_learning_history']=call('GET',learning_path,ft).status_code==404
 checks['other_caregiver_keeps_access']=call('GET','/patients/'+patient+'/overview',st).status_code==200
 ok(call('POST','/auth/logout',st));checks['logout_revokes_token']=call('GET','/me',st).status_code==401
 try:

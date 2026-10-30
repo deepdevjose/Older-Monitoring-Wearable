@@ -40,6 +40,21 @@ CREATE TABLE IF NOT EXISTS readings (
  envelope TEXT NOT NULL, digest TEXT NOT NULL, UNIQUE(elder_id,sample_id)
 );
 CREATE INDEX IF NOT EXISTS readings_patient_time ON readings(elder_id, captured_at DESC);
+CREATE INDEX IF NOT EXISTS readings_history_source ON readings(elder_id,source,captured_at);
+CREATE TABLE IF NOT EXISTS metric_history_rollups (
+ elder_id TEXT NOT NULL REFERENCES patients(id), source TEXT NOT NULL,
+ hour_start INTEGER NOT NULL, detail TEXT NOT NULL,
+ PRIMARY KEY(elder_id,source,hour_start)
+);
+CREATE TABLE IF NOT EXISTS metric_history_indexed (
+ reading_id INTEGER PRIMARY KEY REFERENCES readings(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS learning_records (
+ id TEXT PRIMARY KEY, elder_id TEXT NOT NULL REFERENCES patients(id),
+ sample_id TEXT NOT NULL, created_at INTEGER NOT NULL, detail TEXT NOT NULL,
+ UNIQUE(elder_id,sample_id)
+);
+CREATE INDEX IF NOT EXISTS learning_patient_time ON learning_records(elder_id,created_at DESC,id);
 CREATE TABLE IF NOT EXISTS alerts (
  id TEXT PRIMARY KEY, elder_id TEXT NOT NULL REFERENCES patients(id), type TEXT NOT NULL,
  created_at INTEGER NOT NULL, source TEXT NOT NULL, detail TEXT NOT NULL, recovered_at INTEGER

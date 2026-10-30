@@ -34,6 +34,16 @@ public final class MainActivity extends Activity {
     private long epoch;
     private LiveMonitorService monitor;
     private TextView connectionLabel,readingLabel,deviceHeading;
+    private TextView homeConnection,homeReadingContext,detailFreshness,detailStored,detailSource,emptyReadingNote,emptyReadingHint;
+    private Button homeWearableButton;
+    private CareStatusView homeStatus;
+    private boolean animateNextPage;
+    private String homeBuiltKey="";
+    private final Map<String,MetricViews> metricViews=new LinkedHashMap<>();
+    private static final class MetricViews {
+        final LinearLayout tile; final TextView value,availability; final String title;
+        MetricViews(LinearLayout tile,TextView value,TextView availability,String title){this.tile=tile;this.value=value;this.availability=availability;this.title=title;}
+    }
     private ImageView setupStatusIcon;
     private LinearLayout deviceList;
     private EditText emailInput,passwordInput,nameInput,serverInput;
@@ -42,6 +52,10 @@ public final class MainActivity extends Activity {
     private String loginEmail="";
     private boolean acknowledged;
     private int deviceStep;
+    private String historyMetric="heart_rate_bpm",historyPeriod="day",historyError="";
+    private JSONObject historyData;
+    private long historyEndMillis,historyRequest;
+    private boolean historyLoading;
     private AuthAttempt authentication;
     /** Retained only across configuration changes; never writes passwords or responses to a Bundle. */
     private static final class AuthAttempt{
@@ -57,7 +71,7 @@ public final class MainActivity extends Activity {
         public void onServiceConnected(ComponentName name,IBinder binder){monitor=((LiveMonitorService.LocalBinder)binder).service();monitor.addListener(liveListener);updateDevice();}
         public void onServiceDisconnected(ComponentName name){monitor=null;updateDevice();}
     };
-    private final LiveMonitorService.Listener liveListener=this::updateDevice;
+    private final LiveMonitorService.Listener liveListener=()->{updateDevice();if(page.equals("home")||page.equals("reading_details"))updateReadingViews();};
     @Override public void onCreate(Bundle state){
         super.onCreate(state);getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -67,35 +81,39 @@ public final class MainActivity extends Activity {
         if(state!=null){page=state.getString("page","home");patientId=state.getString("patient","");
             registering=state.getBoolean("registering",false);setup.step=Math.max(0,Math.min(3,state.getInt("setup_step",0)));
             setup.role=state.getString("setup_role","");setup.name=state.getString("setup_name","");setup.email=state.getString("setup_email","");
-            loginEmail=state.getString("login_email","");acknowledged=state.getBoolean("acknowledged",false);deviceStep=Math.max(0,Math.min(3,state.getInt("device_step",0)));}
+            loginEmail=state.getString("login_email","");acknowledged=state.getBoolean("acknowledged",false);deviceStep=Math.max(0,Math.min(3,state.getInt("device_step",0)));
+            historyMetric=state.getString("history_metric","heart_rate_bpm");historyPeriod=state.getString("history_period","day");historyEndMillis=state.getLong("history_end",0);}
         Object retained=getLastNonConfigurationInstance();if(retained instanceof AuthAttempt){authentication=(AuthAttempt)retained;busy=true;authentication.attach(this);}
-        else if(state!=null&&state.getBoolean("auth_in_flight",false))notice="La solicitud se interrumpió. Si tu cuenta ya se creó, elige Ya tengo una cuenta para iniciar sesión.";
+        else if(state!=null&&state.getBoolean("auth_in_flight",false))notice="The request was interrupted. If your account was created, choose I already have an account to sign in.";
         bound=bindService(new Intent(this,LiveMonitorService.class),serviceConnection,BIND_AUTO_CREATE);
         if(Build.VERSION.SDK_INT>=33){android.window.OnBackInvokedCallback callback=this::goBack;
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,callback);backCallback=callback;}
         if(getIntent().getBooleanExtra("show_alerts",false)){page="alerts";patientId=getIntent().getStringExtra("patient_id")==null?patientId:getIntent().getStringExtra("patient_id");}
-        render();handleSoundIntent(getIntent());
+        render();handleSoundIntent(getIntent());if(session!=null&&page.equals("history"))loadHistory();
     }
-    @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);if(intent.getBooleanExtra("show_alerts",false)){page="alerts";patientId=intent.getStringExtra("patient_id")==null?patientId:intent.getStringExtra("patient_id");epoch++;refreshing=false;render();refresh();}handleSoundIntent(intent);}
+    @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);if(intent.getBooleanExtra("show_alerts",false)){clearHistory();page="alerts";patientId=intent.getStringExtra("patient_id")==null?patientId:intent.getStringExtra("patient_id");epoch++;refreshing=false;render();refresh();}handleSoundIntent(intent);}
     private void handleSoundIntent(Intent intent){if(intent.getBooleanExtra("sound_check",false)&&session!=null&&session.elder()){
-        intent.removeExtra("sound_check");new AlertDialog.Builder(this).setTitle("¿Te encuentras bien?")
-            .setMessage("Se observó sonido fuerte en el teléfono. Esta señal no identifica caídas ni accidentes. Puedes enviar un aviso a tu círculo de cuidado.")
-            .setPositiveButton("Enviar aviso",(d,w)->sendEvent("audio_impact")).setNegativeButton("Estoy bien",null).show();}}
+        intent.removeExtra("sound_check");new AlertDialog.Builder(this).setTitle("Are you okay?")
+            .setMessage("Your phone detected a loud sound. This does not identify a fall or accident. You can notify your care circle.")
+            .setPositiveButton("Send a notice",(d,w)->sendEvent("audio_impact")).setNegativeButton("I'm okay",null).show();}}
     @Override protected void onSaveInstanceState(Bundle state){rememberAuth();super.onSaveInstanceState(state);state.putString("page",page);state.putString("patient",patientId);
         state.putBoolean("registering",registering);state.putInt("setup_step",setup.step);state.putString("setup_role",setup.role);state.putString("setup_name",setup.name);
-        state.putString("setup_email",setup.email);state.putString("login_email",loginEmail);state.putBoolean("acknowledged",acknowledged);state.putInt("device_step",deviceStep);state.putBoolean("auth_in_flight",busy);}
+        state.putString("setup_email",setup.email);state.putString("login_email",loginEmail);state.putBoolean("acknowledged",acknowledged);state.putInt("device_step",deviceStep);state.putBoolean("auth_in_flight",busy);
+        state.putString("history_metric",historyMetric);state.putString("history_period",historyPeriod);state.putLong("history_end",historyEndMillis);}
     @Override public Object onRetainNonConfigurationInstance(){return authentication;}
     @Override public void onBackPressed(){goBack();}
     private void goBack(){
-        if(busy){toast("Espera a que termine la solicitud.");return;}
+        if(busy){toast("Please wait for the request to finish.");return;}
         if(session==null){rememberAuth();notice="";if(registering&&setup.step>0)setup.back();else if(registering)registering=false;else{moveTaskToBack(true);return;}}
         else if(page.equals("device")&&deviceStep>0)deviceStep--;
         else if(isSettingsDetail())page="account";else page="home";
+        if(!page.equals("history"))clearHistory();
         hideKeyboard();
         render();
     }
-    @Override protected void onStart(){super.onStart();visible=true;main.post(poll);}
-    @Override protected void onStop(){visible=false;main.removeCallbacks(poll);super.onStop();}
+    @Override protected void onStart(){super.onStart();visible=true;if(homeStatus!=null)homeStatus.setActive(true);main.post(poll);}
+    @Override protected void onStop(){visible=false;main.removeCallbacks(poll);stopPageMotion();super.onStop();}
+    private void stopPageMotion(){if(homeStatus!=null)homeStatus.setActive(false);if(content!=null)CareMotion.cancel(content);for(MetricViews metric:metricViews.values())CareMotion.cancel(metric.value);}
     @Override protected void onDestroy(){epoch++;main.removeCallbacksAndMessages(null);if(monitor!=null)monitor.removeListener(liveListener);if(bound)unbindService(serviceConnection);
         if(authentication!=null)synchronized(authentication){if(authentication.owner==this)authentication.owner=null;}
         if(isChangingConfigurations())network.shutdown();else network.shutdownNow();
@@ -104,7 +122,9 @@ public final class MainActivity extends Activity {
     private boolean elder(){return session!=null&&session.elder();}
     private JSONObject json(Object... entries){JSONObject object=new JSONObject();try{for(int i=0;i<entries.length;i+=2)object.put((String)entries[i],entries[i+1]);}catch(Exception failure){throw new IllegalArgumentException(failure);}return object;}
     private void render(){
+        stopPageMotion();metricViews.clear();
         connectionLabel=null;readingLabel=null;deviceList=null;deviceHeading=null;setupStatusIcon=null;
+        homeConnection=null;homeReadingContext=null;homeStatus=null;detailFreshness=null;detailStored=null;detailSource=null;emptyReadingNote=null;emptyReadingHint=null;homeWearableButton=null;
         emailInput=null;passwordInput=null;nameInput=null;serverInput=null;termsCheck=null;
         authActions=null;
         root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(BG);
@@ -119,73 +139,87 @@ public final class MainActivity extends Activity {
         if(session==null){auth();return;}
         if(!notice.isEmpty()){TextView message=text(notice,16,MUTED,false);message.setPadding(0,0,0,dp(16));content.addView(message);}
         if(page.equals("ready")){ready();return;}
-        if(page.equals("home"))home();else if(page.equals("alerts"))alerts();else if(page.equals("care"))care();else if(page.equals("device"))device();
-        else if(page.equals("connection")){settingsBack();label("Conexión",34,INK,true);paragraph("La conexión de tu equipo, en un solo lugar.");serverSettings();}
-        else if(page.equals("privacy")){settingsBack();label("Tu privacidad",34,INK,true);paragraph("Tú decides qué compartir y cuándo.");if(elder())privacy();}
-        else if(page.equals("notification_settings")){settingsBack();label("Notificaciones",34,INK,true);notificationSettings();}
-        else if(page.equals("security")){settingsBack();label("Tu información",34,INK,true);securityDetails();}
+        if(page.equals("home"))home();else if(page.equals("history"))history();else if(page.equals("alerts"))alerts();else if(page.equals("care"))care();else if(page.equals("device"))device();
+        else if(page.equals("connection")){settingsBack();label("Connection",34,INK,true);paragraph("Your connection, in one place.");serverSettings();}
+        else if(page.equals("privacy")){settingsBack();label("Your privacy",34,INK,true);paragraph("You choose what to share and when.");if(elder())privacy();}
+        else if(page.equals("notification_settings")){settingsBack();label("Notifications",34,INK,true);notificationSettings();}
+        else if(page.equals("security")){settingsBack();label("Your information",34,INK,true);securityDetails();}
+        else if(page.equals("reading_details")){settingsBack();readingDetails();}
         else account();
         navigation();
+        if(animateNextPage){animateNextPage=false;final View target=content;content.post(()->{if(visible&&content==target)CareMotion.enter(target);});}
     }
     private void brand(){
         LinearLayout brand=new LinearLayout(this);brand.setGravity(Gravity.CENTER_VERTICAL);brand.setPadding(0,0,0,dp(session==null?20:8));content.addView(brand);
         ImageView mark=icon(R.drawable.ic_heart,BLUE,22);FrameLayout tile=new FrameLayout(this);tile.setBackground(shape(SOFT,12));tile.addView(mark,new FrameLayout.LayoutParams(dp(22),dp(22),Gravity.CENTER));brand.addView(tile,new LinearLayout.LayoutParams(dp(36),dp(36)));
         TextView word=text("CareMonitor",17,INK,true);LinearLayout.LayoutParams wordLp=new LinearLayout.LayoutParams(0,-2,1);wordLp.leftMargin=dp(10);brand.addView(word,wordLp);
-        if(session!=null){TextView profile=text(initials(session.name),16,BLUE,true);profile.setGravity(Gravity.CENTER);profile.setMinHeight(dp(56));profile.setBackground(interactive(SOFT,28));profile.setContentDescription("Abrir ajustes");profile.setOnClickListener(v->openPage("account"));brand.addView(profile,new LinearLayout.LayoutParams(dp(56),dp(56)));}
+        if(session!=null){TextView profile=text(initials(session.name),16,BLUE,true);profile.setGravity(Gravity.CENTER);profile.setMinHeight(dp(56));profile.setBackground(interactive(SOFT,28));profile.setContentDescription("Open settings");profile.setOnClickListener(v->openPage("account"));brand.addView(profile,new LinearLayout.LayoutParams(dp(56),dp(56)));}
     }
-    private boolean isSettingsDetail(){return page.equals("connection")||page.equals("privacy")||page.equals("notification_settings")||page.equals("security");}
-    private void settingsBack(){textAction(content,"Ajustes",()->openPage("account"),false);}
-    private void openPage(String target){hideKeyboard();page=target;notice="";render();refresh();}
+    private boolean isSettingsDetail(){return page.equals("connection")||page.equals("privacy")||page.equals("notification_settings")||page.equals("security")||page.equals("reading_details");}
+    private void settingsBack(){textAction(content,"Settings",()->openPage("account"),false);}
+    private void openPage(String target){hideKeyboard();if(!target.equals("history"))clearHistory();animateNextPage=!page.equals(target);page=target;notice="";render();refresh();}
     private void hideKeyboard(){View focus=getCurrentFocus();if(focus!=null)((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(focus.getWindowToken(),0);}
     private String initials(String name){String[] parts=name.trim().split("\\s+");if(parts.length==0||parts[0].isEmpty())return "CM";return (parts[0].substring(0,1)+(parts.length>1?parts[parts.length-1].substring(0,1):"")).toUpperCase(Locale.getDefault());}
     private void auth(){
         if(registering){registration();return;}
-        label("Cuidar, más cerca.",34,INK,true);
-        paragraph("Tu bienestar y tu círculo de cuidado, en un mismo lugar.");
+        label("Care, closer.",34,INK,true);
+        paragraph("Your wellbeing and care circle, together.");
         LinearLayout card=card(content);
-        emailInput=input(card,"Correo electrónico",loginEmail,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        passwordInput=input(card,"Contraseña","",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);passwordInput.setSaveEnabled(false);
+        emailInput=input(card,"Email address",loginEmail,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        passwordInput=input(card,"Password","",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);passwordInput.setSaveEnabled(false);
         passwordVisibility(card,passwordInput);
         emailInput.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_NEXT);emailInput.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_NEXT){passwordInput.requestFocus();return true;}return false;});
         passwordInput.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);passwordInput.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_DONE){authenticate();return true;}return false;});
         authNotice();
-        reassurance("Un espacio privado para ti", "CareMonitor no sustituye atención médica ni servicios de emergencia.");
-        LinearLayout actions=authFooter();button(actions,busy?"Iniciando sesión…":"Iniciar sesión",BLUE,this::authenticate);
-        textAction(actions,"Crear una cuenta",()->{rememberAuth();hideKeyboard();registering=true;setup=new AccountSetup();acknowledged=false;notice="";render();},true);
-        if(!getSharedPreferences("caremonitor_endpoint",0).getString("previous_base","").isEmpty())button(content,"Volver a mi conexión anterior",SOFT,()->{
+        reassurance("Your private space", "CareMonitor does not replace medical care or emergency services.");
+        LinearLayout actions=authFooter();button(actions,busy?"Signing in…":"Sign in",BLUE,this::authenticate);
+        textAction(actions,"Create an account",()->{rememberAuth();hideKeyboard();registering=true;setup=new AccountSetup();acknowledged=false;notice="";render();},true);
+        if(!getSharedPreferences("caremonitor_endpoint",0).getString("previous_base","").isEmpty())button(content,"Restore my previous connection",SOFT,()->{
+            if(busy||session!=null)return;
             String previous=getSharedPreferences("caremonitor_endpoint",0).getString("previous_base","");
+            if(previous.isEmpty())return;
+            String password=passwordInput.getText().toString();
             if(getSharedPreferences("caremonitor_endpoint",0).edit().putString("base",previous).remove("previous_base").commit()){
-                rememberAuth();notice="Conexión anterior restaurada.";render();}
-            else toast("No se pudo restaurar la conexión.");
+                rememberAuth();notice="Previous connection restored.";render();passwordInput.setText(password);}
+            else toast("Could not restore your connection.");
+        });
+        if(!ApiSession.savedBase(this).equals(ApiSession.DEFAULT_BASE))button(content,"Update my connection",SOFT,()->{
+            if(busy||session!=null)return;
+            String previous=ApiSession.savedBase(this);
+            if(previous.equals(ApiSession.DEFAULT_BASE))return;
+            String password=passwordInput.getText().toString();
+            if(getSharedPreferences("caremonitor_endpoint",0).edit().putString("previous_base",previous).putString("base",ApiSession.DEFAULT_BASE).commit()){
+                rememberAuth();notice="Connection updated. Sign in to continue.";render();passwordInput.setText(password);}
+            else toast("Could not update your connection.");
         });
     }
     private void registration(){
-        progress(setup.step,4,"Crear tu cuenta");
-        String[] titles={"¿Cómo usarás CareMonitor?","¿Cómo te llamas?","¿Cuál es tu correo?","Protege tu cuenta"};
-        String[] hints={"Elige la opción que mejor te describa.","Usaremos este nombre para saludarte.","Lo usarás para iniciar sesión.","Este es el último paso. Tu contraseña debe tener entre 12 y 128 caracteres."};
+        progress(setup.step,4,"Create your account");
+        String[] titles={"How will you use CareMonitor?","What's your name?","What's your email?","Protect your account"};
+        String[] hints={"Choose the option that describes you.","We'll use this name to greet you.","You'll use it to sign in.","One last step. Your password needs 12 to 128 characters."};
         label(titles[setup.step],32,INK,true);paragraph(hints[setup.step]);
         if(setup.step==0){
-            roleChoice("elder","Soy la persona mayor","Mi wearable, mi bienestar y las personas que elijo.",R.drawable.ic_person);
-            roleChoice("caregiver","Soy cuidador o cuidadora","Acompaño a alguien de mi círculo de cuidado.",R.drawable.ic_people);
+            roleChoice("elder","I'm the older adult","My wearable, my wellbeing and the people I choose.",R.drawable.ic_person);
+            roleChoice("caregiver","I'm a caregiver","I support someone in my care circle.",R.drawable.ic_people);
         }else{
             LinearLayout card=card(content);
-            if(setup.step==1)nameInput=input(card,"Tu nombre",setup.name,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_WORDS);
-            else if(setup.step==2)emailInput=input(card,"Correo electrónico",setup.email,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+            if(setup.step==1)nameInput=input(card,"Your name",setup.name,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+            else if(setup.step==2)emailInput=input(card,"Email address",setup.email,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
             else{
                 labelIn(card,setup.name,23,INK,true);labelIn(card,setup.email,17,MUTED,false);
-                labelIn(card,setup.elder()?"Persona mayor":"Cuidador o cuidadora",17,BLUE,true);
-                passwordInput=input(card,"Elige una contraseña","",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);passwordInput.setSaveEnabled(false);
+                labelIn(card,setup.elder()?"Older adult":"Caregiver",17,BLUE,true);
+                passwordInput=input(card,"Choose a password","",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);passwordInput.setSaveEnabled(false);
                 passwordVisibility(card,passwordInput);
-                termsCheck=new CheckBox(this);termsCheck.setText("Entiendo las limitaciones. Usaré datos de prueba y no tomaré decisiones médicas con esta app.");
+                termsCheck=new CheckBox(this);termsCheck.setText("I understand the limitations. I will use test data and will not make medical decisions with this app.");
                 termsCheck.setTextColor(INK);termsCheck.setTextSize(17);termsCheck.setMinHeight(dp(56));termsCheck.setChecked(acknowledged);termsCheck.setEnabled(!busy);card.addView(termsCheck);
             }
         }
         if(nameInput!=null||emailInput!=null){EditText field=nameInput!=null?nameInput:emailInput;field.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_NEXT);
             field.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_NEXT){advanceSetup();return true;}return false;});}
         authNotice();
-        LinearLayout actions=authFooter();button(actions,busy?"Creando tu cuenta…":setup.step==3?"Crear mi cuenta":"Continuar",BLUE,this::advanceSetup);
-        textAction(actions,setup.step==0?"Ya tengo una cuenta":"Atrás",this::goBack,true);
-        if(setup.step>0)textAction(content,"Ya tengo una cuenta",()->{rememberAuth();hideKeyboard();loginEmail=setup.email;registering=false;notice="";render();},true);
+        LinearLayout actions=authFooter();button(actions,busy?"Creating your account…":setup.step==3?"Create my account":"Continue",BLUE,this::advanceSetup);
+        textAction(actions,setup.step==0?"I already have an account":"Back",this::goBack,true);
+        if(setup.step>0)textAction(content,"I already have an account",()->{rememberAuth();hideKeyboard();loginEmail=setup.email;registering=false;notice="";render();},true);
     }
     private void advanceSetup(){
         if(busy)return;rememberAuth();String problem=setup.problem();if(!problem.isEmpty()){notice=problem;render();return;}
@@ -196,7 +230,10 @@ public final class MainActivity extends Activity {
         root.addView(authActions,new LinearLayout.LayoutParams(-1,-2));return authActions;
     }
     private void passwordVisibility(LinearLayout parent,EditText password){
-        CheckBox show=new CheckBox(this);show.setText("Mostrar contraseña");show.setContentDescription("Mostrar contraseña");show.setTextSize(16);show.setTextColor(MUTED);show.setMinHeight(dp(56));show.setButtonTintList(ColorStateList.valueOf(BLUE));show.setEnabled(!busy);parent.addView(show,new LinearLayout.LayoutParams(-1,-2));
+        secretVisibility(parent,password,"Show password");
+    }
+    private void secretVisibility(LinearLayout parent,EditText password,String title){
+        CheckBox show=new CheckBox(this);show.setText(title);show.setContentDescription(title);show.setTextSize(16);show.setTextColor(MUTED);show.setMinHeight(dp(56));show.setButtonTintList(ColorStateList.valueOf(BLUE));show.setEnabled(!busy);parent.addView(show,new LinearLayout.LayoutParams(-1,-2));
         show.setOnCheckedChangeListener((view,checked)->{int cursor=password.getSelectionStart();password.setTransformationMethod(checked?null:android.text.method.PasswordTransformationMethod.getInstance());password.setSelection(Math.max(0,Math.min(cursor,password.length())));});
     }
     private void reassurance(String title,String detail){
@@ -212,7 +249,7 @@ public final class MainActivity extends Activity {
     }
     private void authNotice(){if(!notice.isEmpty()){TextView message=labelIn(content,notice,17,RED,false);message.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);}}
     private void progress(int step,int count,String title){
-        label(title+" · Paso "+(step+1)+" de "+count,15,MUTED,true);
+        label(title+" · Step "+(step+1)+" of "+count,15,MUTED,true);
         LinearLayout track=new LinearLayout(this);track.setPadding(0,dp(8),0,dp(16));content.addView(track);
         for(int i=0;i<count;i++){View segment=new View(this);segment.setBackground(shape(i<=step?BLUE:LINE,5));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(5),1);lp.rightMargin=i<count-1?dp(6):0;track.addView(segment,lp);}
     }
@@ -230,14 +267,14 @@ public final class MainActivity extends Activity {
         ImageView icon=new ImageView(this);icon.setImageResource(resource);icon.setImageTintList(ColorStateList.valueOf(BLUE));icon.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);row.addView(icon,new LinearLayout.LayoutParams(dp(32),dp(32)));
         TextView heading=text(title,20,INK,true);LinearLayout.LayoutParams headingLp=new LinearLayout.LayoutParams(0,-2,1);headingLp.leftMargin=dp(12);headingLp.rightMargin=dp(12);row.addView(heading,headingLp);
         ImageView check=icon(selected?R.drawable.ic_check_circle:R.drawable.ic_chevron_right,selected?BLUE:MUTED,24);row.addView(check,new LinearLayout.LayoutParams(dp(24),dp(24)));labelIn(option,subtitle,17,MUTED,false);
-        option.setFocusable(true);option.setClickable(true);option.setSelected(selected);option.setContentDescription(title+". "+subtitle+(selected?". Seleccionado":""));
+        option.setFocusable(true);option.setClickable(true);option.setSelected(selected);option.setContentDescription(title+". "+subtitle+(selected?". Selected":""));
         option.setOnClickListener(v->{if(busy)return;setup.role=role;notice="";render();});
     }
     private void ready(){
-        illustration(R.drawable.ic_care_monitor,"Tu círculo de cuidado");label("Tu cuenta está lista",32,INK,true);
-        paragraph("Ahora puedes pedir acceso a la persona que acompañas. Ella revisará y aprobará tu solicitud.");
-        button(content,"Vincular a una persona",BLUE,()->{page="care";render();refresh();});
-        button(content,"Ir a mi inicio",SOFT,()->{page="home";render();refresh();});
+        illustration(R.drawable.ic_care_monitor,"Your care circle");label("Your account is ready",32,INK,true);
+        paragraph("You can now ask the person you support for access. They will review and approve your request.");
+        button(content,"Link to a person",BLUE,()->{page="care";render();refresh();});
+        button(content,"Go to Today",SOFT,()->{page="home";render();refresh();});
     }
     private void authenticate(){
         if(busy)return;
@@ -245,10 +282,10 @@ public final class MainActivity extends Activity {
         rememberAuth();final String base,email,password,name,role;
         try{base=ApiClient.base(ApiSession.savedBase(this));email=registering?setup.email:loginEmail;password=passwordInput.getText().toString();
             name=registering?setup.name:"";role=registering?setup.role:"";
-            if(!email.contains("@")||password.length()<12||password.length()>128)throw new IllegalArgumentException("Usa un correo válido y una contraseña de entre 12 y 128 caracteres.");
-            if(registering&&(!setup.problem().isEmpty()||!acknowledged))throw new IllegalArgumentException("Revisa tus datos y acepta las condiciones de uso.");
+            if(!email.contains("@")||password.length()<12||password.length()>128)throw new IllegalArgumentException("Use a valid email and a password with 12 to 128 characters.");
+            if(registering&&(!setup.problem().isEmpty()||!acknowledged))throw new IllegalArgumentException("Review your details and accept the terms of use.");
         }catch(Exception failure){toast(failure.getMessage());return;}
-        busy=true;final boolean registration=registering;notice="Conectando por HTTPS…";
+        busy=true;final boolean registration=registering;notice="Connecting securely…";
         passwordInput.setText("");epoch++;AuthAttempt attempt=new AuthAttempt(registration,base,email);authentication=attempt;attempt.attach(this);render();
         network.execute(()->{try{
             JSONObject body=json("email",email,"password",password);
@@ -260,208 +297,432 @@ public final class MainActivity extends Activity {
     private void finishAuthentication(AuthAttempt attempt){
         synchronized(attempt){if(attempt.owner!=this||authentication!=attempt||!attempt.finished||isFinishing()||isDestroyed())return;attempt.owner=null;}
         authentication=null;busy=false;
-        if(attempt.error!=null){notice=attempt.error+(attempt.registration?" Si ya tienes cuenta, inicia sesión.":"");render();return;}
+        if(attempt.error!=null){notice=attempt.error+(attempt.registration?" If you already have an account, sign in.":"");render();return;}
         try{ApiSession saved=ApiSession.save(this,attempt.base,attempt.response);session=saved;page=attempt.registration?(saved.elder()?"device":"ready"):"home";deviceStep=0;patientId="";notice="";
             getSharedPreferences("caremonitor_endpoint",0).edit().remove("previous_base").apply();
             loginEmail=attempt.email;registering=false;setup=new AccountSetup();acknowledged=false;
             NotificationSync.schedule(this);if(monitor!=null)monitor.refreshSession();render();refresh();
-        }catch(Exception failure){notice="No se pudo guardar la sesión. Vuelve a iniciar sesión.";render();}
+        }catch(Exception failure){notice="Could not save your session. Please sign in again.";render();}
     }
     private void navigation(){
         View divider=new View(this);divider.setBackgroundColor(LINE);root.addView(divider,new LinearLayout.LayoutParams(-1,Math.max(1,dp(.5f))));
         LinearLayout nav=new LinearLayout(this);nav.setOrientation(LinearLayout.HORIZONTAL);nav.setGravity(Gravity.CENTER_VERTICAL);nav.setPadding(dp(8),dp(6),dp(8),dp(6));nav.setBackgroundColor(Color.WHITE);root.addView(nav);
-        String[] labels={"Hoy","Avisos","Cuidado","Ajustes"},pages={"home","alerts","care","account"};
+        String[] labels={"Today","Updates","Care","Settings"},pages={"home","alerts","care","account"};
         int[] symbols={R.drawable.ic_nav_overview,R.drawable.ic_nav_alerts,R.drawable.ic_people,R.drawable.ic_nav_settings};
-        for(int i=0;i<labels.length;i++){final String target=pages[i];boolean selected=page.equals(target)||(target.equals("account")&&isSettingsDetail())||(target.equals("home")&&page.equals("device"));int tint=selected?BLUE:MUTED;
+        for(int i=0;i<labels.length;i++){final String target=pages[i];boolean selected=page.equals(target)||(target.equals("account")&&isSettingsDetail())||(target.equals("home")&&(page.equals("device")||page.equals("history")));int tint=selected?BLUE:MUTED;
             LinearLayout item=new LinearLayout(this);item.setOrientation(LinearLayout.VERTICAL);item.setGravity(Gravity.CENTER);item.setPadding(dp(2),dp(4),dp(2),dp(4));item.setMinimumHeight(dp(60));item.setBackground(interactive(Color.WHITE,14));
             item.addView(icon(symbols[i],tint,24),new LinearLayout.LayoutParams(dp(24),dp(24)));
             TextView label=text(labels[i],12,tint,selected);label.setGravity(Gravity.CENTER);label.setPadding(0,dp(4),0,0);label.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);item.addView(label,new LinearLayout.LayoutParams(-1,-2));
             item.setSelected(selected);item.setContentDescription(labels[i]);item.setFocusable(true);item.setOnClickListener(v->openPage(target));nav.addView(item,new LinearLayout.LayoutParams(0,-2,1));}
     }
     private void home(){
-        label(elder()?"Hola, "+session.name.split(" ")[0]+".":"Cuidar empieza aquí.",34,INK,true);
-        paragraph(elder()?"Tu día, con tranquilidad y compañía.":"Una vista clara de las personas que acompañas.");
-        if(!elder())patientChooser();
-        LinearLayout hero=card(content);hero.setBackground(shape(Color.WHITE,24));
-        LinearLayout statusTitle=new LinearLayout(this);statusTitle.setGravity(Gravity.CENTER_VERTICAL);hero.addView(statusTitle);
-        statusTitle.addView(icon(R.drawable.ic_watch,BLUE,22),new LinearLayout.LayoutParams(dp(22),dp(22)));
-        TextView eyebrow=text(elder()?"MI BIENESTAR":"BIENESTAR DE "+patientName().toUpperCase(Locale.getDefault()),13,MUTED,true);eyebrow.setLetterSpacing(.06f);LinearLayout.LayoutParams eyebrowLp=new LinearLayout.LayoutParams(0,-2,1);eyebrowLp.leftMargin=dp(10);statusTitle.addView(eyebrow,eyebrowLp);
-        String state=overview.optJSONObject("freshness")==null?"no_data":overview.optJSONObject("freshness").optString("state");
-        labelIn(hero,state.equals("fresh")?"Datos recientes":state.equals("stale")?"Datos antiguos":"Esperando conexión",28,INK,true);
-        labelIn(hero,state.equals("fresh")?"Lecturas del wearable · no son una valoración médica.":"La ausencia de datos no significa que todo esté bien.",17,MUTED,false);
-        if(elder()){
-            connectionLabel=labelIn(hero,monitor==null?"Wearable sin conexión":monitor.bluetoothState(),16,MUTED,false);
-            button(hero,"Conectar mi wearable",BLUE,()->{deviceStep=0;page="device";render();});
-        }else if(patientId.isEmpty())labelIn(hero,"Pide el código de vinculación a la persona mayor.",17,MUTED,false);
-        JSONObject reading=overview.optJSONObject("reading");JSONObject raw=reading==null?null:reading.optJSONObject("payload");
-        if(elder()&&monitor!=null&&monitor.isFresh())raw=monitor.snapshot();
-        metrics(raw);
-        if(reading!=null)paragraph("Última muestra del servidor: "+formatTime(reading.optString("captured_at"))+" · origen "+sourceLabel(reading.optString("source","")));
-        if(elder()){
-            LinearLayout help=card(content);labelIn(help,"Estoy aquí para ayudarte",23,INK,true);
-            labelIn(help,"Envía un aviso a tu círculo de cuidado. Necesita conexión con el servidor.",18,MUTED,false);
-            button(help,"Pedir ayuda",RED,()->confirm("¿Enviar un aviso de ayuda?","Llegará como aviso a tus cuidadores vinculados. Este sistema no llama a emergencias.",()->sendEvent("sos")));
-            button(help,"Quiero avisar de una caída",SOFT,()->confirm("¿Confirmas que quieres avisar?","La señal de movimiento no confirma por sí sola una caída. Tú decides enviar el aviso.",()->sendEvent("possible_fall")));
+        TextView date=labelIn(content,new java.text.SimpleDateFormat("EEEE, d MMMM",Locale.ENGLISH).format(new Date()).toUpperCase(Locale.ENGLISH),13,MUTED,true);
+        date.setLetterSpacing(.06f);
+        String first=session.name.trim().isEmpty()?"there":session.name.trim().split("\\s+")[0];
+        label(elder()?"Hello, "+first+".":"Your care today",34,INK,true);
+        paragraph(elder()?"Your day, one step at a time.":"Stay close to the people you support.");
+        if(!elder()){
+            patientChooser();
+            if(!approvedPatient(patientId)){
+                LinearLayout welcome=card(content);welcome.addView(icon(R.drawable.ic_people,BLUE,32),new LinearLayout.LayoutParams(dp(32),dp(32)));
+                labelIn(welcome,"Bring your care circle together",26,INK,true);
+                labelIn(welcome,"Ask the older adult for an invitation code. Their approval keeps them in control.",18,MUTED,false);
+                button(welcome,"Link to a person",BLUE,()->openPage("care"));homeBuiltKey=homeStructureKey();return;
+            }
         }
-        medicationCards(false);
-        JSONObject location=overview.optJSONObject("location");
-        if(!elder()&&location!=null){LinearLayout card=card(content);labelIn(card,"Fuera de casa",23,INK,true);
-            labelIn(card,"Última ubicación compartida: "+formatTime(location.optString("recorded_at"))+" · precisión ±"+(int)location.optDouble("accuracy_m")+" m",17,MUTED,false);
-            button(card,"Ver coordenadas",SOFT,()->new AlertDialog.Builder(this).setTitle("Ubicación GPS compartida").setMessage("Latitud: "+location.optDouble("latitude")+"\nLongitud: "+location.optDouble("longitude")+"\nPrecisión: ±"+(int)location.optDouble("accuracy_m")+" m\n\nSe muestra en el teléfono sin abrir servicios de mapas externos.").setPositiveButton("Entendido",null).show());}
-        LinearLayout limits=card(content);labelIn(limits,"Una lectura con contexto",22,INK,true);
-        labelIn(limits,"El GY906 mide temperatura de superficie, no temperatura corporal central. La luz puede sugerir contacto, pero requiere calibración. La presión arterial y la deshidratación no se pueden determinar con estos sensores.",17,MUTED,false);
-        button(content,"Actualizar",SOFT,this::refresh);
+        connectionStrip();
+        if(elder()){
+            button(content,"Ask for help",RED,()->confirm("Send a request for help?",
+                (caregivers.length()==0?"No caregiver is linked yet, so nobody in your circle can receive this request. ":"Your approved caregivers will receive a notice. ")+"This does not call emergency services.",()->sendEvent("sos")));
+            nextReminder();
+        }else{
+            int pending=pendingReviewCount();LinearLayout updates=card(content);
+            labelIn(updates,pending>0?"Needs your review":"Care updates",24,INK,true);
+            labelIn(updates,pending>0?pending+(pending==1?" notice is waiting.":" notices are waiting."):"No notices awaiting review.",18,MUTED,false);
+            button(updates,"Review updates",pending>0?BLUE:SOFT,()->openPage("alerts"));
+        }
+        metrics(readingsPayload());
+        if(!elder())nextReminder();
+        if(!elder())sharedLocation();
+        textAction(content,"Refresh",this::refresh,true);
+        homeBuiltKey=homeStructureKey();
+    }
+    private int pendingReviewCount(){JSONArray alerts=overview.optJSONArray("alerts");int count=0;if(alerts!=null)for(int i=0;i<alerts.length();i++){JSONObject alert=alerts.optJSONObject(i);if(alert!=null&&!alert.optBoolean("acknowledged"))count++;}return count;}
+    private void connectionStrip(){
+        LinearLayout strip=new LinearLayout(this);strip.setGravity(Gravity.CENTER_VERTICAL);strip.setMinimumHeight(dp(64));strip.setPadding(0,dp(4),0,dp(12));content.addView(strip,new LinearLayout.LayoutParams(-1,-2));
+        homeStatus=new CareStatusView(this);strip.addView(homeStatus,new LinearLayout.LayoutParams(dp(40),dp(40)));homeStatus.setActive(visible);
+        LinearLayout copy=new LinearLayout(this);copy.setOrientation(LinearLayout.VERTICAL);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,-2,1);cp.leftMargin=dp(10);strip.addView(copy,cp);
+        homeConnection=labelIn(copy,"",17,INK,true);homeConnection.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        homeReadingContext=labelIn(copy,"",15,MUTED,false);
+        strip.addView(icon(R.drawable.ic_chevron_right,MUTED,18),new LinearLayout.LayoutParams(dp(18),dp(18)));
+        strip.setBackground(interactive(Color.TRANSPARENT,16));strip.setFocusable(true);strip.setContentDescription("Reading details");strip.setOnClickListener(v->openPage("reading_details"));
+        if(elder()){button(content,"Connect my wearable",BLUE,()->{deviceStep=0;openPage("device");});homeWearableButton=(Button)content.getChildAt(content.getChildCount()-1);homeWearableButton.setVisibility(monitor!=null&&monitor.isRunning()?View.GONE:View.VISIBLE);}
+        updateConnectionStrip();
+    }
+    private void updateConnectionStrip(){
+        if(homeConnection==null||homeStatus==null)return;
+        boolean live=elder()&&monitor!=null&&monitor.isFresh();
+        String freshness=readingFreshness();
+        String title=live?"Wearable connected":elder()&&monitor!=null&&monitor.isRunning()?"Connecting to your wearable":elder()?"Wearable not connected":"Shared readings";
+        String subtitle=live?"Updating from your wearable":readingsPayload()==null?"No readings available yet":freshness.equals("fresh")?"Latest saved readings":"Saved readings may be out of date";
+        homeConnection.setText(title);homeReadingContext.setText(subtitle);
+        if(homeWearableButton!=null)homeWearableButton.setVisibility(monitor!=null&&monitor.isRunning()?View.GONE:View.VISIBLE);
+        homeStatus.setState(live?CareStatusView.State.LIVE:elder()&&monitor!=null&&monitor.isRunning()?CareStatusView.State.CONNECTING:CareStatusView.State.OFFLINE);
+    }
+    private String readingFreshness(){JSONObject freshness=overview.optJSONObject("freshness");return freshness==null?"no_data":freshness.optString("state","no_data");}
+    private JSONObject storedReading(){
+        if(!elder()&&!approvedPatient(patientId))return null;
+        JSONObject person=overview.optJSONObject("patient");
+        if(!elder()&&(person==null||!patientId.equals(person.optString("id"))))return null;
+        return overview.optJSONObject("reading");
+    }
+    private JSONObject readingsPayload(){
+        if(elder()&&monitor!=null&&monitor.isFresh())return monitor.snapshot();
+        JSONObject reading=storedReading();
+        return reading!=null&&"device_diagnostic".equals(reading.optString("source"))?reading.optJSONObject("payload"):null;
+    }
+    private String homeStructureKey(){
+        return selectedPatient()+"|"+patients.toString()+"|"+reminders.toString()+"|"+pendingReviewCount()+"|"+(monitor!=null&&monitor.isRunning())+"|"+(overview.optJSONObject("location")!=null)+"|"+new java.text.SimpleDateFormat("yyyy-MM-dd",Locale.ENGLISH).format(new Date());
+    }
+    private void nextReminder(){
+        label(elder()?"For today":"Care plan",23,INK,true);
+        JSONObject next=null;long earliest=Long.MAX_VALUE;
+        for(int i=0;i<reminders.length();i++){
+            JSONObject reminder=reminders.optJSONObject(i);if(reminder==null||reminder.opt("cancelled_at") instanceof String)continue;
+            boolean waiting=reminder.opt("last_due_at") instanceof String&&!(reminder.opt("taken_at") instanceof String);
+            if(!waiting&&!reminder.optBoolean("active"))continue;
+            long at=waiting?0:ApiSession.expiryMs(reminder.optString("due_at"));
+            if(next==null||at<earliest){next=reminder;earliest=at;}
+        }
+        LinearLayout plan=card(content);
+        if(next==null){labelIn(plan,"No reminders scheduled",23,INK,true);labelIn(plan,elder()?"Your care circle can add an agreed reminder to your plan.":"Add an agreed reminder from Care.",17,MUTED,false);}
+        else{
+            boolean waiting=next.opt("last_due_at") instanceof String&&!(next.opt("taken_at") instanceof String);
+            labelIn(plan,waiting?"Reminder to confirm":"Next reminder",14,BLUE,true);labelIn(plan,next.optString("title","Reminder"),25,INK,true);
+            String instructions=(next.optString("dose","")+" "+next.optString("instructions","")).trim();if(!instructions.isEmpty())labelIn(plan,instructions,18,INK,false);
+            labelIn(plan,waiting?(elder()?"Have you completed this reminder?":"Waiting for their confirmation."):formatTime(next.optString("due_at")),17,MUTED,false);
+            if(waiting&&elder()){final String id=next.optString("id");button(plan,"I've taken it",BLUE,()->confirm("Confirm you took it?","This records your confirmation only. It does not verify ingestion or change your prescribed plan.",()->mutate("POST","/reminders/"+id+"/taken",json(),"Confirmation recorded.")));}
+        }
+        textAction(plan,elder()?"View my care plan":"View care plan",()->openPage("care"),false);
+    }
+    private void sharedLocation(){JSONObject location=overview.optJSONObject("location");if(location==null)return;
+        LinearLayout shared=card(content);labelIn(shared,"Shared location",23,INK,true);labelIn(shared,"Last shared: "+formatTime(location.optString("recorded_at")),17,MUTED,false);
+        button(shared,"View shared location",SOFT,()->new AlertDialog.Builder(this).setTitle("Shared GPS location").setMessage("Latitude: "+location.optDouble("latitude")+"\nLongitude: "+location.optDouble("longitude")+"\nAccuracy: ±"+(int)location.optDouble("accuracy_m")+" m\n\nShared by the older adult while outside their chosen home area.").setPositiveButton("Got it",null).show());
+    }
+    private void readingDetails(){
+        label("Reading details",34,INK,true);paragraph(elder()?"Your wearable and saved readings.":"Readings shared with you.");
+        if(!elder()){patientChooser();if(!approvedPatient(patientId)){paragraph("Choose an approved person from Today to view their readings.");return;}}
+        LinearLayout details=card(content);detailFreshness=labelIn(details,"",27,INK,true);
+        detailStored=labelIn(details,"",17,MUTED,false);detailSource=labelIn(details,"",16,MUTED,false);
+        if(elder()){
+            connectionLabel=labelIn(details,"",17,INK,true);readingLabel=labelIn(details,"",16,MUTED,false);
+            button(details,monitor!=null&&monitor.isRunning()?"Manage my wearable":"Set up my wearable",SOFT,()->{deviceStep=monitor!=null&&monitor.isRunning()?3:0;openPage("device");});
+        }
+        metrics(readingsPayload());
+        LinearLayout limits=card(content);labelIn(limits,"Understanding your readings",23,INK,true);
+        labelIn(limits,"Surface temperature is not core body temperature. Light is an uncalibrated signal and does not confirm that the wearable is worn. These sensors do not measure blood pressure or dehydration.",17,MUTED,false);
+        labelIn(limits,"A connection or a normal-looking value is not a medical assessment. Missing or older readings do not confirm that someone is okay.",17,MUTED,false);
+        textAction(content,"Refresh saved readings",this::refresh,true);updateReadingViews();
+    }
+    private void updateReadingViews(){
+        if(!page.equals("home")&&!page.equals("reading_details"))return;
+        updateConnectionStrip();JSONObject raw=readingsPayload();
+        if(emptyReadingNote!=null)emptyReadingNote.setVisibility(raw==null?View.VISIBLE:View.GONE);if(emptyReadingHint!=null)emptyReadingHint.setVisibility(raw==null?View.VISIBLE:View.GONE);
+        for(Map.Entry<String,MetricViews> item:metricViews.entrySet()){
+            String human=metricValue(raw,item.getKey(),page.equals("reading_details"));MetricViews views=item.getValue();
+            boolean unavailable=human.equals("Unavailable")||human.equals("No valid reading");String number=unavailable?"—":human;
+            if(visible)CareMotion.fadeText(views.value,number);else views.value.setText(number);
+            views.availability.setText(unavailable?human:"");views.availability.setVisibility(unavailable?View.VISIBLE:View.GONE);
+            views.tile.setContentDescription(views.title+", "+human+". View history");
+        }
+        if(detailFreshness!=null){
+            boolean live=elder()&&monitor!=null&&monitor.isFresh();detailFreshness.setText(live||readingFreshness().equals("fresh")?"Recent readings":readingsPayload()==null?"Waiting for readings":"Older readings");
+            JSONObject reading=storedReading();detailStored.setText(reading==null?"No reading has been stored yet.":"Last stored reading: "+formatTime(reading.optString("captured_at")));
+            detailSource.setText(reading==null?"Measurements appear after your wearable connects.":"Source: "+sourceLabel(reading.optString("source")));
+        }
     }
     private String sourceLabel(String source){
         if("device_diagnostic".equals(source))return "Wearable";
-        if("synthetic".equals(source))return "Datos de prueba";
-        if("dataset_replay".equals(source))return "Registro de prueba";
-        return "Origen no disponible";
+        if("synthetic".equals(source))return "Test data";
+        if("dataset_replay".equals(source))return "Test recording";
+        return "Source unavailable";
     }
-    private String patientName(){JSONObject patient=overview.optJSONObject("patient");return patient==null?"tu círculo":patient.optString("display_name","tu círculo");}
+    private String patientName(){JSONObject patient=overview.optJSONObject("patient");return patient==null?"your care circle":patient.optString("display_name","your care circle");}
     private void patientChooser(){
-        if(patients.length()==0){paragraph("Aún no tienes personas vinculadas. Abre Cuidado para solicitar acceso con su código.");return;}
-        LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.VERTICAL);content.addView(row);
-        for(int i=0;i<patients.length();i++){JSONObject patient=patients.optJSONObject(i);if(patient==null)continue;
-            String id=patient.optString("id");button(row,(id.equals(patientId)?"✓  ":"")+patient.optString("display_name","Persona"),id.equals(patientId)?BLUE:SOFT,
-                ()->{epoch++;refreshing=false;patientId=id;overview=new JSONObject();reminders=new JSONArray();render();refresh();});}
+        if(patients.length()==0){return;}
+        JSONObject selected=null;for(int i=0;i<patients.length();i++){JSONObject person=patients.optJSONObject(i);if(person!=null&&patientId.equals(person.optString("id")))selected=person;}
+        LinearLayout card=card(content);labelIn(card,"VIEWING",12,MUTED,true);labelIn(card,selected==null?"Choose a person":selected.optString("display_name","Person"),26,INK,true);
+        if(patients.length()>1||selected==null)textAction(card,"Change person",this::choosePatient,false);
+    }
+    private void choosePatient(){
+        if(patients.length()==0)return;
+        String[] names=new String[patients.length()];String[] ids=new String[patients.length()];int checked=-1;
+        for(int i=0;i<patients.length();i++){JSONObject person=patients.optJSONObject(i);names[i]=person==null?"Person":person.optString("display_name","Person");ids[i]=person==null?"":person.optString("id");if(patientId.equals(ids[i]))checked=i;}
+        new AlertDialog.Builder(this).setTitle("Whose information?").setSingleChoiceItems(names,checked,(dialog,index)->{
+            dialog.dismiss();if(ids[index].equals(patientId))return;epoch++;refreshing=false;clearHistory();patientId=ids[index];overview=new JSONObject();reminders=new JSONArray();render();refresh();
+        }).setNegativeButton("Cancel",null).show();
     }
     private void metrics(JSONObject raw){
-        label("Lecturas del wearable",23,INK,true);
-        if(raw==null){LinearLayout empty=card(content);empty.addView(icon(R.drawable.ic_nav_sensors,MUTED,28),new LinearLayout.LayoutParams(dp(28),dp(28)));labelIn(empty,"Sin lecturas disponibles",21,INK,true);labelIn(empty,"Tus lecturas aparecerán aquí cuando lleguen muestras del wearable.",17,MUTED,false);return;}
+        label("Your readings",23,INK,true);
+        emptyReadingNote=labelIn(content,"No current readings",17,MUTED,false);emptyReadingHint=labelIn(content,"Tap a card to explore saved history.",16,MUTED,false);emptyReadingNote.setVisibility(raw==null?View.VISIBLE:View.GONE);emptyReadingHint.setVisibility(raw==null?View.VISIBLE:View.GONE);
+        LinearLayout row=metricRow();metricTile(row,"Heart rate",metricValue(raw,"heart_rate_bpm",false),R.drawable.ic_heart,0xFFB52B55,"heart_rate_bpm");
+        metricTile(row,"Estimated oxygen",metricValue(raw,"spo2_percent",false),R.drawable.ic_oxygen,BLUE,"spo2_percent");
+        label("Around you",23,INK,true);
+        row=metricRow();metricTile(row,"Surface temperature",metricValue(raw,"surface_temp_c",false),R.drawable.ic_temperature,0xFF98631D,"surface_temp_c");
+        metricTile(row,"Ambient temperature",metricValue(raw,"ambient_temp_c",false),R.drawable.ic_temperature,BLUE,"ambient_temp_c");
+        row=metricRow();metricTile(row,"Light",metricValue(raw,"light_adc",page.equals("reading_details")),R.drawable.ic_light,0xFF98631D,"light_adc");
+        metricTile(row,"Movement",metricValue(raw,"acceleration_g",false),R.drawable.ic_motion,0xFF6554A4,"acceleration_g");
+        if(page.equals("home"))labelIn(content,"Tap a card to see its history. Readings are not a medical assessment.",16,MUTED,false);
+    }
+    private String metricValue(JSONObject raw,String metric,boolean details){
+        if(raw==null)return metric.equals("heart_rate_bpm")||metric.equals("spo2_percent")?"No valid reading":"Unavailable";
         JSONObject optical=raw.optJSONObject("max30102"),temp=raw.optJSONObject("gy906"),light=raw.optJSONObject("photoresistor"),imu=raw.optJSONObject("mpu6050");
         boolean valid=optical!=null&&"ok".equals(optical.optString("status"))&&!Boolean.FALSE.equals(optical.opt("online"))&&!Boolean.FALSE.equals(optical.opt("finger_detected"));
-        LinearLayout row=metricRow();metricTile(row,"Pulso",valid&&optical.optBoolean("heart_rate_valid")?numeric(optical,"heart_rate_bpm"," lpm"):"Sin lectura válida",R.drawable.ic_heart,0xFFB52B55);
-        metricTile(row,"Oxígeno estimado",valid&&optical.optBoolean("spo2_valid")?numeric(optical,"spo2_percent"," %"):"Sin lectura válida",R.drawable.ic_oxygen,BLUE);
-        boolean tempValid=temp!=null&&!Boolean.FALSE.equals(temp.opt("online"))&&(!temp.has("status")||temp.optString("status").equals("ok"));
-        row=metricRow();metricTile(row,"Superficie",tempValid?numeric(temp,"object_temp_c"," °C"):"No disponible",R.drawable.ic_temperature,0xFF98631D);
-        metricTile(row,"Ambiente",tempValid?numeric(temp,"ambient_temp_c"," °C"):"No disponible",R.drawable.ic_temperature,BLUE);
-        row=metricRow();metricTile(row,"Luz / contacto",light!=null&&light.opt("adc_raw") instanceof Number?"ADC "+light.optInt("adc_raw")+" · sin calibrar":"No disponible",R.drawable.ic_light,0xFF98631D);
-        metricTile(row,"Movimiento",imu!=null&&!Boolean.FALSE.equals(imu.opt("online"))?"Señal disponible":"No disponible",R.drawable.ic_motion,0xFF6554A4);
-        paragraph("Las lecturas inválidas se conservan como inválidas; nunca se convierten en valores normales.");
+        if(metric.equals("heart_rate_bpm"))return valid&&optical.optBoolean("heart_rate_valid")?numeric(optical,"heart_rate_bpm"," bpm"):"No valid reading";
+        if(metric.equals("spo2_percent"))return valid&&optical.optBoolean("spo2_valid")?numeric(optical,"spo2_percent"," %"):"No valid reading";
+        boolean tempValid=temp!=null&&temp.optBoolean("online",false)&&(!temp.has("status")||temp.optString("status").equals("ok"));
+        if(metric.equals("surface_temp_c"))return tempValid?numeric(temp,"object_temp_c"," °C"):"Unavailable";
+        if(metric.equals("ambient_temp_c"))return tempValid?numeric(temp,"ambient_temp_c"," °C"):"Unavailable";
+        if(metric.equals("light_adc"))return light!=null&&light.opt("adc_raw") instanceof Number?(details?"ADC "+light.optInt("adc_raw"):"Signal available"):"Unavailable";
+        return imu!=null&&imu.optBoolean("online",false)&&(!imu.has("status")||"ok".equals(imu.optString("status")))?"Signal available":"Unavailable";
     }
-    private String numeric(JSONObject object,String key,String suffix){Object value=object.opt(key);if(!(value instanceof Number))return "No disponible";double number=((Number)value).doubleValue();return Double.isNaN(number)||Double.isInfinite(number)?"No disponible":String.format(Locale.getDefault(),"%.1f",number)+suffix;}
+    private String numeric(JSONObject object,String key,String suffix){Object value=object.opt(key);if(!(value instanceof Number))return "Unavailable";double number=((Number)value).doubleValue();return Double.isNaN(number)||Double.isInfinite(number)?"Unavailable":String.format(Locale.US,"%.1f",number)+suffix;}
     private LinearLayout metricRow(){LinearLayout row=new LinearLayout(this);row.setOrientation(getResources().getConfiguration().fontScale>=1.3f?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);content.addView(row);return row;}
-    private void metricTile(LinearLayout row,String title,String value,int symbol,int tint){
-        LinearLayout tile=new LinearLayout(this);tile.setOrientation(LinearLayout.VERTICAL);tile.setPadding(dp(18),dp(18),dp(18),dp(18));tile.setBackground(shape(Color.WHITE,22));
+    private void metricTile(LinearLayout row,String title,String value,int symbol,int tint,String metric){
+        LinearLayout tile=new LinearLayout(this);tile.setOrientation(LinearLayout.VERTICAL);tile.setMinimumHeight(dp(156));tile.setPadding(dp(18),dp(18),dp(18),dp(18));tile.setBackground(interactive(Color.WHITE,22));
         boolean stacked=row.getOrientation()==LinearLayout.VERTICAL;LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(stacked?-1:0,-2,stacked?0:1);lp.topMargin=dp(8);lp.bottomMargin=dp(4);if(!stacked&&row.getChildCount()==0)lp.rightMargin=dp(12);row.addView(tile,lp);
-        tile.addView(icon(symbol,tint,24),new LinearLayout.LayoutParams(dp(24),dp(24)));labelIn(tile,title,16,MUTED,false);labelIn(tile,value,22,INK,true);
+        LinearLayout heading=new LinearLayout(this);heading.setGravity(Gravity.CENTER_VERTICAL);tile.addView(heading,new LinearLayout.LayoutParams(-1,-2));heading.addView(icon(symbol,tint,24),new LinearLayout.LayoutParams(dp(24),dp(24)));
+        View space=new View(this);heading.addView(space,new LinearLayout.LayoutParams(0,1,1));heading.addView(icon(R.drawable.ic_chevron_right,MUTED,16),new LinearLayout.LayoutParams(dp(16),dp(16)));
+        labelIn(tile,title,17,INK,true);boolean unavailable=value.equals("Unavailable")||value.equals("No valid reading");
+        TextView number=labelIn(tile,unavailable?"—":value,value.equals("Signal available")?20:29,INK,true);
+        TextView availability=labelIn(tile,unavailable?value:"",15,MUTED,false);availability.setVisibility(unavailable?View.VISIBLE:View.GONE);
+        labelIn(tile,"View history",14,tint,true);metricViews.put(metric,new MetricViews(tile,number,availability,title));
+        tile.setFocusable(true);tile.setContentDescription(title+", "+value+". View history");tile.setOnClickListener(v->openHistory(metric));
+    }
+    private String metricTitle(){
+        switch(historyMetric){case "spo2_percent":return "Estimated oxygen";case "surface_temp_c":return "Surface temperature";case "ambient_temp_c":return "Ambient temperature";case "light_adc":return "Light";case "acceleration_g":return "Movement";default:return "Heart rate";}
+    }
+    private String metricUnit(){
+        switch(historyMetric){case "spo2_percent":return "%";case "surface_temp_c":case "ambient_temp_c":return "°C";case "light_adc":return "ADC";case "acceleration_g":return "g";default:return "bpm";}
+    }
+    private long historyDuration(){return (historyPeriod.equals("month")?30L:historyPeriod.equals("week")?7L:1L)*86400000L;}
+    private String selectedPatient(){return session==null?"":elder()?session.id:patientId;}
+    private boolean approvedPatient(String id){
+        if(session==null||id.isEmpty())return false;if(elder())return id.equals(session.id);
+        for(int i=0;i<patients.length();i++){JSONObject person=patients.optJSONObject(i);if(person!=null&&id.equals(person.optString("id")))return true;}return false;
+    }
+    private void clearHistory(){historyRequest++;historyLoading=false;historyData=null;historyError="";}
+    private void openHistory(String metric){
+        if(!approvedPatient(selectedPatient())){toast("Link to an older adult and select them before opening history.");return;}
+        hideKeyboard();clearHistory();historyMetric=metric;historyPeriod="day";historyEndMillis=0;page="history";notice="";render();loadHistory();
+    }
+    private void openLearning(){
+        String selected=selectedPatient();if(!approvedPatient(selected)){toast("Open Care to request access, then select an approved person.");openPage("care");return;}
+        startActivity(new Intent(this,LearningActivity.class).putExtra("patient_id",selected));
+    }
+    private void history(){
+        textAction(content,"Today",()->openPage("home"),false);
+        label(metricTitle(),34,INK,true);if(!elder())labelIn(content,"For "+patientName(),17,MUTED,false);
+        LinearLayout selector=new LinearLayout(this);selector.setOrientation(getResources().getConfiguration().fontScale>=1.6f?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);
+        selector.setPadding(dp(4),dp(4),dp(4),dp(4));selector.setBackground(shape(LINE,16));content.addView(selector,new LinearLayout.LayoutParams(-1,-2));
+        String[] periods={"day","week","month"},names={"Day","Week","Month"};
+        for(int i=0;i<periods.length;i++){
+            String period=periods[i];boolean selected=historyPeriod.equals(period);Button choice=new Button(this);choice.setText(names[i]);choice.setAllCaps(false);choice.setTextSize(16);choice.setTextColor(selected?INK:MUTED);choice.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
+            choice.setBackground(interactive(selected?Color.WHITE:Color.TRANSPARENT,12));choice.setMinHeight(dp(56));choice.setMinimumHeight(dp(56));choice.setStateListAnimator(null);choice.setSelected(selected);choice.setContentDescription(names[i]+" history"+(selected?", selected":""));
+            boolean stacked=selector.getOrientation()==LinearLayout.VERTICAL;selector.addView(choice,new LinearLayout.LayoutParams(stacked?-1:0,-2,stacked?0:1));
+            choice.setOnClickListener(v->{if(historyPeriod.equals(period))return;clearHistory();historyPeriod=period;historyEndMillis=0;render();loadHistory();});
+        }
+        JSONObject summary=historyData==null?null:historyData.optJSONObject("summary");long count=summary==null?0:summary.optLong("count");
+        JSONObject coverage=historyData==null?null:historyData.optJSONObject("coverage");boolean complete=coverage==null||coverage.optBoolean("complete",true);
+        LinearLayout graph=card(content);
+        labelIn(graph,"AVERAGE",13,MUTED,true);String average=summary==null?"—":historyValue(summary.opt("average"));
+        labelIn(graph,average+" "+metricUnit(),42,INK,true);
+        String interval=historyPeriod.equals("month")?"30 days":historyPeriod.equals("week")?"7 days":"24 hours";
+        if(historyData!=null)labelIn(graph,historyDate(historyData.optString("start"))+" – "+historyDate(historyData.optString("end")),15,MUTED,false);
+        else labelIn(graph,"Past "+interval,15,MUTED,false);
+        if(historyLoading){ProgressBar progress=new ProgressBar(this);progress.setContentDescription("Loading stored readings");graph.addView(progress,new LinearLayout.LayoutParams(dp(40),dp(40)));labelIn(graph,"Loading your history…",17,MUTED,false);}
+        else if(!historyError.isEmpty()){
+            labelIn(graph,"History could not be loaded",22,INK,true);labelIn(graph,historyError,17,MUTED,false);
+            if(!ApiClient.lanAllowed(this))button(graph,"Allow local network",BLUE,()->{pendingAction="history";requestPermissions(new String[]{"android.permission.ACCESS_LOCAL_NETWORK"},714);});
+            else button(graph,"Try again",BLUE,this::loadHistory);
+        }else if(historyData==null||count==0){
+            labelIn(graph,complete?"No valid readings in this period":"No indexed valid readings yet",22,INK,true);labelIn(graph,complete?"Try an earlier period, or check your wearable and server connection. Missing readings do not confirm health status.":"Older readings are still being prepared. Refresh history to check their progress.",17,MUTED,false);
+        }else{
+            MetricHistoryChartView chart=new MetricHistoryChartView(this);chart.setHistory(historyData);graph.addView(chart,new LinearLayout.LayoutParams(-1,-2));
+            labelIn(graph,"Touch the chart to inspect a stored interval.",15,MUTED,false);
+            labelIn(graph,count+" valid "+(count==1?"sample":"samples")+" · interval averages",15,MUTED,false);
+        }
+        LinearLayout periodNavigation=new LinearLayout(this);periodNavigation.setOrientation(LinearLayout.HORIZONTAL);content.addView(periodNavigation,new LinearLayout.LayoutParams(-1,-2));
+        Button earlier=textAction(periodNavigation,"Earlier",()->shiftHistory(-1),true);earlier.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1));earlier.setContentDescription("View previous "+interval);
+        Button later=textAction(periodNavigation,"Later",()->shiftHistory(1),true);later.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1));later.setEnabled(historyEndMillis>0&&historyEndMillis<System.currentTimeMillis()-1000);later.setContentDescription("View next "+interval);
+        if(historyEndMillis>0)textAction(content,"Back to the present",()->{clearHistory();historyEndMillis=0;render();loadHistory();},true);
+        if(summary!=null&&count>0){
+            LinearLayout details=card(content);labelIn(details,"Your stored readings",23,INK,true);
+            historySummary(details,"Latest",historyValue(summary.opt("latest"))+" "+metricUnit());
+            labelIn(details,formatTime(summary.optString("latest_at")),15,MUTED,false);
+            historySummary(details,"Range",historyValue(summary.opt("min"))+"–"+historyValue(summary.opt("max"))+" "+metricUnit());
+        }
+        if(!complete){
+            LinearLayout indexing=card(content);labelIn(indexing,"History is still being prepared",22,INK,true);labelIn(indexing,"Some older readings have not been indexed yet. The chart and summary cover indexed samples only.",17,MUTED,false);button(indexing,"Refresh history",SOFT,this::loadHistory);
+        }
+        LinearLayout context=card(content);labelIn(context,"About these readings",23,INK,true);
+        String explanation="Stored wearable samples only. Stored readings are retained for 30 days. Each point shows the mean of valid samples in its interval; gaps remain gaps. Your phone's live value can be newer than this stored history.";
+        if(historyMetric.equals("surface_temp_c"))explanation+=" Surface temperature is not core body temperature.";
+        else if(historyMetric.equals("light_adc"))explanation+=" Light is an uncalibrated sensor value and does not confirm that the wearable is worn.";
+        else if(historyMetric.equals("acceleration_g"))explanation+=" Acceleration magnitude includes gravity. It is not a step count or fall diagnosis.";
+        else if(historyMetric.equals("spo2_percent")||historyMetric.equals("heart_rate_bpm"))explanation+=" Only samples marked valid by the optical sensor are included.";
+        labelIn(context,explanation,17,MUTED,false);labelIn(context,"Not clinically validated. Do not use these readings to make medical decisions.",16,MUTED,false);
+        button(content,"Refresh history",SOFT,this::loadHistory);
+    }
+    private void historySummary(LinearLayout parent,String title,String value){
+        LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(8),0,dp(8));parent.addView(row,new LinearLayout.LayoutParams(-1,-2));
+        TextView name=text(title,17,MUTED,false);row.addView(name,new LinearLayout.LayoutParams(0,-2,1));TextView number=text(value,19,INK,true);number.setGravity(Gravity.END);row.addView(number,new LinearLayout.LayoutParams(0,-2,2));
+    }
+    private String historyValue(Object value){if(!(value instanceof Number))return "—";double number=((Number)value).doubleValue();return Double.isFinite(number)?String.format(Locale.ENGLISH,historyMetric.equals("light_adc")?"%.0f":historyMetric.equals("acceleration_g")?"%.2f":"%.1f",number):"—";}
+    private String historyDate(String value){long time=ApiSession.expiryMs(value);return time==0?"Date unavailable":new java.text.SimpleDateFormat("d MMM, HH:mm",Locale.ENGLISH).format(new Date(time));}
+    private void shiftHistory(int direction){long end=historyEndMillis==0?System.currentTimeMillis():historyEndMillis;long target=end+direction*historyDuration();clearHistory();historyEndMillis=target>=System.currentTimeMillis()-1000?0:Math.max(historyDuration(),target);render();loadHistory();}
+    private void loadHistory(){
+        if(session==null||!page.equals("history")||historyLoading)return;
+        if(!session.valid()){logout();notice="Your session expired. Please sign in again.";render();return;}
+        if(!ApiClient.lanAllowed(this)){historyData=null;historyError="Your server needs local network access. Allow it to view stored history.";render();return;}
+        final ApiSession account=session;final long capture=epoch,request=++historyRequest;final String person=selectedPatient(),metric=historyMetric,period=historyPeriod;final long end=historyEndMillis;
+        if(person.isEmpty()){historyData=null;historyError="Choose an approved person from Today before opening history.";render();return;}
+        historyLoading=true;historyError="";historyData=null;render();
+        network.execute(()->{try{
+            String path="/patients/"+person+"/metrics/"+metric+"/history?period="+period+"&source=device_diagnostic";
+            if(end>0)path+="&end="+java.net.URLEncoder.encode(ApiSession.utc(end),"UTF-8");
+            JSONObject result=ApiClient.call(this,account,"GET",path,null);
+            main.post(()->{if(!historyCurrent(account,capture,request,person,metric,period,end))return;historyLoading=false;historyData=result;historyError="";int y=scroll.getScrollY();render();scroll.post(()->scroll.scrollTo(0,y));});
+        }catch(Exception failure){main.post(()->{
+            if(!historyCurrent(account,capture,request,person,metric,period,end))return;historyLoading=false;historyData=null;
+            if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==401){logout();notice="Your session expired or was revoked. Please sign in again.";render();return;}
+            if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==403)historyError="Access is no longer available. The older adult must approve your access before you can view their history.";
+            else historyError=failure.getMessage()==null?"Check your connection, then try again.":failure.getMessage();render();
+        });}});
+    }
+    private boolean historyCurrent(ApiSession account,long capture,long request,String person,String metric,String period,long end){
+        return capture==epoch&&request==historyRequest&&session!=null&&session.id.equals(account.id)&&session.base.equals(account.base)&&page.equals("history")&&person.equals(selectedPatient())&&metric.equals(historyMetric)&&period.equals(historyPeriod)&&end==historyEndMillis;
     }
     private void alerts(){
-        label("Avisos de cuidado",34,INK,true);paragraph("Consulta el origen y el detalle de cada aviso.");
+        label("Updates",34,INK,true);paragraph(elder()?"Notices and reminders from your care circle.":"Review notices for the person you support.");
         if(!elder())patientChooser();
-        JSONArray alerts=overview.optJSONArray("alerts");if(alerts==null||alerts.length()==0){LinearLayout empty=card(content);labelIn(empty,"Sin avisos disponibles",25,INK,true);labelIn(empty,"Esto no confirma un estado de salud ni una conexión activa.",18,MUTED,false);}
+        JSONArray alerts=overview.optJSONArray("alerts");if(alerts==null||alerts.length()==0){LinearLayout empty=card(content);labelIn(empty,"No notifications yet",25,INK,true);labelIn(empty,"This does not confirm health status or an active connection.",18,MUTED,false);}
         else for(int i=0;i<alerts.length();i++){JSONObject alert=alerts.optJSONObject(i);if(alert==null)continue;LinearLayout card=card(content);
-            labelIn(card,alert.optBoolean("acknowledged")?"REVISADO":"PENDIENTE DE REVISIÓN",12,BLUE,true);
-            labelIn(card,alert.optString("title",alert.optString("type","Aviso")),23,INK,true);
-            labelIn(card,alert.optString("message","Revisa la señal y el contexto de este aviso."),18,MUTED,false);
+            labelIn(card,alert.optBoolean("acknowledged")?"REVIEWED":"AWAITING REVIEW",12,BLUE,true);
+            labelIn(card,alert.optString("title",alert.optString("type","Notice")),23,INK,true);
+            labelIn(card,alert.optString("message","Review the signal and context of this notice."),18,MUTED,false);
             labelIn(card,formatTime(alert.optString("created_at"))+" · "+sourceLabel(alert.optString("source")),15,MUTED,false);
-            if(!elder()&&!alert.optBoolean("acknowledged")){String id=alert.optString("id");button(card,"Marcar como revisado",SOFT,()->mutate("POST","/alerts/"+id+"/acknowledge",json(),"Aviso marcado como revisado."));}}
-        label("Buzón de mi cuenta",23,INK,true);
+            if(!elder()&&!alert.optBoolean("acknowledged")){String id=alert.optString("id");button(card,"Mark as reviewed",SOFT,()->mutate("POST","/alerts/"+id+"/acknowledge",json(),"Notice marked as reviewed."));}}
+        label("My inbox",23,INK,true);
         int shown=0;for(int i=0;i<notifications.length();i++){JSONObject item=notifications.optJSONObject(i);if(item==null||item.optBoolean("acknowledged"))continue;
-            JSONObject data=item.optJSONObject("data");if(data==null)data=new JSONObject();LinearLayout card=card(content);labelIn(card,data.optString("title","Aviso de cuidado"),21,INK,true);
-            labelIn(card,data.optString("message",data.optString("instructions","Abre Cuidado para ver el recordatorio.")),17,MUTED,false);
-            int id=item.optInt("id");button(card,"Ya lo leí",SOFT,()->mutate("POST","/notifications/"+id+"/ack",json(),"Aviso leído."));shown++;}
-        if(shown==0)paragraph("No hay mensajes pendientes.");
-        LinearLayout delivery=card(content);labelIn(delivery,"Tus notificaciones",22,INK,true);
-        labelIn(delivery,"Elige cómo recibir avisos de tu círculo. La entrega depende de la conexión y los permisos del teléfono.",17,MUTED,false);
+            JSONObject data=item.optJSONObject("data");if(data==null)data=new JSONObject();LinearLayout card=card(content);labelIn(card,data.optString("title","Care notice"),21,INK,true);
+            labelIn(card,data.optString("message",data.optString("instructions","Open Care to see the reminder.")),17,MUTED,false);
+            int id=item.optInt("id");button(card,"I've read this",SOFT,()->mutate("POST","/notifications/"+id+"/ack",json(),"Notice read."));shown++;}
+        if(shown==0)paragraph("You are all caught up.");
+        LinearLayout delivery=card(content);labelIn(delivery,"Your notifications",22,INK,true);
+        labelIn(delivery,"Choose how to receive notices from your circle. Delivery depends on your connection and phone permissions.",17,MUTED,false);
         labelIn(delivery,NotificationChannelService.status(),17,BLUE,true);
-        button(delivery,"Configurar notificaciones",SOFT,()->openPage("notification_settings"));button(content,"Actualizar avisos",SOFT,this::refresh);
+        button(delivery,"Set up notifications",SOFT,()->openPage("notification_settings"));button(content,"Refresh notifications",SOFT,this::refresh);
     }
     private void care(){
-        label(elder()?"Mi círculo de cuidado":"Cuidamos en equipo",34,INK,true);paragraph(elder()?"Tú eliges quién puede acompañarte y acceder a tus datos.":"El acceso comienza con una invitación y la aprobación de la persona mayor.");
+        label(elder()?"My care circle":"Care together",34,INK,true);paragraph(elder()?"You choose who supports you and can access your information.":"Access starts with an invitation and the older adult's approval.");
         if(elder()){
-            LinearLayout invite=card(content);labelIn(invite,"Invita a alguien de confianza",24,INK,true);
-            labelIn(invite,"Genera un código temporal de 4 dígitos. Compartirlo solo solicita acceso: tú debes aprobar a cada persona.",18,MUTED,false);
-            button(invite,"Generar código",BLUE,()->run(session,(account)->ApiClient.call(this,account,"POST","/invitations",json()),result->{
-                new AlertDialog.Builder(this).setTitle("Tu código: "+result.optString("code")).setMessage("Vence: "+formatTime(result.optString("expires_at"))+". Revisa el nombre de cada solicitante antes de aprobarlo.").setPositiveButton("Entendido",null).show();}));
-            label("Solicitudes de acceso",23,INK,true);
+            LinearLayout invite=card(content);labelIn(invite,"Invite someone you trust",24,INK,true);
+            labelIn(invite,"Create a temporary four-digit code. Sharing it lets someone request access; you still approve each person.",18,MUTED,false);
+            button(invite,"Create an invitation code",BLUE,()->run(session,(account)->ApiClient.call(this,account,"POST","/invitations",json()),result->{
+                new AlertDialog.Builder(this).setTitle("Your code: "+result.optString("code")).setMessage("Expires: "+formatTime(result.optString("expires_at"))+". Check each person before approving their request.").setPositiveButton("Got it",null).show();}));
+            label("Access requests",23,INK,true);
             int pending=0;for(int i=0;i<requests.length();i++){JSONObject request=requests.optJSONObject(i);if(request==null||!"pending".equals(request.optString("status","pending")))continue;
-                JSONObject user=request.optJSONObject("caregiver");String name=user==null?request.optString("display_name",request.optString("caregiver_name","Solicitante")):user.optString("display_name","Solicitante");
+                JSONObject user=request.optJSONObject("caregiver");String name=user==null?request.optString("display_name",request.optString("caregiver_name","Applicant")):user.optString("display_name","Applicant");
                 String email=user==null?request.optString("email",""):user.optString("email","");String id=request.optString("id");LinearLayout card=card(content);labelIn(card,name,22,INK,true);if(!email.isEmpty())labelIn(card,email,17,MUTED,false);
-                button(card,"Aprobar acceso",BLUE,()->confirm("¿Reconoces a "+name+"?","Podrá ver lecturas, alertas y ubicación consentida, y asignar recordatorios. Puedes revocar el acceso.",()->mutate("POST","/link-requests/"+id+"/approve",json(),"Cuidador vinculado.")));pending++;}
-            if(pending==0)paragraph("No tienes solicitudes pendientes.");
-            label("Personas vinculadas",23,INK,true);if(caregivers.length()==0)paragraph("Aún no has aprobado cuidadores.");
-            for(int i=0;i<caregivers.length();i++){JSONObject user=caregivers.optJSONObject(i);if(user==null)continue;String id=user.optString("id"),name=user.optString("display_name","Cuidador");LinearLayout card=card(content);labelIn(card,name,22,INK,true);
-                button(card,"Revocar acceso",SOFT,()->confirm("¿Revocar acceso a "+name+"?","Dejará de consultar tus datos y de recibir nuevos avisos. Las notificaciones ya entregadas no pueden retirarse de su memoria.",()->mutate("DELETE","/caregivers/"+id,null,"Acceso revocado.")));}
+                button(card,"Approve access",BLUE,()->confirm("Do you know "+name+"?","They can view readings, alerts and shared location, and assign reminders. You can revoke access.",()->mutate("POST","/link-requests/"+id+"/approve",json(),"Caregiver linked.")));pending++;}
+            if(pending==0)paragraph("No pending requests.");
+            label("Linked people",23,INK,true);if(caregivers.length()==0)paragraph("You have not approved any caregivers yet.");
+            for(int i=0;i<caregivers.length();i++){JSONObject user=caregivers.optJSONObject(i);if(user==null)continue;String id=user.optString("id"),name=user.optString("display_name","Caregiver");LinearLayout card=card(content);labelIn(card,name,22,INK,true);
+                button(card,"Revoke access",SOFT,()->confirm("Revoke access for "+name+"?","They will no longer access your information or receive new notices. Notices already delivered cannot be removed from their device.",()->mutate("DELETE","/caregivers/"+id,null,"Access revoked.")));}
         }else{
-            LinearLayout invite=card(content);labelIn(invite,"Vincular a una persona",24,INK,true);EditText code=input(invite,"Código de 4 dígitos","",InputType.TYPE_CLASS_NUMBER);code.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(4)});
-            button(invite,"Solicitar acceso",BLUE,()->{String value=code.getText().toString();if(!value.matches("[0-9]{4}")){toast("Introduce los 4 dígitos.");return;}mutate("POST","/link-requests",json("code",value),"Solicitud enviada. La persona mayor debe aprobarla.");});
-            patientChooser();if(!patientId.isEmpty()){button(content,"Crear recordatorio de medicación",BLUE,this::reminderDialog);button(content,"Recordatorio para beber agua",SOFT,()->confirm("¿Crear un recordatorio de agua?","Un aviso en 5 minutos y cada 2 horas para recordar una pauta de hidratación ya acordada. No detecta deshidratación ni recomienda cantidades.",()->mutate("POST","/patients/"+patientId+"/reminders",json("title","Recordatorio de agua","dose","Según la pauta acordada","instructions","Recuerda la hidratación acordada. Este aviso no diagnostica deshidratación.","due_at",ApiSession.utc(System.currentTimeMillis()+300000),"repeat_hours",2),"Recordatorio creado.")));}
+            LinearLayout invite=card(content);labelIn(invite,"Link to a person",24,INK,true);EditText code=input(invite,"Four-digit code","",InputType.TYPE_CLASS_NUMBER);code.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(4)});
+            button(invite,"Request access",BLUE,()->{String value=code.getText().toString();if(!value.matches("[0-9]{4}")){toast("Enter all four digits.");return;}mutate("POST","/link-requests",json("code",value),"Request sent. The older adult needs to approve it.");});
+            patientChooser();if(!patientId.isEmpty()){button(content,"Create a medication reminder",BLUE,this::reminderDialog);button(content,"Create a water reminder",SOFT,()->confirm("Create a water reminder?","A reminder in 5 minutes and every 2 hours for an agreed hydration plan. It does not detect dehydration or recommend amounts.",()->mutate("POST","/patients/"+patientId+"/reminders",json("title","Water reminder","dose","Follow the agreed plan","instructions","Remember your agreed hydration plan. This notice does not diagnose dehydration.","due_at",ApiSession.utc(System.currentTimeMillis()+300000),"repeat_hours",2),"Reminder created.")));}
         }
+        if(elder()){LinearLayout support=card(content);labelIn(support,"Let your circle know",23,INK,true);button(support,"Report a fall",SOFT,()->confirm("Send a fall notice?","This sends your report to your approved caregivers. The wearable does not confirm a fall or call emergency services.",()->sendEvent("possible_fall")));}
         medicationCards(true);
     }
     private void medicationCards(boolean all){
-        if(reminders.length()==0){if(all)paragraph("No hay recordatorios asignados.");return;}
-        label("Recordatorios",23,INK,true);
+        if(reminders.length()==0){if(all)paragraph("No reminders assigned.");return;}
+        label("Reminders",23,INK,true);
         for(int i=0;i<reminders.length();i++){JSONObject reminder=reminders.optJSONObject(i);if(reminder==null)continue;
-            LinearLayout card=card(content);labelIn(card,reminder.optString("title","Medicación"),24,INK,true);
-            boolean cancelled=reminder.opt("cancelled_at") instanceof String;if(cancelled)labelIn(card,"CANCELADO",14,MUTED,true);
+            LinearLayout card=card(content);labelIn(card,reminder.optString("title","Medication"),24,INK,true);
+            boolean cancelled=reminder.opt("cancelled_at") instanceof String;if(cancelled)labelIn(card,"CANCELLED",14,MUTED,true);
             labelIn(card,reminder.optString("dose","")+"  "+reminder.optString("instructions",""),19,INK,false);
-            labelIn(card,(reminder.optBoolean("active")?"Próximo: ":"Programado: ")+formatTime(reminder.optString("due_at")),17,MUTED,false);
-            if(reminder.opt("last_due_at") instanceof String)labelIn(card,"Último aviso: "+formatTime(reminder.optString("last_due_at")),17,BLUE,true);
-            if(reminder.opt("taken_at") instanceof String)labelIn(card,"Última confirmación: "+formatTime(reminder.optString("taken_at")),16,MUTED,false);
-            if(!cancelled&&elder()&&reminder.opt("last_due_at") instanceof String&&!(reminder.opt("taken_at") instanceof String)){String id=reminder.optString("id");button(card,"Ya lo tomé",BLUE,()->confirm("¿Confirmar la toma?","Solo registra lo que tú confirmas. El sistema no verifica ingestión ni prescribe dosis.",()->mutate("POST","/reminders/"+id+"/taken",json(),"Toma registrada.")));}
-            if(!cancelled){String id=reminder.optString("id");button(card,"Cancelar recordatorio",SOFT,()->confirm("¿Cancelar este recordatorio?","No se enviarán nuevas ocurrencias. No modifica ninguna prescripción. Las notificaciones que ya llegaron pueden permanecer en otros teléfonos.",()->mutate("DELETE","/reminders/"+id,null,"Recordatorio cancelado.")));}
+            labelIn(card,(reminder.optBoolean("active")?"Next: ":"Scheduled: ")+formatTime(reminder.optString("due_at")),17,MUTED,false);
+            if(reminder.opt("last_due_at") instanceof String)labelIn(card,"Last reminder: "+formatTime(reminder.optString("last_due_at")),17,BLUE,true);
+            if(reminder.opt("taken_at") instanceof String)labelIn(card,"Last confirmation: "+formatTime(reminder.optString("taken_at")),16,MUTED,false);
+            if(!cancelled&&elder()&&reminder.opt("last_due_at") instanceof String&&!(reminder.opt("taken_at") instanceof String)){String id=reminder.optString("id");button(card,"I've taken it",BLUE,()->confirm("Confirm you took it?","This records your confirmation only. The system does not verify ingestion or prescribe doses.",()->mutate("POST","/reminders/"+id+"/taken",json(),"Confirmation recorded.")));}
+            if(!cancelled){String id=reminder.optString("id");button(card,"Cancel reminder",SOFT,()->confirm("Cancel this reminder?","No further occurrences will be sent. This does not change a prescription. Delivered notices may remain on other phones.",()->mutate("DELETE","/reminders/"+id,null,"Reminder cancelled.")));}
         }
     }
     private void reminderDialog(){
         LinearLayout form=new LinearLayout(this);form.setOrientation(LinearLayout.VERTICAL);form.setPadding(dp(24),dp(8),dp(24),dp(8));
-        EditText title=input(form,"Nombre del recordatorio","",InputType.TYPE_CLASS_TEXT),dose=input(form,"Dosis indicada por su profesional","",InputType.TYPE_CLASS_TEXT),
-            instructions=input(form,"Instrucciones acordadas","",InputType.TYPE_CLASS_TEXT),minutes=input(form,"Primera vez, dentro de cuántos minutos","5",InputType.TYPE_CLASS_NUMBER),repeat=input(form,"Repetir cada cuántas horas (vacío = una vez)","",InputType.TYPE_CLASS_NUMBER);
-        labelIn(form,"No prescribe ni verifica interacciones. Usa una pauta ya indicada y acordada con la persona mayor.",16,MUTED,false);
-        ScrollView wrap=new ScrollView(this);wrap.addView(form);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Nuevo recordatorio").setView(wrap).setPositiveButton("Crear",null).setNegativeButton("Cancelar",null).create();
+        EditText title=input(form,"Reminder name","",InputType.TYPE_CLASS_TEXT),dose=input(form,"Dose prescribed by a professional","",InputType.TYPE_CLASS_TEXT),
+            instructions=input(form,"Agreed instructions","",InputType.TYPE_CLASS_TEXT),minutes=input(form,"First reminder, minutes from now","5",InputType.TYPE_CLASS_NUMBER),repeat=input(form,"Repeat every how many hours (blank = once)","",InputType.TYPE_CLASS_NUMBER);
+        labelIn(form,"This does not prescribe or check interactions. Use a plan already prescribed and agreed with the older adult.",16,MUTED,false);
+        ScrollView wrap=new ScrollView(this);wrap.addView(form);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("New reminder").setView(wrap).setPositiveButton("Create",null).setNegativeButton("Cancel",null).create();
         dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{try{
             int delay=Integer.parseInt(minutes.getText().toString());if(delay<1||delay>525600||title.getText().toString().trim().isEmpty())throw new IllegalArgumentException();
             JSONObject body=json("title",title.getText().toString().trim(),"dose",dose.getText().toString().trim(),"instructions",instructions.getText().toString().trim(),"due_at",ApiSession.utc(System.currentTimeMillis()+delay*60000L));
             if(!repeat.getText().toString().isEmpty()){int hours=Integer.parseInt(repeat.getText().toString());if(hours<1||hours>720)throw new IllegalArgumentException();body.put("repeat_hours",hours);}
-            dialog.dismiss();mutate("POST","/patients/"+patientId+"/reminders",body,"Recordatorio asignado.");
-        }catch(Exception failure){toast("Revisa el nombre, los minutos y la repetición.");}}));dialog.show();
+            dialog.dismiss();mutate("POST","/patients/"+patientId+"/reminders",body,"Reminder assigned.");
+        }catch(Exception failure){toast("Check the name, minutes and repeat interval.");}}));dialog.show();
     }
     private void account(){
-        label("Ajustes",34,INK,true);paragraph("A tu manera. Control en tus manos.");
+        label("Settings",34,INK,true);paragraph("Your preferences. Your control.");
         LinearLayout profile=card(content);LinearLayout identity=new LinearLayout(this);identity.setGravity(Gravity.CENTER_VERTICAL);profile.addView(identity);
         TextView avatar=text(initials(session.name),23,BLUE,true);avatar.setGravity(Gravity.CENTER);avatar.setBackground(shape(SOFT,28));identity.addView(avatar,new LinearLayout.LayoutParams(dp(56),dp(56)));
         LinearLayout copy=new LinearLayout(this);copy.setOrientation(LinearLayout.VERTICAL);LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(0,-2,1);copyLp.leftMargin=dp(16);identity.addView(copy,copyLp);
-        labelIn(copy,session.name,22,INK,true);labelIn(copy,elder()?"Persona mayor":"Cuidador o cuidadora",16,MUTED,false);labelIn(profile,session.email,16,MUTED,false);
-        sectionTitle("TU EXPERIENCIA");LinearLayout preferences=group(content);
-        if(elder())settingsRow(preferences,"Configurar mi wearable","Conexión guiada, a tu ritmo",R.drawable.ic_watch,()->{deviceStep=0;openPage("device");});
-        settingsRow(preferences,"Notificaciones","Avisos y permisos del teléfono",R.drawable.ic_nav_alerts,()->openPage("notification_settings"));
-        if(elder())settingsRow(preferences,"Privacidad","Ubicación y sonido, si tú lo decides",R.drawable.ic_shield,()->openPage("privacy"));
-        sectionTitle("CONEXIÓN Y CUENTA");LinearLayout account=group(content);
-        settingsRow(account,"Conexión con tu servidor","Administrar la conexión de tu equipo",R.drawable.ic_bluetooth,()->openPage("connection"));
-        settingsRow(account,"Tu información, protegida","Sesión, almacenamiento y seguridad",R.drawable.ic_lock,()->openPage("security"));
-        textAction(content,"Cerrar sesión",()->confirm("¿Cerrar sesión?","Se detendrán el wearable, ubicación y audio. La cola cifrada queda vinculada a esta cuenta para un acceso posterior.",this::logout),true).setTextColor(RED);
-        labelIn(content,"CareMonitor 1.0.0\nSin validación clínica. No garantiza vigilancia continua ni asistencia de emergencia.",15,MUTED,false);
+        labelIn(copy,session.name,22,INK,true);labelIn(copy,elder()?"Older adult":"Caregiver",16,MUTED,false);labelIn(profile,session.email,16,MUTED,false);
+        sectionTitle("YOUR EXPERIENCE");LinearLayout preferences=group(content);
+        settingsRow(preferences,"Reading details","Saved readings, source and wearable status",R.drawable.ic_nav_sensors,()->openPage("reading_details"));
+        if(elder())settingsRow(preferences,"Set up my wearable","Guided connection, at your pace",R.drawable.ic_watch,()->{deviceStep=0;openPage("device");});
+        settingsRow(preferences,"Notifications","Notices and phone permissions",R.drawable.ic_nav_alerts,()->openPage("notification_settings"));
+        if(elder())settingsRow(preferences,"Privacy","Location and sound, only if you choose",R.drawable.ic_shield,()->openPage("privacy"));
+        settingsRow(preferences,"Learning insights","Explore model classifications with synthetic data",R.drawable.ic_nav_sensors,this::openLearning);
+        sectionTitle("DISPLAY");LinearLayout display=group(content);Switch reduce=new Switch(this);reduce.setText("Reduce motion");reduce.setTextSize(18);reduce.setTextColor(INK);reduce.setPadding(dp(16),dp(14),dp(16),dp(14));reduce.setMinHeight(dp(64));reduce.setSwitchPadding(dp(16));reduce.setChecked(getSharedPreferences("caremonitor_appearance",0).getBoolean("reduce_motion",false));reduce.setContentDescription("Reduce motion");display.addView(reduce,new LinearLayout.LayoutParams(-1,-2));
+        reduce.setOnCheckedChangeListener((button,checked)->{getSharedPreferences("caremonitor_appearance",0).edit().putBoolean("reduce_motion",checked).apply();if(checked)stopPageMotion();});
+        sectionTitle("CONNECTION & ACCOUNT");LinearLayout account=group(content);
+        settingsRow(account,"Server connection","Manage your team's connection",R.drawable.ic_bluetooth,()->openPage("connection"));
+        settingsRow(account,"Your information, protected","Session, storage and security",R.drawable.ic_lock,()->openPage("security"));
+        textAction(content,"Sign out",()->confirm("Sign out?","Wearable monitoring, location and audio will stop. The encrypted queue stays linked to this account for a later sign-in.",this::logout),true).setTextColor(RED);
+        labelIn(content,"CareMonitor 1.0.0\nNot clinically validated. Continuous monitoring and emergency assistance are not guaranteed.",15,MUTED,false);
     }
     private void notificationSettings(){
-        paragraph("Los avisos de tu círculo, como tú prefieras.");
-        LinearLayout delivery=card(content);labelIn(delivery,"Canal de avisos",23,INK,true);labelIn(delivery,NotificationChannelService.status(),17,BLUE,true);
-        labelIn(delivery,"Al activarlo se mantiene una conexión segura con tu servidor y una notificación visible para detenerlo.",17,MUTED,false);
-        button(delivery,"Activar avisos locales",BLUE,this::enableChannel);
-        button(delivery,"Detener canal de avisos",SOFT,()->{stopService(new Intent(this,NotificationChannelService.class));toast("Canal detenido. El buzón permanece en el servidor.");});
-        LinearLayout permissions=card(content);labelIn(permissions,"Permisos del teléfono",23,INK,true);
-        button(permissions,"Permitir notificaciones",SOFT,this::notificationPermission);
-        button(permissions,"Permitir red local",SOFT,()->{if(!ApiClient.lanAllowed(this)){pendingAction="network";requestPermissions(new String[]{"android.permission.ACCESS_LOCAL_NETWORK"},714);}else toast("El permiso de red local ya está concedido.");});
-        paragraph("Si el canal está desactivado, la app consulta cada 15 segundos abierta y Android programa un respaldo de al menos 15 minutos en segundo plano. La red, batería y cierre forzado pueden interrumpirlo. No hay entrega garantizada. Cada cuidador tiene su propio buzón.");
+        paragraph("Notices from your circle, your way.");
+        LinearLayout delivery=card(content);labelIn(delivery,"Notification channel",23,INK,true);labelIn(delivery,NotificationChannelService.status(),17,BLUE,true);
+        labelIn(delivery,"Keeps a secure connection to your server and a visible notification with a Stop control.",17,MUTED,false);
+        button(delivery,"Enable local notifications",BLUE,this::enableChannel);
+        button(delivery,"Stop notification channel",SOFT,()->{stopService(new Intent(this,NotificationChannelService.class));toast("Channel stopped. Your inbox stays on the server.");});
+        LinearLayout permissions=card(content);labelIn(permissions,"Phone permissions",23,INK,true);
+        button(permissions,"Allow notifications",SOFT,this::notificationPermission);
+        button(permissions,"Allow local network",SOFT,()->{if(!ApiClient.lanAllowed(this)){pendingAction="network";requestPermissions(new String[]{"android.permission.ACCESS_LOCAL_NETWORK"},714);}else toast("Local network access is already allowed.");});
+        paragraph("When the channel is off, the open app checks every 15 seconds. Android schedules a background backup at intervals of at least 15 minutes. Network, battery settings and force stop may interrupt delivery. Each caregiver has a separate inbox.");
     }
     private void securityDetails(){
-        paragraph("Información clara sobre cómo se protegen tus datos.");LinearLayout security=card(content);labelIn(security,"Tu información, protegida",23,INK,true);
-        labelIn(security,"La sesión y la cola de lecturas se cifran con una clave de AndroidKeyStore. HTTPS verifica certificado y nombre del servidor. Cada cuenta accede solo al círculo autorizado. Una cola pendiente nunca se enviará desde otra cuenta.",17,MUTED,false);
-        labelIn(security,"No se capturan grabaciones ni se envía audio. El servidor recibe puntos GPS solo fuera del área de casa cuando tú activas la función.",17,MUTED,false);
-        labelIn(security,"Sesión hasta: "+formatTime(session.expires),16,MUTED,false);
+        paragraph("Clear information about how your data is protected.");LinearLayout security=card(content);labelIn(security,"Your information, protected",23,INK,true);
+        labelIn(security,"Your session and queued readings are encrypted with an AndroidKeyStore key. HTTPS checks the certificate and server name. Each account can access only its approved circle. A pending queue is never sent from another account.",17,MUTED,false);
+        labelIn(security,"No recordings are captured and no audio is sent. The server receives GPS points outside your home area only when you enable that feature.",17,MUTED,false);
+        labelIn(security,"Session expires: "+formatTime(session.expires),16,MUTED,false);
     }
     private void serverSettings(){
-        LinearLayout connection=card(content);labelIn(connection,"Conexión con tu servidor",23,INK,true);
-        labelIn(connection,"La app usa la conexión preparada para tu equipo. Cambia esta dirección solo si administras el servidor.",17,MUTED,false);
-        serverInput=input(connection,"Servidor HTTPS",session.base,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
-        labelIn(connection,"La dirección debe terminar en /api/v1 y coincidir con su certificado. Al cambiarla volverás a iniciar sesión; las lecturas pendientes seguirán ligadas al servidor anterior.",16,MUTED,false);
-        button(connection,"Guardar conexión",BLUE,()->{
+        LinearLayout connection=card(content);labelIn(connection,"Server connection",23,INK,true);
+        labelIn(connection,"The app uses the connection prepared for your team. Change this address only if you manage the server.",17,MUTED,false);
+        serverInput=input(connection,"HTTPS server",session.base,InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
+        labelIn(connection,"The address must end in /api/v1 and match its certificate. Changing it requires signing in again; pending readings stay linked to the previous server.",16,MUTED,false);
+        button(connection,"Save connection",BLUE,()->{
             final String base;try{base=ApiClient.base(serverInput.getText().toString().trim());}catch(Exception failure){toast(failure.getMessage());return;}
-            if(base.equals(session.base)){toast("Ya estás usando esta conexión.");return;}
-            confirm("¿Cambiar de servidor?","Se cerrará tu sesión y se detendrán el wearable y las funciones locales. No se enviarán tus credenciales ni lecturas al nuevo servidor hasta que inicies sesión allí.",()->{
-                if(!getSharedPreferences("caremonitor_endpoint",0).edit().putString("previous_base",session.base).putString("base",base).commit()){toast("No se pudo guardar la conexión.");return;}
-                logout();notice="Conexión guardada. Inicia sesión en tu servidor.";render();
+            if(base.equals(session.base)){toast("You are already using this connection.");return;}
+            confirm("Change server?","You will be signed out and wearable monitoring and local features will stop. Your credentials and readings will not be sent to the new server until you sign in there.",()->{
+                if(!getSharedPreferences("caremonitor_endpoint",0).edit().putString("previous_base",session.base).putString("base",base).commit()){toast("Could not save your connection.");return;}
+                logout();notice="Connection saved. Sign in to your server.";render();
             });
         });
     }
@@ -469,40 +730,40 @@ public final class MainActivity extends Activity {
     private JSONObject privacyPolicy(ApiSession account){try{String saved=SecureStore.read(this,"privacy_"+account.id+".enc",4096);return saved.isEmpty()?new JSONObject():new JSONObject(saved);}catch(Exception failure){return new JSONObject();}}
     private void privacy(){
         JSONObject policy=privacyPolicy();
-        LinearLayout location=card(content);labelIn(location,"Ubicación fuera de casa",24,INK,true);
-        labelIn(location,"Solo si lo decides. Configura el centro de casa y un radio de privacidad de al menos 100 m. Se usa la ubicación del teléfono y su precisión: no representa la ubicación exacta de tu cuerpo.",18,MUTED,false);
-        labelIn(location,"Consentimiento del servidor: "+(consents.optBoolean("location")?"activo":"desactivado"),16,MUTED,false);
-        if(policy.has("home_lat"))labelIn(location,"Casa configurada · radio "+policy.optInt("radius_m",200)+" m",17,BLUE,true);
-        button(location,"Configurar casa",SOFT,this::homeDialog);
-        button(location,"Activar ubicación fuera de casa",BLUE,()->{
-            if(!policy.has("home_lat")){toast("Configura primero el área de casa.");return;}
-            confirm("¿Compartir ubicación fuera de casa?","Tus cuidadores verán los puntos enviados cuando el teléfono esté fuera del radio. No se envían puntos dentro de casa. Puedes detenerlo en la notificación.",()->setConsent("location",true,()->requestFeature("location")));});
-        button(location,"Revocar ubicación",SOFT,()->setConsent("location",false,null));
-        LinearLayout audio=card(content);labelIn(audio,"Sonido local, opcional",24,INK,true);
-        labelIn(audio,"Mide intensidad de sonido en memoria para preguntarte si estás bien ante un sonido fuerte. No reconoce accidentes, voces ni caídas. No graba, no guarda y no transmite audio. Mantiene una notificación visible.",18,MUTED,false);
-        labelIn(audio,"Consentimiento del servidor: "+(consents.optBoolean("audio")?"activo":"desactivado"),16,MUTED,false);
-        button(audio,"Activar señal local de sonido",BLUE,()->confirm("¿Activar el micrófono local?","Se procesarán breves muestras solo en RAM. Un sonido fuerte mostrará una pregunta; tú decides si envías un aviso. La escucha termina al pulsar Detener.",()->setConsent("audio",true,()->requestFeature("audio"))));
-        button(audio,"Revocar micrófono",SOFT,()->setConsent("audio",false,null));
-        button(content,"Detener ubicación y micrófono",SOFT,()->{stopService(new Intent(this,PrivacySignalService.class));toast("Funciones locales detenidas.");});
+        LinearLayout location=card(content);labelIn(location,"Location away from home",24,INK,true);
+        labelIn(location,"Only if you choose. Set your home centre and a privacy radius of at least 100 m. This uses your phone's location and accuracy, not your exact body location.",18,MUTED,false);
+        labelIn(location,"Server consent: "+(consents.optBoolean("location")?"enabled":"disabled"),16,MUTED,false);
+        if(policy.has("home_lat"))labelIn(location,"Home area set · radius "+policy.optInt("radius_m",200)+" m",17,BLUE,true);
+        button(location,"Set home area",SOFT,this::homeDialog);
+        button(location,"Enable location away from home",BLUE,()->{
+            if(!policy.has("home_lat")){toast("Set your home area first.");return;}
+            confirm("Share your location away from home?","Your caregivers can see points sent when your phone is outside the radius. Points inside your home area are not sent. You can stop sharing from the notification.",()->setConsent("location",true,()->requestFeature("location")));});
+        button(location,"Revoke location consent",SOFT,()->setConsent("location",false,null));
+        LinearLayout audio=card(content);labelIn(audio,"Optional local sound",24,INK,true);
+        labelIn(audio,"Measures sound intensity in memory to ask if you are okay after a loud sound. It does not recognise accidents, voices or falls. Audio is not recorded, stored or sent. A visible notification stays active.",18,MUTED,false);
+        labelIn(audio,"Server consent: "+(consents.optBoolean("audio")?"enabled":"disabled"),16,MUTED,false);
+        button(audio,"Enable local sound check",BLUE,()->confirm("Enable the local microphone?","Brief samples are processed only in memory. A loud sound shows a question; you decide whether to send a notice. Listening ends when you tap Stop.",()->setConsent("audio",true,()->requestFeature("audio"))));
+        button(audio,"Revoke microphone consent",SOFT,()->setConsent("audio",false,null));
+        button(content,"Stop location and microphone",SOFT,()->{stopService(new Intent(this,PrivacySignalService.class));toast("Local features stopped.");});
     }
     private void homeDialog(){
         JSONObject policy=privacyPolicy();LinearLayout form=new LinearLayout(this);form.setOrientation(LinearLayout.VERTICAL);form.setPadding(dp(24),0,dp(24),0);
-        EditText lat=input(form,"Latitud de casa",policy.has("home_lat")?String.valueOf(policy.optDouble("home_lat")):"",InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED),
-            lon=input(form,"Longitud de casa",policy.has("home_lon")?String.valueOf(policy.optDouble("home_lon")):"",InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED),
-            radius=input(form,"Radio de privacidad en metros",String.valueOf(policy.optInt("radius_m",200)),InputType.TYPE_CLASS_NUMBER);
-        labelIn(form,"Estas coordenadas permanecen cifradas en tu teléfono.",16,MUTED,false);
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Tu área de casa").setView(form).setPositiveButton("Guardar",null).setNegativeButton("Cancelar",null).create();
+        EditText lat=input(form,"Home latitude",policy.has("home_lat")?String.valueOf(policy.optDouble("home_lat")):"",InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED),
+            lon=input(form,"Home longitude",policy.has("home_lon")?String.valueOf(policy.optDouble("home_lon")):"",InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED),
+            radius=input(form,"Privacy radius in metres",String.valueOf(policy.optInt("radius_m",200)),InputType.TYPE_CLASS_NUMBER);
+        labelIn(form,"These coordinates stay encrypted on your phone.",16,MUTED,false);
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Your home area").setView(form).setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
         dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{try{double a=Double.parseDouble(lat.getText().toString()),b=Double.parseDouble(lon.getText().toString());int r=Integer.parseInt(radius.getText().toString());
             if(!Double.isFinite(a)||!Double.isFinite(b)||a< -90||a>90||b< -180||b>180||r<100||r>10000)throw new IllegalArgumentException();
             policy.put("home_lat",a).put("home_lon",b).put("radius_m",r);SecureStore.write(this,"privacy_"+session.id+".enc",policy.toString());dialog.dismiss();render();
-        }catch(Exception failure){toast("Usa coordenadas válidas y un radio de 100 a 10 000 m.");}}));dialog.show();
+        }catch(Exception failure){toast("Use valid coordinates and a radius from 100 to 10,000 m.");}}));dialog.show();
     }
     private void setConsent(String feature,boolean enabled,Runnable after){
         if(!enabled)stopService(new Intent(this,PrivacySignalService.class));
         ApiSession account=session;
         run(account,a->{JSONObject server=ApiClient.call(this,a,"GET","/consents",null);JSONObject body=json("location",server.optBoolean("location"),"audio",server.optBoolean("audio"));body.put(feature,enabled);
             JSONObject result=ApiClient.call(this,a,"POST","/consents",body);JSONObject policy=privacyPolicy(a);policy.put(feature+"_consent",enabled);SecureStore.write(this,"privacy_"+a.id+".enc",policy.toString());return result;
-        },result->{consents=result;notice=enabled?"Consentimiento registrado.":"Consentimiento revocado; funciones locales detenidas.";render();if(after!=null)after.run();});
+        },result->{consents=result;notice=enabled?"Consent saved.":"Consent revoked; local features stopped.";render();if(after!=null)after.run();});
     }
     private void requestFeature(String feature){
         pendingAction=feature;
@@ -513,96 +774,128 @@ public final class MainActivity extends Activity {
         }else startFeature(feature);
     }
     private void startFeature(String feature){
-        pendingAction="";try{Intent intent=new Intent(this,PrivacySignalService.class).setAction(feature);if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);toast("Función iniciada. Puedes detenerla en la notificación.");}
-        catch(RuntimeException failure){toast("No se pudo iniciar. Revisa los permisos y mantén la app abierta al activarla.");}
+        pendingAction="";try{Intent intent=new Intent(this,PrivacySignalService.class).setAction(feature);if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);toast("Feature started. You can stop it from the notification.");}
+        catch(RuntimeException failure){toast("Could not start. Check permissions and keep the app open when enabling it.");}
     }
     private void device(){
-        if(!elder()){label("Conexión del wearable",32,INK,true);paragraph("Solo la persona mayor conecta el wearable desde su propia cuenta.");return;}
-        progress(deviceStep,4,"Conectar mi wearable");
+        if(!elder()){label("Wearable connection",32,INK,true);paragraph("Only the older adult connects the wearable from their own account.");return;}
+        progress(deviceStep,4,"Connect my wearable");
         if(deviceStep==0){
-            label("Vamos paso a paso",32,INK,true);paragraph("Prepara tu wearable y mantén el teléfono cerca.");
-            illustration(R.drawable.ic_watch,"Wearable junto al teléfono");
-            LinearLayout tips=card(content);labelIn(tips,"1. Enciende el wearable",22,INK,true);labelIn(tips,"2. Comprueba que tenga batería",22,INK,true);labelIn(tips,"3. Déjalo cerca de tu teléfono",22,INK,true);
-            button(content,"Ya lo tengo listo",BLUE,()->{deviceStep=1;render();});
+            label("One step at a time",32,INK,true);paragraph("Get your wearable ready and keep your phone nearby.");
+            illustration(R.drawable.ic_watch,"Wearable beside the phone");
+            LinearLayout tips=card(content);labelIn(tips,"1. Turn on your wearable",22,INK,true);labelIn(tips,"2. Check its power",22,INK,true);labelIn(tips,"3. Keep it near your phone",22,INK,true);
+            button(content,"I'm ready",BLUE,()->{deviceStep=1;render();});
         }else if(deviceStep==1){
-            label("Activa la conexión",32,INK,true);paragraph("Abre Bluetooth y empareja tu wearable. Comprueba que la dirección y el código coincidan con tu dispositivo.");
-            illustration(R.drawable.ic_bluetooth,"Emparejamiento Bluetooth");
-            button(content,"Abrir Bluetooth",BLUE,()->startActivity(new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)));
-            paragraph("Cuando termines, vuelve aquí. Si ya estaba emparejado, puedes continuar.");
-            button(content,"Continuar",BLUE,()->{deviceStep=2;render();});
+            label("Connect your wearable",32,INK,true);paragraph("Your phone will guide you through Bluetooth pairing. Confirm any request on this phone.");
+            illustration(R.drawable.ic_bluetooth,"Bluetooth pairing");
+            button(content,"Open Bluetooth",BLUE,()->startActivity(new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)));
+            paragraph("Authorise your wearable here with its private setup key the first time. No computer confirmation is needed. Only one phone can use the wearable at a time.");
+            button(content,"Continue",BLUE,()->{deviceStep=2;render();});
         }else if(deviceStep==2){
-            label("Elige tu wearable",32,INK,true);paragraph("Pulsa Buscar y selecciona tu dispositivo en la lista. El permiso de dispositivos cercanos se pide ahora.");
-            LinearLayout status=card(content);connectionLabel=labelIn(status,"Sin conexión",22,INK,true);readingLabel=labelIn(status,"",17,MUTED,false);
-            button(content,"Buscar mi wearable",BLUE,()->bluetooth("scan"));
-            button(content,"Detener y volver a buscar",SOFT,()->{if(monitor!=null)monitor.stopMonitoring();updateDevice();});
+            label("Choose your wearable",32,INK,true);paragraph("Tap Search and select your wearable. Enter its setup key once when asked; it stays encrypted for your account on this phone.");
+            LinearLayout status=card(content);connectionLabel=labelIn(status,"Not connected",22,INK,true);readingLabel=labelIn(status,"",17,MUTED,false);
+            button(content,"Search for my wearable",BLUE,()->bluetooth("scan"));
+            button(content,"Stop and search again",SOFT,()->{if(monitor!=null)monitor.stopMonitoring();bluetooth("scan");});
             deviceList=new LinearLayout(this);deviceList.setOrientation(LinearLayout.VERTICAL);content.addView(deviceList);
-            button(content,"Comprobar conexión",SOFT,()->{if(monitor==null||!monitor.isFresh()){toast("Aún no llegan lecturas recientes. Revisa que el wearable esté encendido y seleccionado.");return;}deviceStep=3;render();});
+            button(content,"Check connection",SOFT,()->{if(monitor==null||!monitor.isFresh()){toast("No recent readings yet. Check that your wearable is on and selected.");return;}deviceStep=3;render();});
         }else{
             boolean fresh=monitor!=null&&monitor.isFresh();
-            setupStatusIcon=illustration(fresh?R.drawable.ic_status_ok:R.drawable.ic_status_unknown,"Estado de la conexión");
-            deviceHeading=labelIn(content,fresh?"Tu wearable está conectado":"Esperando nuevas lecturas",32,INK,true);
-            paragraph("Aquí puedes comprobar si llegan muestras recientes y volver a tu inicio.");
+            setupStatusIcon=illustration(fresh?R.drawable.ic_status_ok:R.drawable.ic_status_unknown,"Connection status");
+            deviceHeading=labelIn(content,fresh?"Your wearable is connected":"Waiting for new readings",32,INK,true);
+            paragraph("Check for recent readings here, then return to Today.");
             LinearLayout status=card(content);connectionLabel=labelIn(status,"",22,INK,true);readingLabel=labelIn(status,"",17,MUTED,false);
-            paragraph("Recibir muestras en el teléfono no confirma su entrega al servidor ni que los valores sean válidos.");
-            button(content,"Ir a mi inicio",BLUE,()->{page="home";render();refresh();});
-            button(content,"Detener wearable",SOFT,()->{if(monitor!=null)monitor.stopMonitoring();deviceStep=2;render();});
-            button(content,"Borrar lecturas pendientes",SOFT,()->confirm("¿Borrar la cola pendiente?","Las muestras no entregadas se perderán de forma permanente en este teléfono.",()->{if(monitor!=null)monitor.clearUploadQueue();}));
+            paragraph("Receiving samples on your phone does not confirm server delivery or valid measurements.");
+            button(content,"Go to Today",BLUE,()->{page="home";render();refresh();});
+            button(content,"Stop wearable monitoring",SOFT,()->{if(monitor!=null)monitor.stopMonitoring();deviceStep=2;render();});
+            button(content,"Delete pending readings",SOFT,()->confirm("Delete pending readings?","Undelivered samples will be permanently deleted from this phone.",()->{if(monitor!=null)monitor.clearUploadQueue();}));
         }
-        if(deviceStep>0)button(content,"Atrás",SOFT,this::goBack);
-        if(deviceStep<3)button(content,"Lo haré más tarde",SOFT,()->{page="home";render();refresh();});
+        if(deviceStep>0)button(content,"Back",SOFT,this::goBack);
+        if(deviceStep<3)button(content,"I'll do this later",SOFT,()->{page="home";render();refresh();});
         updateDevice();
     }
     private void bluetooth(String action){
-        if(!elder()){pendingAction="";toast("El wearable se conecta desde la cuenta de la persona mayor.");return;}
+        if(!elder()){pendingAction="";toast("Connect the wearable from the older adult's account.");return;}
         pendingAction=action;
         if(Build.VERSION.SDK_INT>=31&&(checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN)!=PackageManager.PERMISSION_GRANTED)){
             requestPermissions(new String[]{Manifest.permission.BLUETOOTH_CONNECT,Manifest.permission.BLUETOOTH_SCAN},711);return;}
         if(Build.VERSION.SDK_INT<31&&Build.VERSION.SDK_INT>=23&&checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},711);return;}
         try{BluetoothManager manager=(BluetoothManager)getSystemService(BLUETOOTH_SERVICE);BluetoothAdapter adapter=manager.getAdapter();
-            if(adapter==null){toast("Este teléfono no tiene Bluetooth disponible.");return;}if(!adapter.isEnabled()){startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE),712);return;}
-            pendingAction="";if(monitor==null){toast("La conexión se está preparando. Inténtalo de nuevo.");return;}monitor.setTransport("spp");monitor.scan();updateDevice();
-        }catch(SecurityException failure){toast("Permite dispositivos cercanos para continuar.");}
+            if(adapter==null){toast("Bluetooth is unavailable on this phone.");return;}if(!adapter.isEnabled()){startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE),712);return;}
+            pendingAction="";if(monitor==null){toast("The connection is getting ready. Please try again.");return;}monitor.setTransport("spp");monitor.scan();updateDevice();
+        }catch(SecurityException failure){toast("Allow Nearby devices to continue.");}
     }
     @Override public void onRequestPermissionsResult(int code,String[] permissions,int[] results){super.onRequestPermissionsResult(code,permissions,results);
         boolean granted=results.length>0;for(int result:results)granted&=result==PackageManager.PERMISSION_GRANTED;
-        if(code==710){String feature=pendingAction;pendingAction="";if(granted)startFeature(feature);else toast("Permiso no concedido. La función permanece detenida.");}
-        if(code==711){if(granted)bluetooth(pendingAction);else{pendingAction="";toast("Bluetooth necesita permiso de dispositivos cercanos.");}}
-        if(code==713){String action=pendingAction;pendingAction="";if(granted&&"channel".equals(action))enableChannel();else if(!granted)toast("Sin permiso de avisos. Puedes leer el buzón en la app.");}
-        if(code==714){String action=pendingAction;pendingAction="";if(granted){if(action.equals("auth"))authenticate();else if(action.equals("channel"))enableChannel();else refresh();}
-            else{notice="El servidor local necesita permiso de dispositivos cercanos/red local. Puedes concederlo en los ajustes de la app.";toast(notice);}}
+        if(code==710){String feature=pendingAction;pendingAction="";if(granted)startFeature(feature);else toast("Permission was not granted. The feature stays stopped.");}
+        if(code==711){if(granted)bluetooth(pendingAction);else{pendingAction="";toast("Bluetooth needs Nearby devices permission.");}}
+        if(code==713){String action=pendingAction;pendingAction="";if(granted&&"channel".equals(action))enableChannel();else if(!granted)toast("Notifications are not allowed. You can still read your inbox in the app.");}
+        if(code==714){String action=pendingAction;pendingAction="";if(granted){if(action.equals("auth"))authenticate();else if(action.equals("channel"))enableChannel();else if(action.equals("history"))loadHistory();else refresh();}
+            else{notice="Your server needs local network access. You can allow it in the app settings.";toast(notice);}}
     }
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==712&&result==RESULT_OK)bluetooth(pendingAction);}
     private void updateDevice(){
         if(!visible&&connectionLabel==null)return;
-        if(deviceHeading!=null){boolean fresh=monitor!=null&&monitor.isFresh();deviceHeading.setText(fresh?"Tu wearable está conectado":"Esperando nuevas lecturas");
+        if(deviceHeading!=null){boolean fresh=monitor!=null&&monitor.isFresh();deviceHeading.setText(fresh?"Your wearable is connected":"Waiting for new readings");
             if(setupStatusIcon!=null)setupStatusIcon.setImageResource(fresh?R.drawable.ic_status_ok:R.drawable.ic_status_unknown);}
-        if(connectionLabel!=null)connectionLabel.setText(monitor==null?"Wearable sin conexión":monitor.bluetoothState());
-        if(readingLabel!=null&&monitor!=null)readingLabel.setText(monitor.relayState()+"\n"+monitor.packetCount()+" muestras · "+monitor.queuedCount()+" pendientes"+(monitor.error().isEmpty()?"":"\n"+monitor.error()));
+        if(connectionLabel!=null)connectionLabel.setText(monitor==null?"Wearable disconnected":monitor.bluetoothState());
+        if(readingLabel!=null&&monitor!=null)readingLabel.setText(monitor.relayState()+"\n"+monitor.packetCount()+" samples · "+monitor.queuedCount()+" pending"+(monitor.error().isEmpty()?"":"\n"+monitor.error()));
         if(deviceList!=null&&monitor!=null&&elder()){deviceList.removeAllViews();List<LiveMonitorService.Device> devices=monitor.devices();
-            if(devices.isEmpty())labelIn(deviceList,"Cuando busques, tus dispositivos emparejados aparecerán aquí.",17,MUTED,false);
+            if(devices.isEmpty())labelIn(deviceList,"Your paired devices will appear here when you search.",17,MUTED,false);
             for(LiveMonitorService.Device device:devices){
-            button(deviceList,"Wearable CareMonitor\n"+device.address,SOFT,()->{try{
+            button(deviceList,"CareMonitor wearable\n"+device.address,SOFT,()->{
                 if(!elder())return;
-                Intent intent=new Intent(this,LiveMonitorService.class).setAction(LiveMonitorService.ACTION_CONNECT).putExtra("address",device.address).putExtra("transport","spp");
-                if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
-            }catch(RuntimeException failure){toast("No se pudo iniciar Bluetooth. Revisa permisos.");}});}}
+                if(WearableKeys.has(this,device.address))connectWearable(device.address);
+                else authoriseWearable(device.address);
+            });
+            if(WearableKeys.has(this,device.address))textAction(deviceList,"Update setup key · "+device.address,()->authoriseWearable(device.address),false);
+        }}}
+    private void authoriseWearable(String address){
+        if(!elder())return;
+        final ApiSession expected=session;
+        LinearLayout fields=new LinearLayout(this);fields.setOrientation(LinearLayout.VERTICAL);fields.setPadding(dp(24),dp(8),dp(24),0);
+        labelIn(fields,"Enter the private key supplied with your wearable.",17,MUTED,false);
+        EditText keyInput=input(fields,"Wearable setup key","",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        keyInput.setSaveEnabled(false);keyInput.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(128)});
+        keyInput.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE|android.view.inputmethod.EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
+        if(Build.VERSION.SDK_INT>=26)keyInput.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+        secretVisibility(fields,keyInput,"Show setup key");
+        ScrollView body=new ScrollView(this);body.setFillViewport(false);body.addView(fields,new ScrollView.LayoutParams(-1,-2));
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Authorise your wearable").setView(body)
+            .setPositiveButton("Save and connect",null).setNegativeButton("Cancel",null).create();
+        dialog.setOnShowListener(ignored->{
+            if(dialog.getWindow()!=null)dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
+                try{
+                    WearableKeys.save(this,expected,address,keyInput.getText().toString());keyInput.setText("");hideKeyboard();dialog.dismiss();connectWearable(address);
+                }catch(IllegalArgumentException failure){keyInput.setError(failure.getMessage());}
+                catch(Exception failure){toast("Your wearable key could not be saved. Check that you are signed in as the older adult.");}
+            });
+        });
+        dialog.setOnDismissListener(ignored->keyInput.setText(""));dialog.show();
+    }
+    private void connectWearable(String address){
+        if(!elder())return;
+        try{
+            Intent intent=new Intent(this,LiveMonitorService.class).setAction(LiveMonitorService.ACTION_CONNECT).putExtra("address",address).putExtra("transport","spp");
+            if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
+        }catch(RuntimeException failure){toast("Could not start Bluetooth. Check permissions.");}
     }
     private void enableChannel(){
-        if(session==null){toast("Inicia sesión primero.");return;}
+        if(session==null){toast("Sign in first.");return;}
         if(!ApiClient.lanAllowed(this)){pendingAction="channel";requestPermissions(new String[]{"android.permission.ACCESS_LOCAL_NETWORK"},714);return;}
         if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){pendingAction="channel";requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},713);return;}
         if(!((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).areNotificationsEnabled()){
-            toast("Activa las notificaciones en los ajustes para usar el canal local.");
+            toast("Allow notifications in settings to use the local channel.");
             startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));return;
         }
         try{Intent intent=new Intent(this,NotificationChannelService.class).setAction("start");if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
-            toast("Canal local iniciado. Puedes detenerlo en la notificación.");}
-        catch(RuntimeException failure){toast("Android no permitió iniciar el canal. Abre la app y revisa sus permisos.");}
+            toast("Local channel started. You can stop it from the notification.");}
+        catch(RuntimeException failure){toast("Android did not allow the channel to start. Open the app and check permissions.");}
     }
-    private void notificationPermission(){if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},713);else toast("Puedes revisar los avisos en los ajustes del sistema.");}
-    private void sendEvent(String type){mutate("POST","/events",json("type",type,"confirmed",true,"occurred_at",ApiSession.utc(System.currentTimeMillis()),"source","device_diagnostic"),"Solicitud registrada.");}
+    private void notificationPermission(){if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},713);else toast("You can review notifications in system settings.");}
+    private void sendEvent(String type){mutate("POST","/events",json("type",type,"confirmed",true,"occurred_at",ApiSession.utc(System.currentTimeMillis()),"source","device_diagnostic"),"Request recorded.");}
     private void logout(){
-        ApiSession old=session;epoch++;refreshing=false;session=null;busy=false;registering=false;setup=new AccountSetup();acknowledged=false;pendingAction="";deviceStep=0;page="home";notice="Sesión cerrada.";patientId="";overview=new JSONObject();patients=new JSONArray();requests=new JSONArray();caregivers=new JSONArray();reminders=new JSONArray();notifications=new JSONArray();consents=new JSONObject();
+        ApiSession old=session;epoch++;clearHistory();refreshing=false;session=null;busy=false;registering=false;setup=new AccountSetup();acknowledged=false;pendingAction="";deviceStep=0;page="home";notice="Signed out.";patientId="";overview=new JSONObject();patients=new JSONArray();requests=new JSONArray();caregivers=new JSONArray();reminders=new JSONArray();notifications=new JSONArray();consents=new JSONObject();
         if(monitor!=null)monitor.stopMonitoring();stopService(new Intent(this,PrivacySignalService.class));ApiSession.clear(this);render();
         if(old!=null)network.execute(()->{try{ApiClient.call(this,old,"POST","/auth/logout",json());}catch(Exception ignored){}});
     }
@@ -611,12 +904,12 @@ public final class MainActivity extends Activity {
     private void run(ApiSession account,Request request,Success success){
         if(account==null)return;final long capture=epoch;
         network.execute(()->{try{JSONObject result=request.call(account);main.post(()->{if(capture==epoch&&session!=null&&session.id.equals(account.id))success.accept(result);});}
-            catch(Exception failure){main.post(()->{if(capture!=epoch)return;if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==401){logout();notice="Tu sesión venció. Vuelve a iniciar sesión.";render();}
+            catch(Exception failure){main.post(()->{if(capture!=epoch)return;if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==401){logout();notice="Your session expired. Please sign in again.";render();}
                 else{notice=failure.getMessage();toast(notice);}});}});
     }
     private void mutate(String method,String path,JSONObject body,String message){run(session,account->ApiClient.call(this,account,method,path,body),result->{notice=message;refresh();render();});}
     private void refresh(){
-        if(refreshing||session==null||!ApiClient.lanAllowed(this))return;if(!session.valid()){logout();notice="Tu sesión venció. Vuelve a iniciar sesión.";render();return;}
+        if(refreshing||session==null||!ApiClient.lanAllowed(this))return;if(!session.valid()){logout();notice="Your session expired. Please sign in again.";render();return;}
         refreshing=true;ApiSession account=session;long capture=epoch;String chosen=patientId;
         network.execute(()->{try{
             JSONObject p=ApiClient.call(this,account,"GET","/patients",null);JSONArray list=p.optJSONArray("patients");if(list==null)list=new JSONArray();
@@ -631,17 +924,21 @@ public final class MainActivity extends Activity {
             try{NotificationSync.sync(this);}catch(Exception ignored){}
             final JSONArray patientList=list,medicine=meds,pending=req,carers=care,messages=inbox;final String id=selected;
             main.post(()->{if(capture!=epoch||session==null||!session.id.equals(account.id))return;refreshing=false;
+                if(!selectedPatient().equals(id)){clearHistory();if(page.equals("history")){page="home";notice="Your care selection changed. Choose a person to open their history.";}}
                 patients=patientList;patientId=id;overview=view;reminders=medicine==null?new JSONArray():medicine;requests=pending==null?new JSONArray():pending;
                 caregivers=carers==null?new JSONArray():carers;notifications=messages==null?new JSONArray():messages;consents=c;
                 // Preserve forms and scroll position; connection labels update independently of sensor cadence.
-                if(!page.equals("device")&&!page.equals("account")&&!page.equals("ready")&&!isSettingsDetail()){int y=scroll==null?0:scroll.getScrollY();render();scroll.post(()->scroll.scrollTo(0,y));}
+                if(page.equals("home")&&homeBuiltKey.equals(homeStructureKey()))updateReadingViews();
+                else if(page.equals("reading_details"))updateReadingViews();
+                else if(!page.equals("device")&&!page.equals("account")&&!page.equals("ready")&&!page.equals("history")&&!isSettingsDetail()&&!(getCurrentFocus() instanceof EditText)){int y=scroll==null?0:scroll.getScrollY();render();scroll.post(()->scroll.scrollTo(0,y));}
             });
         }catch(Exception failure){main.post(()->{if(capture!=epoch)return;refreshing=false;
-            if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==401){logout();notice="Tu sesión venció o fue revocada. Inicia sesión otra vez.";render();}
+            if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==401){logout();notice="Your session expired or was revoked. Please sign in again.";render();}
+            else if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==403&&page.equals("history")){clearHistory();historyError="Access is no longer available. Return to Today and check your care circle.";render();}
             else{notice=failure.getMessage();if(visible)toast(notice);}});}});
     }
-    private void confirm(String title,String body,Runnable action){new AlertDialog.Builder(this).setTitle(title).setMessage(body).setPositiveButton("Confirmar",(d,w)->action.run()).setNegativeButton("Cancelar",null).show();}
-    private void toast(String message){Toast.makeText(this,message==null?"No se pudo completar la acción.":message,Toast.LENGTH_LONG).show();}
+    private void confirm(String title,String body,Runnable action){new AlertDialog.Builder(this).setTitle(title).setMessage(body).setPositiveButton("Confirm",(d,w)->action.run()).setNegativeButton("Cancel",null).show();}
+    private void toast(String message){Toast.makeText(this,message==null?"Could not complete the action.":message,Toast.LENGTH_LONG).show();}
     private void label(String title,int size,int color,boolean bold){labelIn(content,title,size,color,bold);}
     private void paragraph(String value){TextView view=labelIn(content,value,18,MUTED,false);view.setPadding(0,dp(8),0,dp(16));}
     private TextView text(String value,int size,int color,boolean bold){TextView view=new TextView(this);view.setText(value);view.setTextSize(size);view.setTextColor(color);view.setTypeface(Typeface.create(bold?"sans-serif-medium":"sans-serif",Typeface.NORMAL));view.setLineSpacing(dp(2),1.04f);if(size>=28)view.setLetterSpacing(-.025f);return view;}
@@ -677,5 +974,5 @@ public final class MainActivity extends Activity {
     }
     private GradientDrawable shape(int fill,int radius){GradientDrawable drawable=new GradientDrawable();drawable.setColor(fill);drawable.setCornerRadius(dp(radius));return drawable;}
     private int dp(float value){return (int)(value*getResources().getDisplayMetrics().density+.5f);}
-    private String formatTime(String value){long time=ApiSession.expiryMs(value);return time==0?value:android.text.format.DateFormat.getDateFormat(this).format(new Date(time))+" "+android.text.format.DateFormat.getTimeFormat(this).format(new Date(time));}
+    private String formatTime(String value){long time=ApiSession.expiryMs(value);return time==0?value:new java.text.SimpleDateFormat("d MMM yyyy, HH:mm",Locale.ENGLISH).format(new Date(time));}
 }

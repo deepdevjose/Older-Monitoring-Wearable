@@ -4,7 +4,7 @@
 
 Ejecutar todo desde la raíz del repositorio. `./carectl` es la CLI única. El código está en `server/`, `mobile/` y `firmware/esp32/`; ninguna carpeta de versión anterior es fuente activa. `.local/` contiene únicamente estado privado, respaldo histórico, claves y diagnósticos. No se distribuye.
 
-El servidor de esta preparación utiliza **https://192.168.3.3:8443** y API `/api/v1`. Esa IP pertenece hoy al Wi-Fi de este equipo; verificarla con `ip -4 -brief address`. Reservarla por DHCP en el router evita cambios. `127.0.0.1` en el teléfono se refiere al teléfono.
+Para el equipo ya preparado, seguir [PUESTA_EN_MARCHA.md](PUESTA_EN_MARCHA.md). La red actual es **Network**, del módem Huawei, con servidor `https://192.168.3.3:8443/api/v1`. La app código 17 del S22 ya comprobó HTTPS por Wi-Fi. El arranque `./tools/start_offline.sh --serial R5CT20D7X6D` prepara el S22; sin `--serial` conserva el teléfono principal configurado. La IP se detecta por DHCP y el certificado conserva la CA existente. La alternativa `--usb` prepara `127.0.0.1:19443` y exige mantener el cable. Ningún comando cambia la Wi-Fi o la VPN.
 
 ## 2. Instalación y arranque
 
@@ -36,7 +36,9 @@ No usar el antiguo `uvicorn main:app` ni una API key compartida: ese servidor fu
 
 `init` genera CA local, certificado del servidor y clave AES-GCM bajo `.local/runtime`, con permisos privados. El certificado de servidor cubre la IP indicada, loopback y `caremonitor.local`; el nombre DNS solo funciona si tu red lo resuelve. No se usa un certificado autofirmado aceptado a ciegas: el APK incorpora la CA pública y verifica el nombre del servidor.
 
-La CA dura un año y el certificado del servidor 90 días. Revisar la fecha con `doctor`. Si cambia dirección/certificado, preparar un nuevo conjunto TLS y actualizar la CA pública del APK si corresponde; nunca desactivar la verificación para resolver errores. Respaldar el estado y detener el proceso antes de una migración de certificados. Esta versión no automatiza renovación de CA.
+La CA dura un año y el certificado del servidor hasta 90 días. Revisar la fecha con `doctor`. Si cambia la IP, detener el proceso y ejecutar `./carectl prepare-network --host NUEVA_IP --port 8443`: reemite el certificado bajo la misma CA, conserva los SAN anteriores, las claves, las cuentas y las lecturas. Después ejecutar `./carectl start`. No regenera la CA ni cambia la red. Una CA vencida o sustituida requiere actualizar la confianza del APK; nunca desactivar la verificación para resolver errores.
+
+Ese comando adapta únicamente el servidor. El teléfono también debe apuntar a la nueva dirección: prepararla en el APK antes del primer acceso, o cambiarla en Ajustes si ya hay sesión. En este equipo, `./tools/start_offline.sh` automatiza ambas partes en la red Network del módem Huawei. El perfil está guardado sin conexión automática y no se activó durante la preparación; para conservar internet utiliza el modo USB; si había una conexión guardada diferente, el acceso ofrece **Update my connection** para adoptar la preparada.
 
 El proceso escucha en la IP LAN elegida, no en todas las interfaces. La política de firewall del equipo se mantiene: si bloquea el acceso desde el teléfono, permitir TCP 8443 **solo desde la subred LAN confiable** o desde la interfaz WireGuard. No abrir el puerto a todo Internet. Ejemplo Fedora, sustituyendo la subred por la real y revisando la zona adecuada:
 
@@ -47,18 +49,18 @@ sudo firewall-cmd --zone=home --add-rich-rule='rule family="ipv4" source address
 
 El comando anterior es temporal; verificar antes de hacerlo permanente. La app no podrá comunicarse por una Wi-Fi con aislamiento de clientes, aunque ambos aparatos aparezcan conectados.
 
-## 4. Instalar en el Samsung Galaxy S26 Ultra
+## 4. Instalar en los Samsung
 
-El artefacto está en `release/CareMonitor-1.0.0.apk`, código 13. Se compila con API 37 y se ha instalado y abierto por USB en el Samsung SM-S948B con Android 17. La aceptación del flujo Bluetooth, servidor, permisos y avisos en segundo plano sigue pendiente.
+El artefacto está en `release/CareMonitor-1.0.0.apk`, código 17. Se compila con API 37 y está instalado en el Galaxy S22 SM-S901E con Android 13. El SM-S948B con Android 17 conserva su instalación anterior hasta volver a conectarse para actualizarlo. HTTPS con la CA de la app se comprobó por Wi-Fi en el módem Network; el recorrido completo por Bluetooth y Wi-Fi sigue requiriendo aceptación.
 
 1. Copiar el APK al teléfono e instalar desde una fuente local confiable. Autorizar temporalmente a esa aplicación de archivos para instalar APK. También puede usarse `adb install release/CareMonitor-1.0.0.apk` cuando USB debugging esté autorizado.
 2. Si una instalación antigua tiene otro certificado, Android rechazará actualizarla. Conseguir la clave original o decidir conscientemente si se elimina esa instalación y sus datos locales. No se desinstala automáticamente nada.
-3. Conectar a la Wi-Fi del servidor. La pantalla inicial usa la dirección HTTPS preparada en el APK (`ApiSession.DEFAULT_BASE`) o la última conexión guardada, sin mostrar un campo de servidor. Antes del primer acceso, el despliegue debe proporcionar una dirección alcanzable y cubierta por el certificado. En Android 17 conceder **red local** cuando se solicite. Tras iniciar sesión, cambiar la conexión en **Ajustes → Conexión con tu servidor** exige iniciar sesión en el nuevo servidor. Se puede volver a la conexión anterior si falla ese primer acceso.
-4. Pulsar **Crear una cuenta**, elegir el rol y completar nombre, correo y contraseña en pasos separados. Usar cuentas ficticias, contraseña de doce a 128 caracteres y aceptación académica; no hay credenciales predeterminadas. La persona mayor recibe una guía para conectar el wearable y puede retomarla más tarde; el cuidador pasa a solicitar un vínculo.
+3. Conectar a la Wi-Fi del servidor. La pantalla inicial usa la dirección HTTPS preparada en el APK (`ApiSession.DEFAULT_BASE`) o la última conexión guardada, sin mostrar un campo de servidor. Antes del primer acceso, el despliegue debe proporcionar una dirección alcanzable y cubierta por el certificado. En Android 17 conceder **red local** cuando se solicite. Tras iniciar sesión, cambiar la conexión en **Settings → Server connection** exige iniciar sesión en el nuevo servidor. Se puede volver a la conexión anterior si falla ese primer acceso.
+4. Pulsar **Create an account**, elegir el rol y completar nombre, correo y contraseña en pasos separados. Usar cuentas ficticias, contraseña de doce a 128 caracteres y aceptación académica; no hay credenciales predeterminadas. La persona mayor recibe una guía para conectar el wearable y puede retomarla más tarde; el cuidador pasa a solicitar un vínculo.
 5. Desde el adulto generar invitación de cuatro cifras. En el cuidador solicitar vínculo. Volver al adulto y aprobar la identidad correcta. Repetir con cada cuidador.
-6. En el adulto abrir Bluetooth, dar permisos y seleccionar `ElderSensors-elder-demo-01`. Comparar el código con Serial y confirmar `Y` cuando lo solicite el firmware. No se cambia el firmware para conectar la app.
+6. En el adulto abrir Bluetooth, dar permisos y seleccionar `ElderSensors-elder-demo-01`. Aceptar en Android cualquier solicitud del sistema y autorizar el wearable con su clave privada en la guía de CareMonitor. No se requiere confirmación Serial; una sola conexión activa recibe sensores.
 7. Comprobar contador de mensajes, vigencia de la lectura, cola y confirmación del servidor. Los diagnósticos reales se identifican como `device_diagnostic` y no generan alertas fisiológicas.
-8. En **cada teléfono**, dar permiso de notificaciones y pulsar **Activar avisos locales**. Se mantiene una notificación visible con Detener. No basta con instalar el APK: hay que iniciar y permitir el canal.
+8. En **cada teléfono**, dar permiso de notificaciones y pulsar **Enable local notifications**. Se mantiene una notificación visible con Detener. No basta con instalar el APK: hay que iniciar y permitir el canal.
 
 La ubicación y el sonido son opcionales, desactivados inicialmente y revocables. La casa se configura localmente; el GPS se solicita solo al activar la función y solo se envían puntos cuya incertidumbre queda completamente fuera del radio. No se utiliza Google Maps ni localización de red. El micrófono procesa intensidad en RAM, nunca conversaciones ni archivos. Usarlos únicamente dentro del alcance académico autorizado; no hacer pruebas de caídas ni medir salud de participantes.
 

@@ -20,7 +20,7 @@ final class ApiClient {
     private static SSLSocketFactory tls;
     static String base(String input){
         String value=RelayPolicy.endpoint(input);
-        if(!new URIUnchecked(value).path().equals("/api/v1"))throw new IllegalArgumentException("La dirección debe terminar en /api/v1");
+        if(!new URIUnchecked(value).path().equals("/api/v1"))throw new IllegalArgumentException("The server address must end with /api/v1.");
         return value;
     }
     private static final class URIUnchecked{final URI uri;URIUnchecked(String text){uri=URI.create(text);}String path(){return uri.getPath();}}
@@ -29,11 +29,11 @@ final class ApiClient {
         return call(context,session,method,path,body,6000);
     }
     static JSONObject call(Context context,ApiSession session,String method,String path,JSONObject body,int readTimeoutMs)throws Exception{
-        if(session==null||!session.valid())throw new Failure(401,"La sesión venció. Vuelve a iniciar sesión.");
+        if(session==null||!session.valid())throw new Failure(401,"Your session has expired. Sign in again.");
         if(!"/auth/logout".equals(path)){
             ApiSession current=ApiSession.load(context);
             if(current==null||!current.id.equals(session.id)||!current.base.equals(session.base)||!current.token.equals(session.token))
-                throw new Failure(401,"La sesión cambió. Vuelve a iniciar sesión.");
+                throw new Failure(401,"Your session has changed. Sign in again.");
         }
         return request(context,session.base,session.token,method,path,body,readTimeoutMs);
     }
@@ -41,7 +41,7 @@ final class ApiClient {
         return request(context,base,token,method,path,body,6000);
     }
     private static JSONObject request(Context context,String base,String token,String method,String path,JSONObject body,int readTimeoutMs)throws Exception{
-        if(!lanAllowed(context))throw new Failure(0,"Permite el acceso a la red local para conectar con tu servidor.");
+        if(!lanAllowed(context))throw new Failure(0,"Allow local network access to connect to your server.");
         HttpsURLConnection connection=null;
         try{
             connection=(HttpsURLConnection)new URL(base+path).openConnection();connection.setSSLSocketFactory(tls(context));
@@ -56,13 +56,13 @@ final class ApiClient {
             String response=stream==null?"{}":new String(readLimited(stream,512*1024),StandardCharsets.UTF_8);
             JSONObject result=new JSONObject(response.isEmpty()?"{}":response);
             if(status<200||status>=300){
-                String message=status==401?"Sesión no válida. Inicia sesión otra vez.":status==403?"No tienes permiso para esta acción.":
-                    status==409?"La solicitud ya existe o requiere revisión.":status==429?"Demasiados intentos. Espera y vuelve a intentarlo.":
-                    status==422?"Revisa los campos y vuelve a intentarlo.":status>=500?"El servidor no está disponible. Inténtalo después.":"No se pudo completar la solicitud ("+status+").";
+                String message=status==401?"Your session is no longer valid. Sign in again.":status==403?"You do not have permission to do this.":
+                    status==409?"This request already exists or needs review.":status==429?"Too many attempts. Wait a moment and try again.":
+                    status==422?"Check the form and try again.":status>=500?"The server is unavailable. Try again later.":"The request could not be completed ("+status+").";
                 throw new Failure(status,message);
             }return result;
-        }catch(SSLException error){throw new Failure(0,"No se pudo verificar el certificado o nombre del servidor.");}
-        catch(Failure error){throw error;}catch(Exception error){throw new Failure(0,"Sin conexión segura con el servidor. Revisa la red y su dirección.");}
+        }catch(SSLException error){throw new Failure(0,"The server certificate or hostname could not be verified.");}
+        catch(Failure error){throw error;}catch(Exception error){throw new Failure(0,"Could not connect securely to the server. Check your network and server address.");}
         finally{if(connection!=null)connection.disconnect();}
     }
     static byte[] readLimited(InputStream input,int maximum)throws IOException{

@@ -1,0 +1,32 @@
+{
+  "boot_reset_performed": true,
+  "serial_byte_writes": false,
+  "frames": 63,
+  "invalid_json_frames": 0,
+  "wifi_associated": true,
+  "wifi_ip": "192.168.3.8",
+  "gateway": "192.168.3.1",
+  "ntp_started": true,
+  "clock_valid_frames": 59,
+  "clock_max_error_seconds": 0.55,
+  "bluetooth_ready": true,
+  "disconnect_reasons": {},
+  "target_scan_matches": null,
+  "target_scan_metadata": [],
+  "sensor_online_flags": {
+    "mpu6050:True": 63,
+    "gy906:True": 63
+  },
+  "optical_states": {
+    "waiting": 1,
+    "no_finger": 62
+  },
+  "uptime_discontinuities": 0,
+  "privacy": "Only aggregate statuses; no raw sensor values, credentials, neighbouring SSIDs, MACs or pairing codes retained.",
+  "duration_seconds": 65.1,
+  "frequency_hz": 0.999,
+  "recorded_at": "2026-10-27T10:33:44.457951+00:00",
+  "canonical_source_sha256": "8e439538070aa856e83b3e74c70b315d5393f532416915fde14058090cfe38e3",
+  "firmware_identity": "Application image verified during app-only flash; see FIRMWARE_NETWORK_EVIDENCE.json.",
+  "actions": "App-only flash followed by reset and aggregate serial observation; no pairing acceptance or sensor-value retention."
+}

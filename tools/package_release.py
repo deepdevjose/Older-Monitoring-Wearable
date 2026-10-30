@@ -46,7 +46,9 @@ def main():
         verify_hashes(directory,metadata['artifact_sha256'])
     outputs={}
     destination=RELEASE/f'CareMonitor-{VERSION}.apk';shutil.copyfile(apk,destination);outputs[destination.name]=sha(destination)
-    for name,source in [('ANDROID_BUILD.json',ROOT/'mobile/artifacts/BUILD_EVIDENCE.json'),('JVM_TEST_RESULTS.txt',ROOT/'mobile/artifacts/JVM_TEST_RESULTS.txt'),('FIRMWARE_DIAGNOSTIC.json',ROOT/'.local/firmware-check-20261025.json')]:
+    firmware_diagnostic=ROOT/'.local/firmware-check.json'
+    if not firmware_diagnostic.exists(): firmware_diagnostic=ROOT/'.local/firmware-check-20261025.json'
+    for name,source in [('ANDROID_BUILD.json',ROOT/'mobile/artifacts/BUILD_EVIDENCE.json'),('JVM_TEST_RESULTS.txt',ROOT/'mobile/artifacts/JVM_TEST_RESULTS.txt'),('FIRMWARE_DIAGNOSTIC.json',firmware_diagnostic)]:
         if source.exists():shutil.copyfile(source,RELEASE/name)
     sources=[]
     for directory in ['server','mobile/app','mobile/scripts','mobile/tests','firmware','datasets','models','docs','tests','tools']:

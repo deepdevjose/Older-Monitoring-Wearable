@@ -1,0 +1,188 @@
+{
+  "projectName": "Older-Monitoring-Wearable",
+  "projectType": "Software repository",
+  "analyzedAt": "2026-10-26T11:22:51.740Z",
+  "packageManager": "unknown",
+  "totals": {
+    "files": 696,
+    "directories": 81,
+    "bytes": 812005445,
+    "packageManifests": 0
+  },
+  "languages": [
+    {
+      "language": "Other",
+      "extensions": [
+        ".a",
+        ".apk",
+        ".bin",
+        ".cache",
+        ".cpp",
+        ".crt",
+        ".csv",
+        ".d",
+        ".db",
+        ".docx",
+        ".elf",
+        ".example",
+        ".gz",
+        ".h",
+        ".ino",
+        ".jks",
+        ".joblib",
+        ".jpg",
+        ".key",
+        ".log",
+        ".map",
+        ".merged",
+        ".nmcli",
+        ".o",
+        ".odt",
+        ".part01",
+        ".part02",
+        ".part03",
+        ".pdf",
+        ".pid",
+        ".png",
+        ".pyc",
+        ".sqlite3",
+        ".tag",
+        ".tex",
+        ".txt",
+        ".xml",
+        ".zip"
+      ],
+      "files": 534,
+      "bytes": 810729224
+    },
+    {
+      "language": "JSON",
+      "extensions": [
+        ".json"
+      ],
+      "files": 64,
+      "bytes": 491813
+    },
+    {
+      "language": "Python",
+      "extensions": [
+        ".py"
+      ],
+      "files": 43,
+      "bytes": 333779
+    },
+    {
+      "language": "Java",
+      "extensions": [
+        ".java"
+      ],
+      "files": 36,
+      "bytes": 315259
+    },
+    {
+      "language": "Markdown",
+      "extensions": [
+        ".md"
+      ],
+      "files": 14,
+      "bytes": 133686
+    },
+    {
+      "language": "Shell",
+      "extensions": [
+        ".sh"
+      ],
+      "files": 4,
+      "bytes": 911
+    },
+    {
+      "language": "TOML",
+      "extensions": [
+        ".toml"
+      ],
+      "files": 1,
+      "bytes": 773
+    }
+  ],
+  "frameworks": [],
+  "entryPoints": [],
+  "directories": [
+    {
+      "path": ".local",
+      "files": 425,
+      "directories": 37
+    },
+    {
+      "path": "docs",
+      "files": 83,
+      "directories": 7
+    },
+    {
+      "path": "mobile",
+      "files": 83,
+      "directories": 17
+    },
+    {
+      "path": "server",
+      "files": 24,
+      "directories": 2
+    },
+    {
+      "path": "tests",
+      "files": 18,
+      "directories": 1
+    },
+    {
+      "path": "models",
+      "files": 15,
+      "directories": 2
+    },
+    {
+      "path": "tools",
+      "files": 15,
+      "directories": 1
+    },
+    {
+      "path": "release",
+      "files": 11,
+      "directories": 0
+    },
+    {
+      "path": "datasets",
+      "files": 6,
+      "directories": 0
+    },
+    {
+      "path": ".pytest_cache",
+      "files": 5,
+      "directories": 2
+    },
+    {
+      "path": "firmware",
+      "files": 3,
+      "directories": 1
+    }
+  ],
+  "risks": [
+    {
+      "id": "missing-ci",
+      "severity": "low",
+      "title": "No CI workflow detected",
+      "description": "The repository has no obvious GitHub Actions workflow for build or test verification.",
+      "evidence": [
+        "No .github/workflows/ci.yml or .github/workflows/ci.yaml file found"
+      ],
+      "recommendation": "Add CI once the MVP command behavior has tests, so releases stay reproducible."
+    },
+    {
+      "id": "missing-license",
+      "severity": "low",
+      "title": "No license file detected",
+      "description": "The repository does not contain a root LICENSE file.",
+      "evidence": [
+        "LICENSE not found"
+      ],
+      "recommendation": "Add a license before publishing packages or distributing an installer."
+    }
+  ]
+}

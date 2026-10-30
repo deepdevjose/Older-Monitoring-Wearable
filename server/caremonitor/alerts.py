@@ -4,6 +4,7 @@ import math
 import time
 import uuid
 from .push import fanout, iso
+from .system_text import ALERT_TEXT
 
 CAPABILITIES = [
     {"id":"synthetic_rules","status":"educational_only","reason":"Three fresh, valid synthetic samples demonstrate configurable rules; no clinical validation."},
@@ -30,19 +31,19 @@ def conditions(payload):
     hr = ppg.get("heart_rate_bpm")
     if contact and ready and ppg.get("heart_rate_valid") is True and number(hr) and 30<=hr<=220:
         if hr<50:
-            out["pulse_low"] = ("Pulso bajo simulado","La secuencia sintética ilustra pulso bajo. Verificar la muestra; no es un diagnóstico.")
+            out["pulse_low"] = ALERT_TEXT["pulse_low"]
         elif hr>120:
-            out["pulse_high"] = ("Pulso alto simulado","La secuencia sintética ilustra pulso alto. Verificar la muestra; no es un diagnóstico.")
+            out["pulse_high"] = ALERT_TEXT["pulse_high"]
     oxygen = ppg.get("spo2_percent")
     if contact and ready and ppg.get("spo2_valid") is True and number(oxygen) and 70<=oxygen<95:
-        out["oxygen_low"] = ("Oxígeno bajo simulado","La secuencia sintética ilustra saturación baja. No constituye una lectura clínica validada.")
+        out["oxygen_low"] = ALERT_TEXT["oxygen_low"]
     temp = payload.get("gy906",{})
     surface,ambient = temp.get("object_temp_c"),temp.get("ambient_temp_c")
     if temp.get("online") is True and number(ambient) and -20<=ambient<=60:
         if ambient<10 or ambient>35:
-            out["environment_extreme"] = ("Ambiente extremo simulado","Revisar el entorno del escenario sintético y su confort térmico.")
+            out["environment_extreme"] = ALERT_TEXT["environment_extreme"]
         if number(surface) and 10<=surface<=50 and (surface<28 or surface>39):
-            out["surface_temperature_extreme"] = ("Temperatura superficial simulada","El GY906 representa temperatura superficial, influida por el ambiente; no permite concluir fiebre o hipotermia.")
+            out["surface_temperature_extreme"] = ALERT_TEXT["surface_temperature_extreme"]
     return out
 
 

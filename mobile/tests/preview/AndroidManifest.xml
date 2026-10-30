@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.caremonitor.preview" android:versionCode="1" android:versionName="1">
+    <!-- Deliberately no permissions or services. Fixtures cannot contact a server or wearable. -->
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="37" />
+    <application android:allowBackup="false" android:label="CareMonitor UI checks"
+        android:theme="@style/CareMonitorTheme" android:usesCleartextTraffic="false">
+        <activity android:name="org.caremonitor.demo.MainActivity" android:exported="false" />
+        <activity android:name="org.caremonitor.demo.LearningActivity" android:exported="false" />
+    </application>
+    <instrumentation android:name="org.caremonitor.demo.PreviewInstrumentation"
+        android:targetPackage="org.caremonitor.preview" />
+</manifest>

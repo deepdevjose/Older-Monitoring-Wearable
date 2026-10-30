@@ -269,11 +269,48 @@ def test_reminder_scheduler_exactly_once_and_self_reported_taken(service):
     caregiver_notes=client.get("/api/v1/notifications",headers=caregiver).json()["items"]
     assert len(elder_notes)==len(caregiver_notes)==1
     assert elder_notes[0]["data"]["dose"]==data["dose"]
+    assert elder_notes[0]["data"]["instructions"]==data["instructions"]
+    assert elder_notes[0]["data"]["message"].startswith("Care reminder.")
     assert client.post("/api/v1/reminders/"+reminder["id"]+"/taken",headers=caregiver).status_code==403
     assert client.post("/api/v1/reminders/"+reminder["id"]+"/taken",headers=elder).status_code==200
     assert client.get(f"/api/v1/patients/{elder_id}/reminders",headers=elder).json()["reminders"][0]["taken_at"]
     # Repeated confirmation never claims ingestion was objectively verified.
     assert "Self-reported" in client.post("/api/v1/reminders/"+reminder["id"]+"/taken",headers=elder).text
+
+
+def test_old_system_alerts_display_in_english_without_rewriting_history(service):
+    client,app,_=service
+    elder_id,elder,_=account(client)
+    _,caregiver,_=account(client,"carer","caregiver")
+    link(client,elder,caregiver)
+    create_alert(client,elder)
+    legacy_title="Pulso alto simulado"
+    legacy_message="La secuencia sintética ilustra pulso alto. Verificar la muestra; no es un diagnóstico."
+    # Emulate encrypted records written by the previous installed release.
+    with app.state.db.transaction() as conn:
+        row=conn.execute("SELECT * FROM alerts WHERE type='pulse_high'").fetchone()
+        alert_id=row["id"]
+        detail=app.state.db.vault.open(row["detail"],f"alert:{alert_id}")
+        detail.update(title=legacy_title,message=legacy_message)
+        sealed_alert=app.state.db.vault.seal(detail,f"alert:{alert_id}")
+        conn.execute("UPDATE alerts SET detail=? WHERE id=?",(sealed_alert,alert_id))
+        sealed_notifications={}
+        for note in conn.execute("SELECT * FROM notifications WHERE type='alert'").fetchall():
+            data=app.state.db.vault.open(note["data"],f"notification:{note['id']}")
+            data.update(title=legacy_title,message=legacy_message)
+            sealed_notifications[note["id"]]=app.state.db.vault.seal(data,f"notification:{note['id']}")
+            conn.execute("UPDATE notifications SET data=? WHERE id=?",(sealed_notifications[note["id"]],note["id"]))
+    for actor in (elder,caregiver):
+        alert=client.get(f"/api/v1/patients/{elder_id}/alerts",headers=actor).json()["alerts"][0]
+        note=client.get("/api/v1/notifications",headers=actor).json()["items"][0]["data"]
+        assert alert["title"]==note["title"]=="Simulated high pulse"
+        assert alert["message"]==note["message"]
+        assert "not a diagnosis" in alert["message"]
+    # Display adaptation preserves the encrypted historical record and identifiers.
+    with app.state.db.connection() as conn:
+        assert conn.execute("SELECT detail FROM alerts WHERE id=?",(alert_id,)).fetchone()[0]==sealed_alert
+        for note_id,sealed in sealed_notifications.items():
+            assert conn.execute("SELECT data FROM notifications WHERE id=?",(note_id,)).fetchone()[0]==sealed
 
 
 def test_catchup_sends_latest_occurrence_without_dose_flood(service):

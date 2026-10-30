@@ -1,0 +1,16 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.caremonitor.btprobe"
+    android:versionCode="1" android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="37" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <application android:label="CareMonitor Bluetooth protocol checks"
+        android:testOnly="true" android:debuggable="true" android:allowBackup="false"
+        android:usesCleartextTraffic="false" />
+    <instrumentation android:name="org.caremonitor.demo.BluetoothProbeInstrumentation"
+        android:targetPackage="org.caremonitor.btprobe"
+        android:functionalTest="true" android:handleProfiling="false" />
+</manifest>

@@ -67,6 +67,7 @@ public final class LiveMonitorService extends Service {
     private String connectionState="Not connected", error="", relayState="Not configured";
     private boolean running, lastFresh, destroyed;
     private String selectedAddress="", selectedName="";
+    private String connectionOwner="",connectionBase="";
     private int reconnectAttempts;
     private long lastReceivedAt, packetCount, lastUploadAt, lastNotifyAt;
     private int queued;
@@ -89,8 +90,12 @@ public final class LiveMonitorService extends Service {
             private boolean active() {return !destroyed&&transportGeneration==generation;}
             @Override public void onState(String state) {
                 if(!active())return;
-                if(state.equals("disconnected")||state.equals("connecting")||state.equals("closed"))invalidateLiveSample();
+                if(state.equals("disconnected")||state.equals("connecting")||state.equals("closed")||state.equals("authentication_failed"))invalidateLiveSample();
                 connectionState=readableState(state);
+                if(state.equals("authentication_failed")) {
+                    running=false;selectedAddress="";main.removeCallbacks(reconnect);
+                    relay.pause();stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();
+                }
                 if(state.equals("ready")){reconnectAttempts=0;main.removeCallbacks(reconnect);}
                 if(state.equals("disconnected")&&running&&!selectedAddress.isEmpty()) {
                     main.removeCallbacks(reconnect);main.postDelayed(reconnect,Math.min(30000,5000L*(1L<<Math.min(reconnectAttempts++,3))));
@@ -118,7 +123,7 @@ public final class LiveMonitorService extends Service {
         if(intent==null || ACTION_STOP.equals(intent.getAction())) {stopMonitoring();return START_NOT_STICKY;}
         if(ACTION_CONNECT.equals(intent.getAction())) {
             ApiSession account=ApiSession.load(this);
-            if(account==null||!account.elder()){error="Inicia sesión como persona mayor antes de conectar el wearable.";stopMonitoring();return START_NOT_STICKY;}
+            if(account==null||!account.elder()){error="Sign in as the older adult before connecting the wearable.";stopMonitoring();return START_NOT_STICKY;}
             if(Build.VERSION.SDK_INT>=31 && checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED) {
                 error="Nearby devices permission is required.";stopMonitoring();return START_NOT_STICKY;
             }
@@ -132,8 +137,13 @@ public final class LiveMonitorService extends Service {
                     error="Choose an ESP32 from the Bluetooth device list.";
                     if(!running)stopSelf();changed();return START_NOT_STICKY;
                 }
+                if("spp".equals(transport)&&!WearableKeys.has(this,address)) {
+                    error="Add your wearable's setup key in the app before connecting.";
+                    if(!running)stopSelf();changed();return START_NOT_STICKY;
+                }
                 Device selected=devices.get(address);
                 selectedAddress=address;
+                connectionOwner=account.id;connectionBase=account.base;
                 selectedName=selected==null?("spp".equals(transport)?"ElderSensors-elder-demo-01":"CareMonitor-elder-demo-01"):selected.name;
                 main.removeCallbacks(reconnect);reconnectAttempts=0;
                 invalidateLiveSample();packetCount=0;error="";
@@ -153,7 +163,7 @@ public final class LiveMonitorService extends Service {
     }
 
     public void scan() {
-        ApiSession account=ApiSession.load(this);if(account==null||!account.elder()){error="Cuenta de persona mayor requerida.";changed();return;}
+        ApiSession account=ApiSession.load(this);if(account==null||!account.elder()){error="An older adult account is required.";changed();return;}
         if(running){error="Stop monitoring before scanning for another ESP32.";changed();return;}
         devices.clear();error="";bluetooth.startScan();changed();
     }
@@ -193,7 +203,7 @@ public final class LiveMonitorService extends Service {
 
     public void stopMonitoring() {
         running=false;main.removeCallbacks(reconnect);reconnectAttempts=0;
-        selectedAddress="";selectedName="";invalidateLiveSample();
+        selectedAddress="";selectedName="";connectionOwner="";connectionBase="";invalidateLiveSample();
         replaceTransportClient();connectionState="Disconnected";relay.pause();
         stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();changed();
     }
@@ -213,7 +223,7 @@ public final class LiveMonitorService extends Service {
             if(!(decoded instanceof JSONObject)||tokens.nextClean()!=0)throw new IllegalArgumentException();
             JSONObject incoming=(JSONObject)decoded;
             if(!EXPECTED_DEVICE_ID.equals(incoming.opt("device_id"))) {
-                error="El dispositivo no corresponde al wearable vinculado.";changed();return;
+                error="This device does not match the linked wearable.";changed();return;
             }
             String identity=incoming.has("sample_id")?incoming.optString("boot_nonce","")+":"+incoming.optString("sample_id",""):"";
             if(!identity.isEmpty()&&sampleIds.contains(identity))return;
@@ -269,8 +279,10 @@ public final class LiveMonitorService extends Service {
         if(state.equals("scan_stopped"))return "Scan stopped";
         if(state.equals("subscribing"))return "Enabling sensor notifications";
         if(state.equals("discovering"))return "Discovering sensor service";
-        if(state.equals("scanning"))return "spp".equals(transport)?"Scanning for classic Bluetooth devices":"Scanning for Care Monitor BLE devices";
-        if(state.equals("connecting"))return "Conectando con tu wearable";
+        if(state.equals("scanning"))return "spp".equals(transport)?"Scanning for classic Bluetooth devices":"Scanning for CareMonitor BLE devices";
+        if(state.equals("connecting"))return "Connecting to your wearable";
+        if(state.equals("authenticating"))return "Authorising your wearable";
+        if(state.equals("authentication_failed"))return "Wearable authorisation needed";
         if(state.equals("disconnected"))return "Disconnected";
         if(state.equals("closed"))return "Disconnected";
         return state;
@@ -297,6 +309,12 @@ public final class LiveMonitorService extends Service {
     private final Runnable reconnect=new Runnable() {
         @Override public void run() {
             if(running&&!destroyed&&!selectedAddress.isEmpty()) {
+                ApiSession account=ApiSession.load(LiveMonitorService.this);
+                if(account==null||!account.elder()||!account.id.equals(connectionOwner)||!account.base.equals(connectionBase)
+                        ||("spp".equals(transport)&&!WearableKeys.has(LiveMonitorService.this,selectedAddress))) {
+                    error="Sign in to the same older adult account and check your wearable setup key before reconnecting.";
+                    stopMonitoring();return;
+                }
                 error="Reconnecting to the selected ESP32…";invalidateLiveSample();replaceTransportClient();
                 connectionState=readableState("connecting");bluetooth.connect(selectedAddress);changed();
             }
@@ -326,8 +344,8 @@ public final class LiveMonitorService extends Service {
         PendingIntent stop=PendingIntent.getService(this,1,new Intent(this,LiveMonitorService.class).setAction(ACTION_STOP),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         Notification.Builder builder=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CHANNEL):new Notification.Builder(this);
         String mode="spp".equals(transport)?"Classic SPP":"BLE";
-        String device="Wearable CareMonitor";
-        return builder.setSmallIcon(R.drawable.ic_watch).setContentTitle("Care Monitor · "+mode+" · "+device)
+        String device="CareMonitor wearable";
+        return builder.setSmallIcon(R.drawable.ic_watch).setContentTitle("CareMonitor · "+mode+" · "+device)
             .setContentText(connectionState+" · "+queued+" uploads queued").setContentIntent(content)
             .setOngoing(true).setOnlyAlertOnce(true).setVisibility(Notification.VISIBILITY_PRIVATE)
             .addAction(new Notification.Action.Builder(null,"Stop",stop).build()).build();

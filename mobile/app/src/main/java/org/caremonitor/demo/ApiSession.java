@@ -29,7 +29,7 @@ final class ApiSession {
         ApiSession session=new ApiSession(base,response);if(!session.valid())throw new IllegalArgumentException("Expired session");
         JSONObject saved=new JSONObject(response.toString());saved.put("base",base);
         SecureStore.write(context,FILE,saved.toString());
-        if(!context.getSharedPreferences("caremonitor_session_control",0).edit().putBoolean("signed_out",false).commit())throw new java.io.IOException("No se pudo guardar el control de sesión.");
+        if(!context.getSharedPreferences("caremonitor_session_control",0).edit().putBoolean("signed_out",false).commit())throw new java.io.IOException("Your sign-in state could not be saved.");
         locallyClosed=false;
         context.getSharedPreferences("caremonitor_endpoint",0).edit().putString("base",base).apply();return session;
     }

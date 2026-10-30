@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -42,16 +43,20 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/** On-device view-tree checks: no authentication, persistence, Bluetooth or network operations. */
+/** On-device checks: no authentication, Bluetooth or network operations; endpoint fixtures restored in finally. */
 public final class SetupInstrumentation extends Instrumentation {
     private static final String TARGET = "org.caremonitor.demo";
     private static final String PASSWORD = "ui-check-only-Password-4917";
     private Activity activity;
     private boolean safeToReset;
     private int checks;
+    private boolean connectionOnly;
+    private int originalWindowFlags;
+    private boolean windowFlagsCaptured;
 
     @Override public void onCreate(Bundle arguments) {
         super.onCreate(arguments);
+        connectionOnly = arguments != null && "connection".equals(arguments.getString("scope"));
         start();
     }
 
@@ -72,6 +77,9 @@ public final class SetupInstrumentation extends Instrumentation {
             launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             activity = startActivitySync(launch);
             main(() -> {
+                originalWindowFlags = activity.getWindow().getAttributes().flags;
+                windowFlagsCaptured = true;
+                activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                 if (get(activity, "session") != null) throw new ExistingAccount();
                 safeToReset = true;
                 ((Handler) get(activity, "main")).removeCallbacks((Runnable) get(activity, "poll"));
@@ -79,9 +87,13 @@ public final class SetupInstrumentation extends Instrumentation {
                 check("secure window remains enabled", (activity.getWindow().getAttributes().flags
                     & WindowManager.LayoutParams.FLAG_SECURE) != 0);
             });
-            registration();
-            accessibleAuthentication();
-            caregiverGuard();
+            connectionRecovery();
+            if (!connectionOnly) {
+                registration();
+                accessibleAuthentication();
+                wearableKeySetup();
+                caregiverGuard();
+            }
             check("preferences unchanged", preferences.equals(preferences()));
             Map<String, byte[]> after = privateFiles();
             for (String name : files.keySet()) {
@@ -89,6 +101,7 @@ public final class SetupInstrumentation extends Instrumentation {
             }
             check("permissions unchanged", Arrays.equals(permissions, permissions()));
             result.putString("result", "PASS");
+            result.putString("scope", connectionOnly ? "connection recovery; no layout assertions" : "full onboarding and layout");
             code = Activity.RESULT_OK;
         } catch (ExistingAccount abort) {
             result.putString("result", "ABORTED_EXISTING_SESSION");
@@ -108,6 +121,9 @@ public final class SetupInstrumentation extends Instrumentation {
                             set(activity, "registering", false);
                             invoke(activity, "render");
                         }
+                        if (windowFlagsCaptured) activity.getWindow().setFlags(
+                            originalWindowFlags & WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                         activity.finish();
                     });
                 } catch (Throwable cleanupFailure) {
@@ -121,40 +137,116 @@ public final class SetupInstrumentation extends Instrumentation {
         }
     }
 
+    /** Exercise only the explicit endpoint action, never login or an HTTPS request. */
+    private void connectionRecovery() throws Exception {
+        final SharedPreferences endpoint = getTargetContext().getSharedPreferences("caremonitor_endpoint", 0);
+        final boolean hadBase = endpoint.contains("base"), hadPrevious = endpoint.contains("previous_base");
+        final String originalBase = endpoint.getString("base", ""), originalPrevious = endpoint.getString("previous_base", "");
+        Field defaultField = targetClass("ApiSession").getDeclaredField("DEFAULT_BASE");
+        defaultField.setAccessible(true);
+        final String prepared = (String) defaultField.get(null);
+        final String previous = prepared.equals("https://192.0.2.1:8443/api/v1")
+            ? "https://192.0.2.2:8443/api/v1" : "https://192.0.2.1:8443/api/v1";
+        final Map<String, byte[]> files = privateFiles();
+        final String originalEmail = (String) get(activity, "loginEmail");
+        try {
+            main(() -> {
+                check("prepared endpoint fixture saved", endpoint.edit().putString("base", prepared).remove("previous_base").commit());
+                invoke(activity, "render");
+                check("matching connection has no update action", text("Update my connection") == null);
+                check("matching connection has no previous action", text("Restore my previous connection") == null);
+                check("different endpoint fixture saved", endpoint.edit().putString("base", previous).commit());
+                invoke(activity, "render");
+                check("mismatched connection offers explicit update", text("Update my connection") != null
+                    && text("Update my connection").isEnabled());
+                check("connection does not change merely by rendering", previous.equals(endpoint.getString("base", ""))
+                    && !endpoint.contains("previous_base"));
+                check("connection recovery does not expose a server field", edit("HTTPS server") == null
+                    && get(activity, "serverInput") == null);
+                check("connection recovery does not expose either address", find(root(), view -> view instanceof TextView
+                    && (((TextView)view).getText().toString().contains(prepared)
+                        || ((TextView)view).getText().toString().contains(previous))) == null);
+                set(activity, "busy", true);
+                invoke(activity, "render");
+                check("connection action disabled during authentication", !text("Update my connection").isEnabled());
+                text("Update my connection").performClick();
+                check("busy guard preserves connection", previous.equals(endpoint.getString("base", ""))
+                    && !endpoint.contains("previous_base"));
+                set(activity, "busy", false);
+                invoke(activity, "render");
+                edit("Email address").setText("ui-check@example.invalid");
+                edit("Password").setText(PASSWORD);
+                click("Update my connection");
+                check("explicit update selects prepared connection", prepared.equals(endpoint.getString("base", "")));
+                check("explicit update retains previous connection", previous.equals(endpoint.getString("previous_base", "")));
+                check("updated connection has friendly notice", text("Connection updated. Sign in to continue.") != null);
+                check("updated connection hides redundant action", text("Update my connection") == null);
+                check("previous connection remains restorable", text("Restore my previous connection") != null);
+                check("update preserves login email and password in memory", "ui-check@example.invalid".contentEquals(edit("Email address").getText())
+                    && PASSWORD.contentEquals(edit("Password").getText()) && !edit("Password").isSaveEnabled());
+                check("update never authenticates or schedules a permission action", get(activity,"session") == null
+                    && get(activity,"authentication") == null && !(Boolean)get(activity,"busy")
+                    && "".equals(get(activity,"pendingAction")));
+                click("Restore my previous connection");
+                check("previous connection restored without a session", previous.equals(endpoint.getString("base", ""))
+                    && !endpoint.contains("previous_base") && get(activity,"session") == null);
+                check("restoring previous connection reoffers explicit update", text("Update my connection") != null);
+                check("restoring previous connection preserves login form", "ui-check@example.invalid".contentEquals(edit("Email address").getText())
+                    && PASSWORD.contentEquals(edit("Password").getText()));
+                secureWindow();
+            });
+            Map<String, byte[]> after = privateFiles();
+            for (String name : files.keySet()) check("recovery leaves private session and outbox unchanged", Arrays.equals(files.get(name),after.get(name)));
+        } finally {
+            main(() -> {
+                SharedPreferences.Editor restore = endpoint.edit();
+                if(hadBase)restore.putString("base",originalBase);else restore.remove("base");
+                if(hadPrevious)restore.putString("previous_base",originalPrevious);else restore.remove("previous_base");
+                check("endpoint fixtures restored", restore.commit());
+                if(get(activity,"passwordInput") instanceof EditText)((EditText)get(activity,"passwordInput")).setText("");
+                set(activity,"busy",false);set(activity,"loginEmail",originalEmail);set(activity,"notice","");
+                invoke(activity,"render");
+                check("recovery cleanup retains no session or authentication", get(activity,"session") == null
+                    && get(activity,"authentication") == null);
+                secureWindow();
+            });
+        }
+    }
+
     private void registration() throws Exception {
         main(() -> {
-            check("login email exists", edit("Correo electrónico") != null);
-            check("login password exists", edit("Contraseña") != null);
-            check("server absent from login", edit("Servidor HTTPS") == null
+            check("login email exists", edit("Email address") != null);
+            check("login password exists", edit("Password") != null);
+            check("server absent from login", edit("HTTPS server") == null
                 && get(activity, "serverInput") == null);
-            click("Crear una cuenta");
+            click("Create an account");
             check("registration requires explicit role", step() == 0 && role().isEmpty());
-            check("neither role preselected", !roleView("Soy la persona mayor").isSelected()
-                && !roleView("Soy cuidador o cuidadora").isSelected());
-            click("Continuar");
+            check("neither role preselected", !roleView("I'm the older adult").isSelected()
+                && !roleView("I'm a caregiver").isSelected());
+            click("Continue");
             check("cannot advance without role", step() == 0 && role().isEmpty());
             check("role explanation shown", !((String) get(activity, "notice")).isEmpty());
-            roleView("Soy cuidador o cuidadora").performClick();
+            roleView("I'm a caregiver").performClick();
             check("caregiver selected explicitly", "caregiver".equals(role())
-                && roleView("Soy cuidador o cuidadora").isSelected()
-                && !roleView("Soy la persona mayor").isSelected());
-            click("Continuar");
-            check("name step", step() == 1 && edit("Tu nombre") != null);
-            edit("Tu nombre").setText("Prueba de interfaz");
-            click("Continuar");
-            check("email step", step() == 2 && edit("Correo electrónico") != null);
-            edit("Correo electrónico").setText("ui-check@example.invalid");
-            click("Continuar");
-            check("final password step", step() == 3 && edit("Elige una contraseña") != null);
-            check("profile summary shown", text("Prueba de interfaz") != null
-                && text("ui-check@example.invalid") != null && text("Cuidador o cuidadora") != null);
-            EditText password = edit("Elige una contraseña");
+                && roleView("I'm a caregiver").isSelected()
+                && !roleView("I'm the older adult").isSelected());
+            click("Continue");
+            check("name step", step() == 1 && edit("Your name") != null);
+            edit("Your name").setText("Interface check");
+            click("Continue");
+            check("email step", step() == 2 && edit("Email address") != null);
+            edit("Email address").setText("ui-check@example.invalid");
+            click("Continue");
+            check("final password step", step() == 3 && edit("Choose a password") != null);
+            check("profile summary shown", text("Interface check") != null
+                && text("ui-check@example.invalid") != null && text("Caregiver") != null);
+            EditText password = edit("Choose a password");
             check("password view disables state saving", !password.isSaveEnabled());
             password.setText(PASSWORD);
             Bundle saved = new Bundle();
             callActivityOnSaveInstanceState(activity, saved);
             check("profile state retained without password key", saved.getInt("setup_step") == 3
-                && "Prueba de interfaz".equals(saved.getString("setup_name"))
+                && "Interface check".equals(saved.getString("setup_name"))
                 && "ui-check@example.invalid".equals(saved.getString("setup_email")));
             for (String key : saved.keySet()) check("no password state key", !key.toLowerCase(java.util.Locale.ROOT).contains("password"));
             Parcel parcel = Parcel.obtain();
@@ -167,30 +259,30 @@ public final class SetupInstrumentation extends Instrumentation {
             } finally { parcel.recycle(); }
         });
         main(() -> {
-            click("Atrás");
+            click("Back");
             check("back preserves email", step() == 2
-                && "ui-check@example.invalid".contentEquals(edit("Correo electrónico").getText()));
-            click("Atrás");
+                && "ui-check@example.invalid".contentEquals(edit("Email address").getText()));
+            click("Back");
             check("back preserves name", step() == 1
-                && "Prueba de interfaz".contentEquals(edit("Tu nombre").getText()));
-            click("Atrás");
+                && "Interface check".contentEquals(edit("Your name").getText()));
+            click("Back");
             check("back preserves caregiver choice", step() == 0 && "caregiver".equals(role()));
-            roleView("Soy la persona mayor").performClick();
+            roleView("I'm the older adult").performClick();
             check("adult changes only by explicit selection", "elder".equals(role())
-                && roleView("Soy la persona mayor").isSelected()
-                && !roleView("Soy cuidador o cuidadora").isSelected());
-            click("Continuar");
-            check("name preserved after role change", "Prueba de interfaz".contentEquals(edit("Tu nombre").getText()));
-            click("Continuar");
-            check("email preserved after role change", "ui-check@example.invalid".contentEquals(edit("Correo electrónico").getText()));
-            click("Continuar");
-            check("adult summary and password reentry", step() == 3 && text("Persona mayor") != null
-                && edit("Elige una contraseña").getText().length() == 0);
+                && roleView("I'm the older adult").isSelected()
+                && !roleView("I'm a caregiver").isSelected());
+            click("Continue");
+            check("name preserved after role change", "Interface check".contentEquals(edit("Your name").getText()));
+            click("Continue");
+            check("email preserved after role change", "ui-check@example.invalid".contentEquals(edit("Email address").getText()));
+            click("Continue");
+            check("adult summary and password reentry", step() == 3 && text("Older adult") != null
+                && edit("Choose a password").getText().length() == 0);
             check("no authentication request started", !(Boolean) get(activity, "busy") && get(activity, "session") == null);
-            // Never click Iniciar sesión or Crear mi cuenta.
+            // Never click Sign in or Create my account.
             for (int i = 0; i < 4; i++) invoke(activity, "goBack");
             check("returned to login", !(Boolean) get(activity, "registering")
-                && edit("Contraseña") != null && edit("Servidor HTTPS") == null);
+                && edit("Password") != null && edit("HTTPS server") == null);
         });
     }
 
@@ -212,32 +304,32 @@ public final class SetupInstrumentation extends Instrumentation {
                 set(activity, "registering", false);
                 invoke(activity, "render");
             });
-            authenticationLayout("Iniciar sesión", "Correo electrónico", "Contraseña");
-            main(() -> passwordVisibility("Contraseña"));
-            main(() -> click("Crear una cuenta"));
-            authenticationLayout("Continuar");
+            authenticationLayout("Sign in", "Email address", "Password");
+            main(() -> passwordVisibility("Password"));
+            main(() -> click("Create an account"));
+            authenticationLayout("Continue");
             main(() -> {
-                View adult = roleView("Soy la persona mayor");
-                View caregiver = roleView("Soy cuidador o cuidadora");
+                View adult = roleView("I'm the older adult");
+                View caregiver = roleView("I'm a caregiver");
                 check("role cards are accessible focus targets", adult.isFocusable() && caregiver.isFocusable());
                 minimumTarget("adult role card", adult);
                 minimumTarget("caregiver role card", caregiver);
                 check("explicit role selected for layout flow", caregiver.performClick());
-                click("Continuar");
+                click("Continue");
             });
-            authenticationLayout("Continuar", "Tu nombre");
+            authenticationLayout("Continue", "Your name");
             main(() -> {
-                edit("Tu nombre").setText("Prueba de interfaz");
-                click("Continuar");
+                edit("Your name").setText("Interface check");
+                click("Continue");
             });
-            authenticationLayout("Continuar", "Correo electrónico");
+            authenticationLayout("Continue", "Email address");
             main(() -> {
-                edit("Correo electrónico").setText("ui-check@example.invalid");
-                click("Continuar");
+                edit("Email address").setText("ui-check@example.invalid");
+                click("Continue");
             });
-            authenticationLayout("Crear mi cuenta", "Elige una contraseña");
+            authenticationLayout("Create my account", "Choose a password");
             main(() -> {
-                passwordVisibility("Elige una contraseña");
+                passwordVisibility("Choose a password");
                 check("layout checks never start authentication", !(Boolean) get(activity, "busy")
                     && get(activity, "session") == null && get(activity, "authentication") == null);
                 secureWindow();
@@ -306,10 +398,10 @@ public final class SetupInstrumentation extends Instrumentation {
 
     private void passwordVisibility(String hint) {
         EditText password = edit(hint);
-        TextView toggle = text("Mostrar contraseña");
+        TextView toggle = text("Show password");
         check("password toggle is accessible", toggle != null && toggle.isClickable() && toggle.isEnabled()
             && toggle.getContentDescription() != null
-            && "Mostrar contraseña".contentEquals(toggle.getContentDescription()));
+            && "Show password".contentEquals(toggle.getContentDescription()));
         check("password begins masked", password != null
             && password.getTransformationMethod() instanceof PasswordTransformationMethod);
         check("password state saving remains disabled", !password.isSaveEnabled());
@@ -335,7 +427,7 @@ public final class SetupInstrumentation extends Instrumentation {
             Constructor<?> constructor = targetClass("ApiSession").getDeclaredConstructor(String.class, JSONObject.class);
             constructor.setAccessible(true);
             JSONObject user = new JSONObject().put("id", "ui-check").put("role", "caregiver")
-                .put("display_name", "Prueba de interfaz").put("email", "ui-check@example.invalid");
+                .put("display_name", "Interface check").put("email", "ui-check@example.invalid");
             JSONObject body = new JSONObject().put("access_token", "ui-check-fictional-token-never-persisted-0001")
                 .put("expires_at", "2099-01-01T00:00:00Z").put("user", user);
             // Constructor only: never ApiSession.save(), logout(), refresh() or a navigation listener.
@@ -345,12 +437,12 @@ public final class SetupInstrumentation extends Instrumentation {
         });
         awaitLayout();
         main(() -> {
-            check("caregiver home visible", text("Cuidar empieza aquí.") != null);
-            check("caregiver cannot connect wearable from home", text("Conectar mi wearable") == null);
-            navigationState("Hoy");
+            check("caregiver home visible", text("Care starts here.") != null);
+            check("caregiver cannot connect wearable from home", text("Connect my wearable") == null);
+            navigationState("Today");
         });
         String[] pages = {"alerts", "care", "account", "connection", "privacy", "notification_settings", "security"};
-        String[] selected = {"Avisos", "Cuidado", "Ajustes", "Ajustes", "Ajustes", "Ajustes", "Ajustes"};
+        String[] selected = {"Notifications", "Care", "Settings", "Settings", "Settings", "Settings", "Settings"};
         for (int i = 0; i < pages.length; i++) {
             final String page = pages[i], label = selected[i];
             main(() -> {
@@ -361,15 +453,15 @@ public final class SetupInstrumentation extends Instrumentation {
             main(() -> {
                 navigationState(label);
                 if ("account".equals(page)) {
-                    View connection = described("Conexión con tu servidor");
+                    View connection = described("Server connection");
                     View heading = find((View) get(activity, "content"), view -> view instanceof TextView
-                        && "Ajustes".contentEquals(((TextView) view).getText()));
+                        && "Settings".contentEquals(((TextView) view).getText()));
                     check("settings exposes grouped server connection", heading != null
                         && connection != null && connection.isClickable());
-                    check("server field is not embedded in settings list", edit("Servidor HTTPS") == null
+                    check("server field is not embedded in settings list", edit("HTTPS server") == null
                         && get(activity, "serverInput") == null);
                 } else if ("connection".equals(page)) {
-                    check("HTTPS server field belongs in connection settings", edit("Servidor HTTPS") != null
+                    check("HTTPS server field belongs in connection settings", edit("HTTPS server") != null
                         && get(activity, "serverInput") != null);
                 }
                 secureWindow();
@@ -381,8 +473,8 @@ public final class SetupInstrumentation extends Instrumentation {
         });
         awaitLayout();
         main(() -> {
-            check("caregiver device page is explanatory", text("Conexión del wearable") != null
-                && get(activity, "deviceList") == null && text("Buscar mi wearable") == null);
+            check("caregiver device page is explanatory", text("Wearable connection") != null
+                && get(activity, "deviceList") == null && text("Search for my wearable") == null);
             invoke(activity, "device");
             Method bluetooth = activity.getClass().getDeclaredMethod("bluetooth", String.class);
             bluetooth.setAccessible(true);
@@ -397,22 +489,135 @@ public final class SetupInstrumentation extends Instrumentation {
         });
     }
 
-    private void navigationState(String selected) {
-        String[] labels = {"Hoy", "Avisos", "Cuidado", "Ajustes"};
-        ViewGroup parent = null;
+    /** Private-key UI only: fixtures stay in memory; Save/connect is never pressed. */
+    private void wearableKeySetup() throws Exception {
+        if(Build.VERSION.SDK_INT<29)return; // Public global-window inspection starts at API 29.
+        final Resources resources=activity.getResources();
+        final Configuration original=new Configuration(resources.getConfiguration());
+        final DisplayMetrics metrics=new DisplayMetrics();metrics.setTo(resources.getDisplayMetrics());
+        final String key="0123456789abcdef0123456789abcdef";
+        final Map<String,byte[]> credentials=wearableFiles();
+        try {
+            for(float scale:new float[]{1.0f,2.0f}) {
+                main(()->{
+                    Configuration fixture=new Configuration(original);fixture.fontScale=scale;
+                    resources.updateConfiguration(fixture,metrics);
+                    set(activity,"session",fixtureSession("elder"));set(activity,"registering",false);
+                    set(activity,"page","device");set(activity,"deviceStep",1);invoke(activity,"render");
+                    check("wearable pairing no longer requests a computer",find(root(),view->view instanceof TextView
+                        && ((TextView)view).getText().toString().contains("USB pairing assistant"))==null);
+                    Method method=activity.getClass().getDeclaredMethod("authoriseWearable",String.class);
+                    method.setAccessible(true);method.invoke(activity,"02:00:00:00:00:01");
+                });
+                final View dialog=wearableDialog();
+                check("wearable key dialog opened for elder",dialog!=null);
+                awaitLayout(dialog);
+                final EditText[] field=new EditText[1];
+                main(()->{
+                    check("dialog uses requested in-memory font scale",Float.compare(dialog.getResources().getConfiguration().fontScale,scale)==0);
+                    field[0]=(EditText)find(dialog,view->view instanceof EditText&&"Wearable setup key".contentEquals(view.getContentDescription()));
+                    check("setup key field is present and enabled",field[0]!=null&&field[0].isEnabled());
+                    check("setup key starts masked",field[0].getTransformationMethod() instanceof PasswordTransformationMethod);
+                    check("setup key view state saving disabled",!field[0].isSaveEnabled());
+                    check("setup key autofill disabled",field[0].getImportantForAutofill()==View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+                    check("setup dialog has a secure window",dialog.getLayoutParams() instanceof WindowManager.LayoutParams
+                        && (((WindowManager.LayoutParams)dialog.getLayoutParams()).flags&WindowManager.LayoutParams.FLAG_SECURE)!=0);
+                    fullyVisible("setup key field",field[0]);minimumTarget("setup key field",field[0]);textNotClipped("setup key field",field[0],false);
+                    TextView show=(TextView)find(dialog,view->view instanceof TextView&&"Show setup key".contentEquals(((TextView)view).getText()));
+                    check("setup key visibility control accessible",show!=null&&show.isClickable()&&show.isEnabled()
+                        &&"Show setup key".contentEquals(show.getContentDescription()));
+                    fullyVisible("setup key visibility control",show);minimumTarget("setup key visibility control",show);
+                    textNotClipped("setup key visibility control",show,true);
+                    field[0].setText(key);show.performClick();
+                    check("explicit key reveal keeps field text",!(field[0].getTransformationMethod() instanceof PasswordTransformationMethod)&&key.contentEquals(field[0].getText()));
+                    show.performClick();
+                    check("key can be masked again",field[0].getTransformationMethod() instanceof PasswordTransformationMethod&&key.contentEquals(field[0].getText()));
+                    Bundle saved=new Bundle();callActivityOnSaveInstanceState(activity,saved);
+                    Parcel parcel=Parcel.obtain();
+                    try {
+                        saved.writeToParcel(parcel,0);byte[] bytes=parcel.marshall();
+                        check("key absent from saved state UTF8",!contains(bytes,key.getBytes(StandardCharsets.UTF_8)));
+                        check("key absent from saved state UTF16",!contains(bytes,key.getBytes(StandardCharsets.UTF_16LE))&&!contains(bytes,key.getBytes(StandardCharsets.UTF_16BE)));
+                    } finally {parcel.recycle();}
+                    for(int id:new int[]{android.R.id.button1,android.R.id.button2}) {
+                        TextView action=dialog.findViewById(id);
+                        check("setup dialog action operable",action!=null&&action.isEnabled()&&action.isClickable());
+                        fullyVisible("setup dialog action",action);textNotClipped("setup dialog action",action,true);
+                        check("platform dialog action at least 48dp high",action.getHeight()+1>=48*resources.getDisplayMetrics().density);
+                    }
+                    check("setup save button labelled", "Save and connect".contentEquals(((TextView)dialog.findViewById(android.R.id.button1)).getText()));
+                    check("setup Cancel click handled",dialog.findViewById(android.R.id.button2).performClick());
+                });
+                main(()->{
+                    check("Cancel dismisses key dialog",!dialog.isAttachedToWindow()&&wearableDialog()==null);
+                    check("Cancel clears secret field",field[0].getText().length()==0);
+                    check("key UI does not create a persisted account",persistedSession()==null);
+                    check("key UI does not start authentication",get(activity,"authentication")==null);
+                    secureWindow();
+                });
+            }
+            main(()->{
+                set(activity,"session",fixtureSession("caregiver"));set(activity,"page","device");invoke(activity,"render");
+                Method method=activity.getClass().getDeclaredMethod("authoriseWearable",String.class);
+                method.setAccessible(true);method.invoke(activity,"02:00:00:00:00:01");
+                check("caregiver cannot open setup key dialog",wearableDialog()==null);
+                check("caregiver key guard requests no permission or transport",get(activity,"deviceList")==null&&"".equals(get(activity,"pendingAction")));
+            });
+            Map<String,byte[]> after=wearableFiles();check("key UI creates no credential files",credentials.keySet().equals(after.keySet()));
+            for(String name:credentials.keySet())check("key UI preserves existing encrypted credential",Arrays.equals(credentials.get(name),after.get(name)));
+        } finally {
+            main(()->{
+                View dialog=wearableDialog();if(dialog!=null&&dialog.findViewById(android.R.id.button2)!=null)dialog.findViewById(android.R.id.button2).performClick();
+                resources.updateConfiguration(original,metrics);set(activity,"session",null);set(activity,"page","home");set(activity,"deviceStep",0);invoke(activity,"render");
+                check("key UI font restored",Float.compare(resources.getConfiguration().fontScale,original.fontScale)==0);
+            });
+        }
+    }
+
+    private Object fixtureSession(String role) throws Exception {
+        Constructor<?> constructor=targetClass("ApiSession").getDeclaredConstructor(String.class,JSONObject.class);constructor.setAccessible(true);
+        JSONObject user=new JSONObject().put("id","ui-check").put("role",role).put("display_name","Interface check").put("email","ui-check@example.invalid");
+        JSONObject body=new JSONObject().put("access_token","ui-check-fictional-token-never-persisted-0001").put("expires_at","2099-01-01T00:00:00Z").put("user",user);
+        return constructor.newInstance("https://192.0.2.1:8443/api/v1",body);
+    }
+    private Object persistedSession() throws Exception {
+        Method load=targetClass("ApiSession").getDeclaredMethod("load",Context.class);load.setAccessible(true);return load.invoke(null,getTargetContext());
+    }
+    private View wearableDialog() {
+        if(Build.VERSION.SDK_INT<29)return null;
+        for(View window:android.view.inspector.WindowInspector.getGlobalWindowViews())
+            if(window.isAttachedToWindow()&&find(window,view->view instanceof EditText&&"Wearable setup key".contentEquals(view.getContentDescription()))!=null)return window;
+        return null;
+    }
+    private Map<String,byte[]> wearableFiles() throws Exception {
+        Map<String,byte[]> result=new HashMap<>();File[] files=getTargetContext().getFilesDir().listFiles();
+        if(files!=null)for(File file:files)if(file.getName().startsWith("wearable_")) {
+            MessageDigest digest=MessageDigest.getInstance("SHA-256");
+            try(FileInputStream input=new FileInputStream(file)){byte[] bytes=new byte[4096];int count;while((count=input.read(bytes))!=-1)digest.update(bytes,0,count);}
+            result.put(file.getName(),digest.digest());
+        }
+        return result;
+    }
+
+    private void navigationState(String selected) throws Exception {
+        String[] labels = {"Today", "Notifications", "Care", "Settings"};
+        // Settings may legitimately contain another Notifications control. Locate
+        // destinations only in the bottom navigation appended to the screen root.
+        ViewGroup screen = (ViewGroup) get(activity, "root");
+        check("navigation is a separate bottom container", screen.getChildCount() > 0
+            && screen.getChildAt(screen.getChildCount() - 1) instanceof ViewGroup);
+        ViewGroup parent = (ViewGroup) screen.getChildAt(screen.getChildCount() - 1);
         int selectedCount = 0;
         for (String label : labels) {
-            View item = described(label);
+            View item = find(parent, view -> view.isClickable() && view.getContentDescription() != null
+                && label.contentEquals(view.getContentDescription()));
             check("navigation item is accessible: " + label, item != null && item.isClickable() && item.isFocusable());
             check("navigation label visible: " + label, find(item, view -> view instanceof TextView
                 && label.contentEquals(((TextView) view).getText())) != null);
             check("navigation includes an icon: " + label, find(item, view -> view instanceof ImageView) != null);
             check("navigation selection matches current destination", item.isSelected() == selected.equals(label));
             if (item.isSelected()) selectedCount++;
-            if (parent == null) {
-                check("navigation has a shared container", item.getParent() instanceof ViewGroup);
-                parent = (ViewGroup) item.getParent();
-            } else check("navigation destinations share one container", item.getParent() == parent);
+            check("navigation destinations share one container", item.getParent() == parent);
             fullyVisible("navigation item: " + label, item);
             minimumTarget("navigation item: " + label, item);
         }
@@ -470,8 +675,10 @@ public final class SetupInstrumentation extends Instrumentation {
 
     /** Wait for an actual traversal, rather than measuring a freshly rebuilt zero-size tree. */
     private void awaitLayout() throws Exception {
+        awaitLayout(activity.getWindow().getDecorView());
+    }
+    private void awaitLayout(View decor) throws Exception {
         final CountDownLatch frame = new CountDownLatch(1);
-        final View decor = activity.getWindow().getDecorView();
         final ViewTreeObserver.OnPreDrawListener[] listener = new ViewTreeObserver.OnPreDrawListener[1];
         runOnMainSync(() -> {
             listener[0] = () -> {

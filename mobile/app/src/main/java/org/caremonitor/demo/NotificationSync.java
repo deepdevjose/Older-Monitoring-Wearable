@@ -44,7 +44,7 @@ final class NotificationSync {
     static void waitAndSync(Context context,BooleanSupplier active)throws Exception{sync(context,true,active);}
     private static void sync(Context context,boolean wait,BooleanSupplier active)throws Exception{
         ApiSession session=ApiSession.load(context);if(session==null)return;
-        if(!permitted(context))throw new ApiClient.Failure(403,"Permisos de avisos o red local desactivados.");
+        if(!permitted(context))throw new ApiClient.Failure(403,"Notifications or local network access are disabled.");
         String file=key(session);long start=cursor(context,file);
         JSONObject result=ApiClient.call(context,session,"GET",wait?"/notifications/wait?after="+start+"&timeout=20":"/notifications?after="+start,null,wait?30000:6000);
         deliver(context,session,file,result,active);
@@ -52,8 +52,8 @@ final class NotificationSync {
     private static synchronized void deliver(Context context,ApiSession session,String file,JSONObject result,BooleanSupplier active)throws Exception{
         long last=cursor(context,file);JSONArray items=result.optJSONArray("items");if(items==null||!active.getAsBoolean()||!permitted(context))return;
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if(Build.VERSION.SDK_INT>=26){NotificationChannel channel=new NotificationChannel(CHANNEL,"Avisos de cuidado",NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("Avisos de cuidado y recordatorios del servidor propio");channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);manager.createNotificationChannel(channel);}
+        if(Build.VERSION.SDK_INT>=26){NotificationChannel channel=new NotificationChannel(CHANNEL,"Care alerts",NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Care alerts and reminders from your server");channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);manager.createNotificationChannel(channel);}
         for(int i=0;i<items.length();i++){
             ApiSession current=ApiSession.load(context);
             if(!active.getAsBoolean()||current==null||!current.token.equals(session.token)||!current.id.equals(session.id)||!current.base.equals(session.base))return;
@@ -62,12 +62,12 @@ final class NotificationSync {
             Intent open=new Intent(context,MainActivity.class).putExtra("show_alerts",true).putExtra("patient_id",data.optString("patient_id","")).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
             PendingIntent pending=PendingIntent.getActivity(context,id,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
             Notification.Builder builder=Build.VERSION.SDK_INT>=26?new Notification.Builder(context,CHANNEL):new Notification.Builder(context);
-            String title=data.optString("title","Aviso de cuidado"),text=data.optString("message",data.optString("instructions","Abre CareMonitor para ver el aviso."));
+            String title=data.optString("title","Care alert"),text=data.optString("message",data.optString("instructions","Open CareMonitor to review the alert."));
             Notification.Builder publicVersion=Build.VERSION.SDK_INT>=26?new Notification.Builder(context,CHANNEL):new Notification.Builder(context);
             manager.notify(TAG,id,builder.setSmallIcon(R.drawable.ic_care_monitor).setContentTitle(title).setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(text)).setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true)
                 .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(publicVersion.setSmallIcon(R.drawable.ic_care_monitor)
-                    .setContentTitle("CareMonitor").setContentText("Tienes un aviso de cuidado").build()).build());
+                    .setContentTitle("CareMonitor").setContentText("You have a care alert").build()).build());
         }
         ApiSession current=ApiSession.load(context);
         if(active.getAsBoolean()&&current!=null&&current.token.equals(session.token)&&current.id.equals(session.id)&&current.base.equals(session.base))

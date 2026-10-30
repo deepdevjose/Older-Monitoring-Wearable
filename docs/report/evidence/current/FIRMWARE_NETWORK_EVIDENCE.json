@@ -1,0 +1,54 @@
+{
+  "result": "PASS",
+  "recorded_at": "2026-10-27T10:36:02.942076+00:00",
+  "ssid": "Network",
+  "network_kind": "User Huawei dorm modem",
+  "app_only_flash_address": "0x10000",
+  "app_bytes": 1680608,
+  "compiled_app_sha256": "9c2ed3d9020c3fca1a108772da3eb19bd139d7e743ede6ed842fc0fd21b04397",
+  "canonical_source_sha256": "8e439538070aa856e83b3e74c70b315d5393f532416915fde14058090cfe38e3",
+  "tool_hash_verification": true,
+  "baud": 115200,
+  "no_compress": true,
+  "no_erase_all": true,
+  "bootloader_partition_table_and_otadata_not_written": true,
+  "existing_app_partition_retained": {
+    "address": "0x10000",
+    "size": "0x300000"
+  },
+  "full_flash_backup_retained_privately": true,
+  "private_credentials_not_packaged": true,
+  "credential_resolution": "Supplied credential differed from active Network profile; used working locally saved credential without disclosure.",
+  "nvs": "No erase or NVS write requested by flasher; runtime initialization changed NVS content, so Bluetooth bond functionality remains separately untested.",
+  "runtime": {
+    "boot_reset_performed": true,
+    "serial_byte_writes": false,
+    "frames": 63,
+    "invalid_json_frames": 0,
+    "wifi_associated": true,
+    "wifi_ip": "192.168.3.8",
+    "gateway": "192.168.3.1",
+    "ntp_started": true,
+    "clock_valid_frames": 59,
+    "clock_max_error_seconds": 0.55,
+    "bluetooth_ready": true,
+    "disconnect_reasons": {},
+    "target_scan_matches": null,
+    "target_scan_metadata": [],
+    "sensor_online_flags": {
+      "mpu6050:True": 63,
+      "gy906:True": 63
+    },
+    "optical_states": {
+      "waiting": 1,
+      "no_finger": 62
+    },
+    "uptime_discontinuities": 0,
+    "privacy": "Only aggregate statuses; no raw sensor values, credentials, neighbouring SSIDs, MACs or pairing codes retained.",
+    "duration_seconds": 65.1,
+    "frequency_hz": 0.999,
+    "recorded_at": "2026-10-27T10:33:44.457951+00:00"
+  },
+  "bluetooth_phone_server_flow_tested": false,
+  "cloud_backend_services_used": false
+}

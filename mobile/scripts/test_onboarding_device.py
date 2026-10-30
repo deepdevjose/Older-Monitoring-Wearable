@@ -22,6 +22,7 @@ def main():
     parser.add_argument('--sdk', type=Path, default=os.environ.get('ANDROID_HOME', Path.home() / 'Android/Sdk'))
     parser.add_argument('--jdk', type=Path, default=os.environ.get('JAVA_HOME', '/usr'))
     parser.add_argument('--build-only', action='store_true', help='Build only; do not invoke adb')
+    parser.add_argument('--connection-only', action='store_true', help='Check explicit connection recovery and state preservation; skip layout and other onboarding checks')
     args = parser.parse_args()
     sdk, jdk = args.sdk.absolute(), args.jdk.absolute()
     suffix = '.exe' if os.name == 'nt' else ''
@@ -99,6 +100,7 @@ def main():
         if not installed:
             raise RuntimeError('Test-package installation did not confirm success')
         outcome = run([*selected, 'shell', 'am', 'instrument', '-w', '-r',
+                       '-e', 'scope', 'connection' if args.connection_only else 'full',
                        TEST_PACKAGE + '/.SetupInstrumentation']).stdout
         if 'INSTRUMENTATION_RESULT: result=ABORTED_EXISTING_SESSION' in outcome:
             raise SystemExit('Aborted: an existing signed-in account was detected and left unchanged')

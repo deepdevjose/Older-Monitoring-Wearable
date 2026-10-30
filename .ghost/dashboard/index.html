@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ghost Engineer Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f7f9;
+      color: #17191c;
+    }
+    body { margin: 0; }
+    main { max-width: 1120px; margin: 0 auto; padding: 32px 20px; }
+    header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-end; border-bottom: 1px solid #d9dde3; padding-bottom: 20px; }
+    h1, h2 { margin: 0; letter-spacing: 0; }
+    h1 { font-size: 32px; }
+    h2 { font-size: 18px; margin-bottom: 12px; }
+    p { color: #4b5563; margin: 8px 0 0; }
+    section { padding: 24px 0; border-bottom: 1px solid #e3e6eb; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .metric, .panel { background: #ffffff; border: 1px solid #dfe3e8; border-radius: 8px; padding: 16px; }
+    .metric strong { display: block; font-size: 28px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 8px 0; }
+    span { color: #657183; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Older-Monitoring-Wearable</h1>
+        <p>Software repository · unknown</p>
+      </div>
+      <p>2026-10-26T11:22:51.740Z</p>
+    </header>
+    <section class="metrics">
+      <div class="metric"><strong>696</strong> files</div>
+      <div class="metric"><strong>81</strong> directories</div>
+      <div class="metric"><strong>0</strong> dependencies</div>
+      <div class="metric"><strong>2</strong> risk findings</div>
+    </section>
+    <section class="grid">
+      <div class="panel"><h2>Languages</h2><ul><li>Other <span>534 files</span></li><li>JSON <span>64 files</span></li><li>Python <span>43 files</span></li><li>Java <span>36 files</span></li><li>Markdown <span>14 files</span></li><li>Shell <span>4 files</span></li><li>TOML <span>1 files</span></li></ul></div>
+      <div class="panel"><h2>Entry Points</h2><ul></ul></div>
+    </section>
+    <section>
+      <h2>Risks</h2>
+      <ul><li><strong>low</strong> No CI workflow detected<br><span>Add CI once the MVP command behavior has tests, so releases stay reproducible.</span></li><li><strong>low</strong> No license file detected<br><span>Add a license before publishing packages or distributing an installer.</span></li></ul>
+    </section>
+  </main>
+</body>
+</html>

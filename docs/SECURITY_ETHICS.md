@@ -51,3 +51,9 @@ La firma actual del APK es de desarrollo y su clave se mantiene fuera del reposi
 - [Android: tipos de foreground service](https://developer.android.com/develop/background-work/services/fgs/service-types): funciones visibles y permisos por tipo de servicio.
 - [Android 17: permiso de red local](https://developer.android.com/privacy-and-security/local-network-permission): requisito de permiso LAN para apps que apuntan a SDK 37.
 - `reference-labs.zip`: pasos 1–6 y borrador de rúbrica del propio proyecto. Se usa como contexto académico, no como evidencia de funciones ejecutadas.
+
+## Bluetooth y autorización del wearable
+
+El servicio SPP solicita autenticación y cifrado de enlace. La placa usa SSP sin entrada/salida y Android conserva su confirmación de sistema; no se requiere una consola USB. La app verifica una clave aleatoria de 128 bits diferente para cada placa mediante HMAC-SHA256 mutuo, con roles y nonces nuevos. No recibe muestras antes de READY. La clave se guarda cifrada y ligada a cuenta de persona mayor, servidor y MAC; no se incluye en el APK. La placa admite un único handle/generación y filtra los eventos de otros handles. La autorización vence a los diez segundos y no sobrevive a una desconexión.
+
+SSP sin entrada/salida no acredita resistencia a un intermediario activo durante el emparejamiento. El reto de la app prueba conocimiento de la clave; no añade AEAD de extremo a extremo a cada muestra ni impide por sí solo un relay activo durante el emparejamiento. No se atribuye esa garantía a esta revisión.

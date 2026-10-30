@@ -148,7 +148,7 @@ public final class BleSensorClient implements SensorTransport {
             ScanRecord record = result.getScanRecord();
             String name = record == null ? null : record.getDeviceName();
             if (name == null || name.length() == 0) name = result.getDevice().getName();
-            if (name == null || name.length() == 0) name = "Care Monitor BLE device";
+            if (name == null || name.length() == 0) name = "CareMonitor BLE device";
             listener.onDevice(result.getDevice().getAddress(), name, result.getRssi());
         } catch (SecurityException exception) {
             scanFailure("Bluetooth permission was revoked. Grant Nearby devices permission and scan again.");
@@ -276,7 +276,7 @@ public final class BleSensorClient implements SensorTransport {
             notifyCharacteristic = service == null ? null : service.getCharacteristic(TX_UUID);
             if (notifyCharacteristic == null ||
                     (notifyCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) == 0) {
-                fail("This device does not provide the Care Monitor sensor notification service.");
+                fail("This device does not provide the CareMonitor sensor notification service.");
                 return;
             }
             pendingDescriptor = notifyCharacteristic.getDescriptor(CCCD_UUID);

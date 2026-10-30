@@ -34,7 +34,7 @@ public final class SensorChartView extends View {
     public SensorChartView timeline(String earlier,String middle,String latest) {
         earlierLabel=safe(earlier);middleLabel=safe(middle);latestLabel=safe(latest);
         CharSequence description=getContentDescription();
-        if(description!=null)setContentDescription(description.toString().replace("Illustrative 60-minute","Recent received"));
+        if(description!=null)setContentDescription(description.toString().replace("Illustrative 60-minute","Recently received"));
         invalidate();return this;
     }
     private String message = "No valid readings available";

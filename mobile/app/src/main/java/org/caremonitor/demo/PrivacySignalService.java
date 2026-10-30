@@ -93,19 +93,19 @@ public final class PrivacySignalService extends Service implements LocationListe
         PendingIntent pending=PendingIntent.getActivity(this,903,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         Notification.Builder builder=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CHANNEL):new Notification.Builder(this);
         try{((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(903,builder.setSmallIcon(R.drawable.ic_microphone)
-            .setContentTitle("Señal de sonido fuerte").setContentText("¿Estás bien? Abre la app para confirmar. No identifica accidentes.")
+            .setContentTitle("Loud sound detected").setContentText("Are you OK? Open the app to confirm. Sound alone does not identify an accident.")
             .setContentIntent(pending).setAutoCancel(true).setVisibility(Notification.VISIBILITY_PRIVATE).build());}catch(SecurityException ignored){}
     }
     private void notification(){
         NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        if(Build.VERSION.SDK_INT>=26)manager.createNotificationChannel(new NotificationChannel(CHANNEL,"Privacidad y señales locales",NotificationManager.IMPORTANCE_LOW));
+        if(Build.VERSION.SDK_INT>=26)manager.createNotificationChannel(new NotificationChannel(CHANNEL,"Privacy and local signals",NotificationManager.IMPORTANCE_LOW));
         PendingIntent stop=PendingIntent.getService(this,902,new Intent(this,PrivacySignalService.class).setAction(STOP),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         PendingIntent open=PendingIntent.getActivity(this,901,new Intent(this,MainActivity.class),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         Notification.Builder builder=Build.VERSION.SDK_INT>=26?new Notification.Builder(this,CHANNEL):new Notification.Builder(this);
-        Notification item=builder.setSmallIcon(R.drawable.ic_watch).setContentTitle("CareMonitor · funciones consentidas activas")
-            .setContentText((gpsRunning?"Ubicación fuera de casa. ":"")+(audioRunning?"Sonido local, sin grabaciones.":""))
+        Notification item=builder.setSmallIcon(R.drawable.ic_watch).setContentTitle("CareMonitor · enabled privacy features")
+            .setContentText((gpsRunning?"Location sharing outside home. ":"")+(audioRunning?"Local sound monitoring, without recordings.":""))
             .setContentIntent(open).setOngoing(true).setVisibility(Notification.VISIBILITY_PRIVATE)
-            .addAction(new Notification.Action.Builder(null,"Detener",stop).build()).build();
+            .addAction(new Notification.Action.Builder(null,"Stop",stop).build()).build();
         if(Build.VERSION.SDK_INT>=29)startForeground(902,item,(gpsRunning?ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION:0)|(audioRunning?ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE:0));
         else startForeground(902,item);
     }

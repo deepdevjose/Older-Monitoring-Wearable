@@ -17,7 +17,7 @@ public final class RelayPolicy {
 
     public static String endpoint(String input) {
         if (input == null || input.trim().isEmpty()) {
-            throw new IllegalArgumentException("Enter the full HTTPS sensor-data endpoint.");
+            throw new IllegalArgumentException("Enter the full HTTPS server address.");
         }
         try {
             URI uri = new URI(input.trim()).normalize();
@@ -29,7 +29,7 @@ public final class RelayPolicy {
             }
             String path = uri.getRawPath();
             if (path == null || path.isEmpty() || "/".equals(path)) {
-                throw new IllegalArgumentException("Include the POST path, normally /sensor-data.");
+                throw new IllegalArgumentException("Include the API path, such as /api/v1.");
             }
             // Canonical authority prevents spelling changes from rebinding a queue.
             String host = uri.getHost().toLowerCase(java.util.Locale.ROOT);
@@ -38,7 +38,7 @@ public final class RelayPolicy {
             String authority = host + (port == -1 || port == 443 ? "" : ":" + port);
             return "https://" + authority + path;
         } catch (URISyntaxException exception) {
-            throw new IllegalArgumentException("Enter a valid HTTPS sensor-data endpoint.");
+            throw new IllegalArgumentException("Enter a valid HTTPS server address.");
         }
     }
 

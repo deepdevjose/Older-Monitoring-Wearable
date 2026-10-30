@@ -12,8 +12,10 @@ import os
 from pathlib import Path
 import signal
 import sqlite3
+import stat
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 import zipfile
@@ -50,7 +52,7 @@ def init_tls(settings: Settings, host: str):
         cert = x509.load_pem_x509_certificate(cert_path.read_bytes())
         sans = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
         if address not in sans.get_values_for_type(x509.IPAddress):
-            raise ValueError("Host changed. Create new TLS state and rebuild the phone trust configuration.")
+            raise ValueError("Host changed. Stop the server and use prepare-network to retain its CA and data.")
         return
     now = datetime.now(timezone.utc)
     authority_key = ec.generate_private_key(ec.SECP256R1())
@@ -89,6 +91,139 @@ def read_config(settings):
     return json.loads(path.read_text())
 
 
+def _private_state_path(path: Path, *, directory=False):
+    """Reject links, shared files and permissive state before network preparation."""
+    metadata = path.lstat()
+    expected = stat.S_ISDIR if directory else stat.S_ISREG
+    if not expected(metadata.st_mode) or metadata.st_uid != os.getuid() or metadata.st_mode & 0o077:
+        raise ValueError(f"State must be a private owned {'directory' if directory else 'regular file'}: {path.name}")
+    if not directory and metadata.st_nlink != 1:
+        raise ValueError(f"State must not have hard links: {path.name}")
+
+
+def _network_address(value, *, bind=False):
+    try:
+        address = ipaddress.ip_address(value)
+    except ValueError as exc:
+        raise ValueError("Use a numeric local IP address, without a URL or interface scope") from exc
+    if '%' in str(address):
+        raise ValueError("Scoped IP addresses are not supported")
+    if bind and address.is_unspecified:
+        return address
+    if (not address.is_private or address.is_unspecified or address.is_multicast
+            or (address.is_reserved and not address.is_loopback) or address.is_link_local):
+        raise ValueError("Choose a private LAN or loopback IP address")
+    return address
+
+
+def _replace_private_files(updates):
+    """Stage complete private files; restore committed originals if a replacement fails.
+
+    Each rename is atomic. The server must be stopped because two separate paths
+    cannot be replaced as one filesystem transaction.
+    """
+    staged, originals, committed = {}, {}, []
+    keep = set()
+    def stage(path, content):
+        descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+        temporary = Path(name)
+        try:
+            with os.fdopen(descriptor, "wb") as output:
+                output.write(content); output.flush(); os.fsync(output.fileno())
+        except BaseException:
+            temporary.unlink(missing_ok=True)
+            raise
+        return temporary
+    try:
+        for path, content in updates.items():
+            originals[path] = stage(path, path.read_bytes())
+            staged[path] = stage(path, content)
+        try:
+            for path, temporary in staged.items():
+                os.replace(temporary, path); committed.append(path)
+            for directory in {path.parent for path in updates}:
+                descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+                try: os.fsync(descriptor)
+                finally: os.close(descriptor)
+        except BaseException:
+            failed = []
+            for path in reversed(committed):
+                try: os.replace(originals[path], path)
+                except OSError:
+                    keep.add(originals[path])
+                    failed.append(originals[path])
+            if failed:
+                raise RuntimeError(f"Restore private originals from {', '.join(map(str,failed))}; server remains stopped")
+            raise
+    finally:
+        for temporary in [*staged.values(), *originals.values()]:
+            if temporary not in keep: temporary.unlink(missing_ok=True)
+
+
+def prepare_network(args, settings):
+    """Adapt an existing deployment offline without replacing trust or stored data."""
+    if running_pid(settings):
+        raise ValueError("Stop the managed server before preparing another network")
+    host = _network_address(args.host)
+    bind = _network_address(args.bind, bind=True) if args.bind is not None else host
+    if bind.version != host.version:
+        raise ValueError("Host and bind addresses must use the same IP version")
+    ca_path, cert_path, key_path = tls_paths(settings)
+    config_path, ca_key_path = settings.data_dir / "server.json", ca_path.parent / "ca.key"
+    for directory in (settings.data_dir, ca_path.parent):
+        _private_state_path(directory, directory=True)
+    for path in (config_path, ca_path, ca_key_path, cert_path, key_path, settings.key_path, settings.db_path):
+        _private_state_path(path)
+    config = read_config(settings)
+    port = config["port"] if args.port is None else args.port
+    if isinstance(port, bool) or not isinstance(port, int) or not 1024 <= port <= 65535:
+        raise ValueError("Choose a port between 1024 and 65535")
+    settings.load_key()
+    authority = x509.load_pem_x509_certificate(ca_path.read_bytes())
+    authority_key = serialization.load_pem_private_key(ca_key_path.read_bytes(), password=None)
+    server = x509.load_pem_x509_certificate(cert_path.read_bytes())
+    server_key = serialization.load_pem_private_key(key_path.read_bytes(), password=None)
+    now = datetime.now(timezone.utc)
+    if not authority.not_valid_before_utc <= now < authority.not_valid_after_utc:
+        raise ValueError("The retained CA is not currently valid; preparation cannot replace phone trust")
+    if not authority.extensions.get_extension_for_class(x509.BasicConstraints).value.ca:
+        raise ValueError("The retained certificate is not a CA")
+    if not authority.extensions.get_extension_for_class(x509.KeyUsage).value.key_cert_sign:
+        raise ValueError("The retained CA is not permitted to sign certificates")
+    authority.verify_directly_issued_by(authority)
+    server.verify_directly_issued_by(authority)
+    public_bytes = lambda key: key.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)
+    if public_bytes(authority_key.public_key()) != public_bytes(authority.public_key()):
+        raise ValueError("The retained CA key does not match its certificate")
+    if public_bytes(server_key.public_key()) != public_bytes(server.public_key()):
+        raise ValueError("The retained server key does not match its certificate")
+    names = list(server.extensions.get_extension_for_class(x509.SubjectAlternativeName).value)
+    for address in (host, ipaddress.ip_address("127.0.0.1")):
+        name = x509.IPAddress(address)
+        if name not in names: names.append(name)
+    replacement = (x509.CertificateBuilder()
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, str(host))]))
+        .issuer_name(authority.subject).public_key(server_key.public_key())
+        .serial_number(x509.random_serial_number()).not_valid_before(max(now-timedelta(minutes=5), authority.not_valid_before_utc))
+        .not_valid_after(min(now+timedelta(days=90), authority.not_valid_after_utc))
+        .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+        .add_extension(x509.SubjectKeyIdentifier.from_public_key(server_key.public_key()), critical=False)
+        .add_extension(x509.AuthorityKeyIdentifier.from_issuer_public_key(authority_key.public_key()), critical=False)
+        .add_extension(x509.KeyUsage(True, False, False, False, False, False, False, False, False), critical=True)
+        .add_extension(x509.ExtendedKeyUsage([x509.oid.ExtendedKeyUsageOID.SERVER_AUTH]), critical=False)
+        .add_extension(x509.SubjectAlternativeName(names), critical=False)
+        .sign(authority_key, hashes.SHA256()))
+    replacement.verify_directly_issued_by(authority)
+    config.update(host=str(host), port=port, bind=str(bind))
+    if running_pid(settings):
+        raise ValueError("The managed server started during preparation; stop it and retry")
+    _replace_private_files({cert_path: replacement.public_bytes(serialization.Encoding.PEM)+ca_path.read_bytes(),
+        config_path: json.dumps(config, indent=2).encode()})
+    url_host = f"[{host}]" if host.version == 6 else str(host)
+    print(f"Prepared: https://{url_host}:{port}/api/v1 (bind {bind})")
+    print("CA, private keys and database preserved. No network, VPN or firewall settings changed; server remains stopped.")
+
+
 def initialize(args, settings):
     from .db import Database
     if not 1024 <= args.port <= 65535: raise ValueError("Choose a port between 1024 and 65535")
@@ -114,7 +249,7 @@ def serve(args, settings):
     ca, cert, key = tls_paths(settings); settings.load_key()
     if not all(p.is_file() for p in (ca,cert,key)): raise ValueError("TLS files are missing; run init.")
     if key.stat().st_mode & 0o077: raise ValueError("TLS key must have mode 0600")
-    uvicorn.run(create_app(settings),host=args.bind or config["host"],port=args.port or config["port"],
+    uvicorn.run(create_app(settings),host=args.bind or config.get("bind",config["host"]),port=args.port or config["port"],
         ssl_certfile=str(cert),ssl_keyfile=str(key),ssl_version=ssl.PROTOCOL_TLS_SERVER,
         access_log=False,proxy_headers=False,server_header=False,log_level="warning")
 
@@ -159,8 +294,10 @@ def status(args,settings):
     import ssl
     import httpx
     config = read_config(settings); context = ssl.create_default_context(cafile=str(tls_paths(settings)[0]))
+    host = "127.0.0.1" if config.get("bind") == "0.0.0.0" else config["host"]
+    url_host = f"[{host}]" if ":" in host else host
     try:
-        response=httpx.get(f"https://{config['host']}:{config['port']}/health",verify=context,timeout=5,trust_env=False)
+        response=httpx.get(f"https://{url_host}:{config['port']}/health",verify=context,timeout=5,trust_env=False)
         response.raise_for_status(); print(json.dumps({"reachable":True,"managed_pid":running_pid(settings),"health":response.json()},indent=2))
     except httpx.HTTPError as exc:
         print(json.dumps({"reachable":False,"managed_pid":running_pid(settings),"reason":type(exc).__name__})); return 1
@@ -271,6 +408,11 @@ def main(argv=None):
     commands=parser.add_subparsers(dest="command",required=True)
     command=commands.add_parser("init",help="Initialize private state and local TLS")
     command.add_argument("--host",required=True,help="Server LAN IP");command.add_argument("--port",type=int,default=8443);command.set_defaults(run=initialize)
+    command=commands.add_parser("prepare-network",help="Prepare another local IP offline, retaining CA, keys and database; stop server first")
+    command.add_argument("--host",required=True,help="New private LAN or loopback IP")
+    command.add_argument("--port",type=int,help="Retain the existing port when omitted")
+    command.add_argument("--bind",help="Listening IP; defaults to --host. 0.0.0.0 explicitly permits all IPv4 interfaces")
+    command.set_defaults(run=prepare_network)
     command=commands.add_parser("serve",help="Run foreground; Ctrl+C stops")
     command.add_argument("--bind");command.add_argument("--port",type=int);command.add_argument("--docs",action="store_true");command.set_defaults(run=serve)
     for name,func in [("start",start),("stop",stop),("status",status),("doctor",doctor),("demo",synthetic_demo)]: commands.add_parser(name).set_defaults(run=func)

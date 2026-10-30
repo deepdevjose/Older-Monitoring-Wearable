@@ -2,6 +2,7 @@
 import asyncio
 from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timezone
+from typing import Literal
 import json
 import logging
 import secrets
@@ -20,6 +21,8 @@ from .db import Database
 from .push import iso, process_due_reminders
 from .schemas import Consents, Event, LinkRequest, Location, Login, Reading, Register, Reminder
 from .security import DUMMY_PASSWORD_HASH, check_password, hash_password, new_token, token_hash
+from .history import METRICS, index_reading, metric_history
+from .system_text import english_system_text
 
 logger = logging.getLogger("caremonitor")
 PREFIX = "/api/v1"
@@ -78,7 +81,7 @@ def reading_view(db,row):
 def alert_view(conn,db,row,user_id):
     ack=conn.execute("SELECT acknowledged_at FROM alert_acknowledgements WHERE alert_id=? AND user_id=?",(row["id"],user_id)).fetchone()
     return {"id":row["id"],"patient_id":row["elder_id"],"type":row["type"],"created_at":iso(row["created_at"]),
-            "source":row["source"],**db.vault.open(row["detail"],f"alert:{row['id']}"),"acknowledged":bool(ack),
+            "source":row["source"],**english_system_text(db.vault.open(row["detail"],f"alert:{row['id']}"),row["type"]),"acknowledged":bool(ack),
             "acknowledged_at":iso(ack[0]) if ack else None,
             "episode_status":"recovered" if row["recovered_at"] else "open",
             "recovered_at":iso(row["recovered_at"]) if row["recovered_at"] else None}
@@ -95,7 +98,7 @@ def reminder_view(db,row):
 def inbox_view(db,user,after,limit=100):
     with db.connection() as conn:
         rows=conn.execute("SELECT n.* FROM notifications n WHERE n.user_id=? AND n.id>? AND (n.elder_id=? OR EXISTS(SELECT 1 FROM memberships m WHERE m.elder_id=n.elder_id AND m.caregiver_id=?)) ORDER BY n.id LIMIT ?",(user["id"],after,user["id"],user["id"],limit)).fetchall()
-        items=[{"id":row["id"],"type":row["type"],"created_at":iso(row["created_at"]),"data":db.vault.open(row["data"],f"notification:{row['id']}"),"acknowledged":row["acknowledged_at"] is not None} for row in rows]
+        items=[{"id":row["id"],"type":row["type"],"created_at":iso(row["created_at"]),"data":english_system_text(db.vault.open(row["data"],f"notification:{row['id']}"),row["type"]),"acknowledged":row["acknowledged_at"] is not None} for row in rows]
         return {"items":items,"cursor":rows[-1]["id"] if rows else after}
 
 
@@ -348,6 +351,7 @@ def create_app(settings=None):
                              (user["id"],data.sample_id,captured,now,data.source,"pending",digest))
             record_id=cur.lastrowid
             conn.execute("UPDATE readings SET envelope=? WHERE id=?",(db.vault.seal(envelope,f"reading:{record_id}"),record_id))
+            index_reading(conn,db,{"id":record_id,"elder_id":user["id"],"source":data.source,"captured_at":captured},envelope)
             created=evaluate_reading(conn,db,user["id"],data,now=now)
             return {"status":"received","record_id":record_id,"duplicate":False,"alert_created":bool(created)}
 
@@ -358,6 +362,24 @@ def create_app(settings=None):
             rows=conn.execute("SELECT * FROM readings WHERE elder_id=? ORDER BY captured_at DESC,id DESC LIMIT ?",(patient_id,limit)).fetchall()
             db.audit(conn,user["id"],"readings_viewed",patient_id)
             return {"readings":[reading_view(db,row) for row in rows]}
+
+    @application.get(PREFIX+"/patients/{patient_id}/metrics/{metric}/history")
+    def history_get(patient_id:str,metric:str,period:Literal["day","week","month"]="day",
+                    end:datetime|None=None,source:Literal["device_diagnostic","synthetic"]="device_diagnostic",
+                    user=Depends(get_current_user),db=Depends(get_database)):
+        if metric not in METRICS:
+            raise HTTPException(404,"Metric not found")
+        if end is not None and (end.tzinfo is None or end.utcoffset() is None):
+            raise HTTPException(422,"History end time requires a timezone")
+        end_seconds=int(end.timestamp()) if end is not None else int(time.time())+1
+        if end_seconds<0 or end_seconds>int(time.time())+31:
+            raise HTTPException(422,"History end time is outside the supported range")
+        authenticated_rate(db,user,"metric_history",30)
+        with db.transaction() as conn:
+            authorize_patient(conn,user,patient_id)
+            result=metric_history(conn,db,patient_id,metric,period,end_seconds,source)
+            db.audit(conn,user["id"],"metric_history_viewed",patient_id)
+            return result
 
     @application.get(PREFIX+"/patients/{patient_id}/alerts")
     def alerts_get(patient_id:str,limit:int=Query(50,ge=1,le=500),user=Depends(get_current_user),db=Depends(get_database)):
@@ -635,6 +657,8 @@ def create_app(settings=None):
 
     from .routes_ml import build_router
     application.include_router(build_router(get_current_user,get_database))
+    from .learning import build_learning_router
+    application.include_router(build_learning_router(get_current_user,get_database,authorize_patient))
     return application
 
 

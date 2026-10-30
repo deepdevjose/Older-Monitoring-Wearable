@@ -3,7 +3,10 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include "secrets.h"
-#include <BluetoothSerial.h>
+#include "WearableBluetooth.h"
+#include "WearableSession.h"
+#include <esp_random.h>
+#include <mbedtls/md.h>
 #include <time.h>
 
 #include "MAX30105.h"
@@ -41,7 +44,7 @@
 
 
 #define BT_DEVICE_NAME "ElderSensors-elder-demo-01"
-#define WIFI_RETRY_INTERVAL 10000
+#define WIFI_RETRY_INTERVAL 30000
 #define NTP_SERVER "pool.ntp.org"
 #define SHANGHAI_TZ "CST-8"
 
@@ -49,53 +52,78 @@
 #error "Bluetooth SPP requires a classic ESP32 board with Bluetooth enabled."
 #endif
 
-BluetoothSerial SerialBT;
-volatile bool pairingConfirmationPending = false;
-volatile uint32_t pairingConfirmationStartedAt = 0;
+#ifndef WEARABLE_SETUP_KEY_HEX
+#error "Add a unique 128-bit WEARABLE_SETUP_KEY_HEX to private secrets.h before commissioning."
+#endif
+static_assert(sizeof(WEARABLE_SETUP_KEY_HEX) == 33, "Wearable key must contain exactly 32 hex characters.");
 
-void confirmBluetoothPairing(uint32_t numericCode)
+WearableBluetooth wearableBluetooth;
+bool wearableReady = false;
+String pendingBluetoothReply;
+uint8_t wearableKey[16];
+bool wearableKeyValid = false;
+
+std::string wearableProof(const std::string &message)
 {
-  pairingConfirmationStartedAt = millis();
-  pairingConfirmationPending = true;
-  Serial.printf("Compare pairing code %06lu with the phone, then type Y to accept: ",
-                static_cast<unsigned long>(numericCode));
+  if (!wearableKeyValid) return "";
+  uint8_t digest[32];
+  const mbedtls_md_info_t *md = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+  if (!md || mbedtls_md_hmac(md, wearableKey, sizeof(wearableKey),
+      reinterpret_cast<const unsigned char *>(message.data()), message.size(), digest) != 0) return "";
+  static const char digits[] = "0123456789abcdef";
+  std::string result(64, '0');
+  for (size_t i = 0; i < sizeof(digest); ++i) {
+    result[2*i] = digits[digest[i] >> 4]; result[2*i+1] = digits[digest[i] & 15];
+  }
+  return result;
 }
 
-void bluetoothAuthComplete(boolean success)
+WearableSession wearableSession(wearableProof);
+
+std::string bluetoothNonce()
 {
-  Serial.println(success ? "Bluetooth pairing authenticated." : "Bluetooth pairing rejected.");
+  uint8_t bytes[16]; esp_fill_random(bytes, sizeof(bytes));
+  static const char digits[] = "0123456789abcdef";
+  std::string result(32, '0');
+  for (size_t i = 0; i < sizeof(bytes); ++i) {
+    result[2*i] = digits[bytes[i] >> 4]; result[2*i+1] = digits[bytes[i] & 15];
+  }
+  return result;
 }
 
-void processBluetoothPairingConfirmation()
+void processBluetoothAuthentication()
 {
-  if (!pairingConfirmationPending)
-  {
-    return;
+  wearableBluetooth.poll();
+  const uint32_t session = wearableBluetooth.generation();
+  if (!wearableBluetooth.connected()) {
+    wearableReady = false; pendingBluetoothReply = ""; wearableSession.clear(); return;
   }
-
-  if (millis() - pairingConfirmationStartedAt >= 25000)
-  {
-    pairingConfirmationPending = false;
-    SerialBT.confirmReply(false);
-    Serial.println("\nBluetooth pairing timed out and was rejected.");
-    return;
+  if (wearableSession.session() != session) {
+    wearableReady = false; pendingBluetoothReply = "";
+    wearableSession.start(session, millis());
+    Serial.println("Bluetooth phone connected; waiting for app authentication.");
   }
-
-  while (Serial.available())
-  {
-    const int answer = Serial.read();
-    if (answer == '\r' || answer == '\n')
-    {
-      continue;
+  if (!wearableReady && wearableSession.expired(millis())) {
+    pendingBluetoothReply = ""; wearableBluetooth.disconnect(session);
+    Serial.println("Bluetooth app authentication expired; connection closed."); return;
+  }
+  String line; uint32_t incomingSession = 0;
+  while (wearableBluetooth.readLine(line, incomingSession)) {
+    if (incomingSession != session) continue;
+    std::string reply;
+    if (!pendingBluetoothReply.isEmpty() || !wearableSession.receive(line.c_str(), bluetoothNonce(), reply)) {
+      wearableReady = false; pendingBluetoothReply = ""; wearableBluetooth.disconnect(session);
+      Serial.println("Bluetooth app authentication rejected; connection closed."); return;
     }
-
-    pairingConfirmationPending = false;
-    const bool accepted = answer == 'Y' || answer == 'y';
-    SerialBT.confirmReply(accepted);
-    Serial.println(accepted
-        ? "\nBluetooth pairing confirmation accepted."
-        : "\nBluetooth pairing rejected; enter Y only when the codes match.");
-    return;
+    pendingBluetoothReply = reply.c_str();
+  }
+  if (!pendingBluetoothReply.isEmpty() && wearableBluetooth.sendLine(pendingBluetoothReply, session)) {
+    pendingBluetoothReply = "";
+    if (wearableSession.authenticated()) {
+      wearableReady = true;
+      Serial.println("Bluetooth app authenticated; exclusive sensor stream enabled.");
+    }
+    wearableBluetooth.poll();
   }
 }
 
@@ -103,6 +131,68 @@ unsigned long lastReport = 0;
 unsigned long lastWiFiRetry = 0;
 bool wifiInfoPrinted = false;
 bool timeSyncStarted = false;
+portMUX_TYPE wifiEventMux = portMUX_INITIALIZER_UNLOCKED;
+volatile uint16_t wifiDisconnectReason = 0;
+volatile bool wifiDisconnectPending = false;
+bool wifiDiagnosticScanStarted = false;
+bool wifiDiagnosticScanFinished = false;
+
+// Wi-Fi callbacks run on another task. Keep serial output in loop(), between
+// complete JSON lines, and never print credentials or neighbouring networks.
+void noteWiFiDisconnect(WiFiEvent_t event, WiFiEventInfo_t info)
+{
+  portENTER_CRITICAL(&wifiEventMux);
+  wifiDisconnectReason = info.wifi_sta_disconnected.reason;
+  wifiDisconnectPending = true;
+  portEXIT_CRITICAL(&wifiEventMux);
+}
+
+void updateWiFiDiagnostics()
+{
+  portENTER_CRITICAL(&wifiEventMux);
+  const bool pending = wifiDisconnectPending;
+  const uint16_t reason = wifiDisconnectReason;
+  wifiDisconnectPending = false;
+  portEXIT_CRITICAL(&wifiEventMux);
+  if (pending)
+  {
+    Serial.printf("Wi-Fi disconnected; reason=%u status=%d.\n", reason, static_cast<int>(WiFi.status()));
+  }
+
+  // One asynchronous, target-only scan after an unsuccessful association.
+  // ESP32 Classic scans 2.4 GHz; this distinguishes an absent compatible AP
+  // from an authentication failure without collecting other SSIDs or MACs.
+  if (!wifiDiagnosticScanStarted && millis() >= 15000 && WiFi.status() == WL_NO_SSID_AVAIL)
+  {
+    wifiDiagnosticScanStarted = true;
+    WiFi.scanNetworks(true, false, false, 120, 0, WIFI_SSID);
+  }
+  if (wifiDiagnosticScanStarted && !wifiDiagnosticScanFinished)
+  {
+    const int16_t found = WiFi.scanComplete();
+    if (found >= 0)
+    {
+      int matching = 0;
+      for (int16_t index = 0; index < found; ++index)
+      {
+        if (WiFi.SSID(index) == WIFI_SSID)
+        {
+          ++matching;
+          Serial.printf("Wi-Fi target AP: channel=%d RSSI=%d auth=%d.\n",
+                        WiFi.channel(index), WiFi.RSSI(index), static_cast<int>(WiFi.encryptionType(index)));
+        }
+      }
+      Serial.printf("Wi-Fi target 2.4 GHz scan: matches=%d.\n", matching);
+      WiFi.scanDelete();
+      wifiDiagnosticScanFinished = true;
+    }
+    else if (found == WIFI_SCAN_FAILED)
+    {
+      Serial.println("Wi-Fi target scan unavailable; association will retry normally.");
+      wifiDiagnosticScanFinished = true;
+    }
+  }
+}
 
 
 // =====================================================
@@ -409,6 +499,13 @@ void updateGY906()
 
   objectTemp =
     readMLXTemperature(0x07);
+
+  if (!isfinite(ambientTemp) || !isfinite(objectTemp))
+  {
+    gyOnline = false;
+    ambientTemp = NAN;
+    objectTemp = NAN;
+  }
 }
 
 
@@ -878,22 +975,22 @@ void printJSON()
   serializeJson(doc, json);
   Serial.println(json);
 
-  if (!SerialBT.hasClient())
+  if (!wearableReady || !wearableBluetooth.connected() ||
+      wearableSession.session() != wearableBluetooth.generation())
   {
     Serial.println("Bluetooth SPP skipped: no phone is connected.");
     return;
   }
 
-  const size_t jsonBytes = SerialBT.print(json);
-  const size_t newlineBytes = SerialBT.write('\n');
-  if (jsonBytes != json.length() || newlineBytes != 1)
+  if (!wearableBluetooth.sendLine(json, wearableSession.session()))
   {
-    Serial.println("Bluetooth SPP write was incomplete; the phone should discard this line.");
+    // Never block sensor acquisition or carry a record across phone sessions.
+    Serial.println("Bluetooth SPP busy: this record was not queued.");
     return;
   }
-
-  Serial.printf("Bluetooth SPP -> sent %u-byte sensor record.\n",
-                static_cast<unsigned int>(jsonBytes));
+  wearableBluetooth.poll();
+  Serial.printf("Bluetooth SPP -> queued %u-byte sensor record.\n",
+                static_cast<unsigned int>(json.length()));
 }
 
 
@@ -907,23 +1004,28 @@ void setup()
 
   delay(1000);
 
-  SerialBT.enableSSP(true, true);
-  SerialBT.onConfirmRequest(confirmBluetoothPairing);
-  SerialBT.onAuthComplete(bluetoothAuthComplete);
-  if (!SerialBT.begin(BT_DEVICE_NAME))
+  const std::string setupKey(WEARABLE_SETUP_KEY_HEX);
+  wearableKeyValid = WearableSession::hex(setupKey, 32);
+  if (wearableKeyValid) {
+    for (size_t i = 0; i < sizeof(wearableKey); ++i) {
+      const char hi = setupKey[2*i], lo = setupKey[2*i+1];
+      wearableKey[i] = ((hi <= '9' ? hi-'0' : hi-'a'+10) << 4) | (lo <= '9' ? lo-'0' : lo-'a'+10);
+    }
+  }
+  if (!wearableKeyValid || !wearableBluetooth.begin(BT_DEVICE_NAME))
   {
-    Serial.println("Bluetooth SPP failed to start; check that this is a classic ESP32.");
+    Serial.println("Bluetooth SPP failed to start; check private wearable setup and classic ESP32 support.");
   }
   else
   {
     Serial.printf("Bluetooth SPP ready: %s\n", BT_DEVICE_NAME);
-    Serial.printf("Bluetooth MAC: %s\n", SerialBT.getBtAddressString().c_str());
-    Serial.println("Pair from Android Settings; compare the numeric code on both devices.");
+    Serial.println("Pair from the phone; authorize this wearable in the app. No serial approval is required.");
   }
 
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(false);
+  WiFi.onEvent(noteWiFiDisconnect, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   Serial.println();
@@ -1004,7 +1106,8 @@ void setup()
 
 void loop()
 {
-  processBluetoothPairingConfirmation();
+  processBluetoothAuthentication();
+  updateWiFiDiagnostics();
 
   if (WiFi.status() == WL_CONNECTED)
   {
@@ -1013,6 +1116,8 @@ void loop()
       wifiInfoPrinted = true;
       Serial.print("Wi-Fi connected. ESP32 IP: ");
       Serial.println(WiFi.localIP());
+      Serial.print("Wi-Fi gateway: ");
+      Serial.println(WiFi.gatewayIP());
     }
 
     if (!timeSyncStarted)
@@ -1042,6 +1147,16 @@ void loop()
 
 
   // Other sensors
+
+  // A transient boot-time NACK or unplug must not latch a sensor offline for
+  // the entire session. Reprobe only missing addresses, at a bounded interval.
+  static unsigned long lastSensorRetry = 0;
+  if (millis() - lastSensorRetry >= 5000)
+  {
+    lastSensorRetry = millis();
+    if (!mpuOnline && i2cDeviceExists(MPU6050_ADDRESS)) initMPU();
+    if (!gyOnline && i2cDeviceExists(GY906_ADDRESS)) initGY906();
+  }
 
   static unsigned long lastMPU = 0;
 

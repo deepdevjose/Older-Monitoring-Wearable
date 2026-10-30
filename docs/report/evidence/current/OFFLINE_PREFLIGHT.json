@@ -1,0 +1,44 @@
+{
+  "checked_at": "2026-10-27T10:26:32.879880+00:00",
+  "mode": "lan",
+  "device_model": "SM-S901E",
+  "android_api": 33,
+  "version_code": 16,
+  "apk_sha256": "43646b5ff64cda4234986fd8f633f8fc7524d98a8c221d409103aa8d4f5f246c",
+  "ssid": "Network",
+  "network_kind": "User Huawei dorm modem",
+  "phone_https_probe": {
+    "result": "PASS",
+    "endpoint": "https://192.168.3.3:8443/api/v1",
+    "transport": "Wi-Fi Network, Huawei modem",
+    "server_lan_ip": "192.168.3.3",
+    "phone_lan_ip": "192.168.3.5",
+    "gateway": "192.168.3.1",
+    "usb_reverse_removed": true,
+    "temporary_relay_removed": true,
+    "strict_original_ca_and_hostname_validation": true,
+    "default_and_saved_endpoint_match": true,
+    "public_health": "ok",
+    "empty_register_body_http_status": 422,
+    "accounts_created": false
+  },
+  "accounts_and_readings_preserved_on_server": true,
+  "phone_wifi_connected": true,
+  "phone_to_laptop_ping": {
+    "sent": 3,
+    "received": 3,
+    "loss_percent": 0
+  },
+  "laptop_connection_changed": false,
+  "firewall": "existing TCP range already permits8443; startup recognizes policy without mutation",
+  "original_phone_update": "Run tools/start_offline.sh with primary phone connected when it returns",
+  "firmware_wifi_validation": {
+    "result": "PASS",
+    "esp32_ip": "192.168.3.8",
+    "gateway": "192.168.3.1",
+    "clock_synchronized": true,
+    "mpu6050_online": true,
+    "gy906_online": true,
+    "evidence": "FIRMWARE_NETWORK_EVIDENCE.json"
+  }
+}

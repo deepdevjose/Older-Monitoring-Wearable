@@ -45,7 +45,8 @@ Estos son los valores del fuente, no una certificación del cableado actual. No 
 ```bash
 cp firmware/esp32/secrets.example.h firmware/esp32/secrets.h
 chmod 600 firmware/esp32/secrets.h
-# Editar secrets.h localmente con la red propia.
+# Editar secrets.h localmente con la red propia y una clave única del wearable.
+# Para generar solo una nueva clave privada de instalación: python3 -c 'import secrets; print(secrets.token_hex(16))'
 ```
 
 Dependencias verificadas: Arduino ESP32 core 3.3.12, ArduinoJson 7.4.3 y SparkFun MAX3010x Pulse and Proximity Sensor Library 1.1.2. La compilación predeterminada con partición de 1.2 MiB falla por tamaño. Para comprobar el fuente sin escribir al dispositivo se utilizó la configuración de 4 MiB con aplicación de 1.9 MiB:
@@ -58,7 +59,7 @@ arduino-cli compile \
 
 Este comando **solo compila**. No cambia las particiones de la placa ni prueba que su flash instalada tenga ese tamaño/esquema. El directorio de compilación es privado: los binarios incorporan `secrets.h` y no deben distribuirse. Para una futura instalación habrá que identificar placa, flash y particiones y autorizar esa operación expresamente; no ejecutar un borrado o una subida como parte del diagnóstico.
 
-El emparejamiento SSP del fuente solicita comparar el código numérico del teléfono con Serial y aceptar escribiendo `Y` únicamente si coincide; caduca a los 25 segundos. El diagnóstico siguiente nunca envía esa aceptación. No publicar códigos de vinculación ni registros Serial completos.
+El firmware utiliza SPP cifrado con SSP sin entrada en la placa. Android puede mostrar su propia confirmación; no se escribe `Y` por Serial. Antes de emitir sensores, la app y la placa verifican un reto mutuo HMAC-SHA256 con nonces nuevos y la clave privada de 128 bits de esa placa (`WEARABLE_SETUP_KEY_HEX` en `secrets.h`). La app pide la clave una sola vez y la guarda cifrada por cuenta/servidor/MAC. La autenticación vence a los 10 segundos; los datos, escrituras y cierres se filtran por el handle y la generación de la única conexión admitida. Al ocuparla se desactiva descubrimiento y conectabilidad; se restauran al desconectarse. No publicar la clave, pruebas HMAC ni registros Serial completos.
 
 ## Diagnóstico de solo lectura
 

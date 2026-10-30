@@ -12,18 +12,18 @@ final class AccountSetup {
         switch (step) {
             case 0:
                 return elder() || "caregiver".equals(role)
-                    ? "" : "Elige si la cuenta es de adulto o cuidador.";
+                    ? "" : "Choose whether this account is for an older adult or a caregiver.";
             case 1:
                 int length = name == null ? 0 : name.trim().length();
                 return length >= 1 && length <= 100
-                    ? "" : "Escribe un nombre de entre 1 y 100 caracteres.";
+                    ? "" : "Enter a name between 1 and 100 characters.";
             case 2:
                 return validEmail(email)
-                    ? "" : "Escribe un correo válido de hasta 254 caracteres.";
+                    ? "" : "Enter a valid email address, up to 254 characters.";
             case 3:
                 return "";
             default:
-                return "Vuelve al inicio del registro.";
+                return "Return to the first account setup step.";
         }
     }
 

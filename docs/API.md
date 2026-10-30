@@ -211,6 +211,20 @@ El clasificador acepta únicamente el contrato del dataset sintético y muestras
 
 ## Persistencia y controles
 
+### Históricos por métrica
+
+`GET /patients/{id}/metrics/{metric}/history?period=day&source=device_diagnostic` exige sesión y acceso al paciente. `period` admite `day`, `week` o `month` (24 horas, siete o treinta días); `end` opcional es una fecha ISO con zona horaria. Las métricas son `heart_rate_bpm`, `spo2_percent`, `surface_temp_c`, `ambient_temp_c`, `light_adc` y `acceleration_g`. `source` distingue `device_diagnostic` de `synthetic`; nunca se combinan.
+
+Devuelve `points` con hora, media, mínimo, máximo y conteo; `summary` con media ponderada, rango y última observación; `coverage` informa indexación y observaciones omitidas. Los puntos sin observaciones válidas tienen `value:null`, no cero. Rollups horarios cifrados se actualizan en la misma transacción de ingestión; las horas de los extremos se leen exactamente. La migración de históricos existentes tiene trabajo acotado y comunica cobertura parcial. Solo se muestran datos retenidos en los últimos treinta días. Las medias no equivalen a lecturas instantáneas ni a evaluaciones clínicas.
+
+### Ejercicios de aprendizaje móvil
+
+`GET /patients/{id}/learning/readings` devuelve los últimos treinta ejercicios (hasta cien con `limit`), los rangos del modelo y tres ejemplos trazables al CSV. La persona mayor consulta los suyos y un cuidador requiere vínculo aprobado vigente. `can_add` es falso para cuidadores.
+
+`POST /patients/{id}/learning/readings` es exclusivo de la persona mayor propietaria. Recibe `sample_id` UUID, `source:"synthetic"` y el mismo objeto `features` del clasificador. Devuelve clase, confianza, modelo, características y fecha, guardados cifrados por treinta días en `learning_records`. Repetir identificador y características devuelve el registro original; cambiarlas produce `409`. Datos ausentes, no finitos, fuera de rango, antiguos o de origen físico se rechazan. Un identificador expirado requiere otro UUID.
+
+Estos ejercicios se muestran en **Settings → Learning insights** para ambos roles. Su almacenamiento es independiente de `readings`, no genera alertas ni notificaciones y no convierte temperatura superficial en corporal. Revocar el vínculo retira el acceso tanto a los ejercicios como a los históricos por métrica.
+
 SQLite usa claves foráneas, WAL, transacciones y permisos locales privados. AES-256-GCM protege perfiles, lecturas, eventos, alertas, recordatorios, coordenadas y contenido de notificaciones. Identificadores, roles, relaciones, índices y fechas permanecen como metadatos necesarios para autorización/programación. Las lecturas, eventos y notificaciones se eliminan después de treinta días; las ubicaciones, después de 24 horas. La auditoría se conserva noventa días y las sesiones vencidas se limpian después de siete días adicionales. El programador realiza estas limpiezas mientras el servidor funciona. Las contraseñas usan Argon2id. Las búsquedas de correo y código emplean HMAC con la clave local. La auditoría contiene acciones e IDs; omite textos de salud, correo, contraseñas, códigos y tokens.
 
 La clave se crea de manera explícita al inicializar el servidor, en `CAREMONITOR_HOME/encryption.key` con permisos `0600`. Importar la aplicación no crea archivos, inicia servicios ni toca hardware. Guardar la base y la clave juntas en una copia sin cifrar elimina la utilidad del cifrado frente al robo de esa copia. La guía del servidor documenta el respaldo cifrado y la gestión de certificados.

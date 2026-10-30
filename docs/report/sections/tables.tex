@@ -1,18 +1,18 @@
 \newcommand{\RequirementsTable}{%
 \begin{table}[htbp]\small
-\caption{Core requirements traced to current implementation and evidence. S means source inspected, E means backend or JVM software executed, and D means Android UI executed on a physical phone.}\label{tab:requirements}
+\caption{Requirements traced to implementation and evidence. S: source inspected; E: backend or JVM executed; D: dated production-package checks on a phone; F: current isolated preview UI fixture on a phone.}\label{tab:requirements}
 \begin{tabularx}{\textwidth}{@{}P{10mm}Y Y P{12mm}@{}}\toprule
 ID & Requirement and component & Verification and scope & State\\\midrule
-R1 & Older adult and caregiver views; MainActivity & Role selection, navigation and caregiver wearable guard checked on device & E/D\\
+R1 & Older adult and caregiver views; MainActivity & Role selection, navigation and caregiver wearable guard checked on device & E/D/F\\
 R2 & Reading storage and retrieval; readings API, SQLite & Idempotency, access and ordering tests pass & E\\
-R3 & Reading history and charts; history API, SensorChartView & History endpoint tested; chart component exists outside current care navigation & S/E\\
-R4 & Three classes and confidence; ModelService & Two saved models and authenticated inference tested; output available through API only & E\\
+R3 & Tappable metric history; history API, MetricHistoryChartView & Mounted Day/Week/Month charts; weighted aggregation, gaps and consent tested & E/F\\
+R4 & Three classes and confidence; ModelService, LearningActivity & Class, score and saved history in UI fixture; persistence and access tested separately & E/F\\
 R5 & Stored alerts and review; alerts, private inbox & Sustained episode, recovery and independent caregiver review tested & E\\
 R6 & Missing, invalid and disconnected states & Validation and relay policies tested; physical outage recovery outside this campaign & S/E\\
 R7 & Roles, consent and credentials & Authentication, approved membership, TLS and revocation tested & E\\
-R8 & Modular app and accessible navigation & JVM logic, labelled tabs and registration at 200\% font scale checked; Activity coupling remains & E/D\\
+R8 & Modular app and accessible navigation & JVM logic, tabs and enlarged registration checked; Activity coupling remains & E/D/F\\
 R9 & Controlled development and contribution & Four main history commits establish repository-level development history & S\\
-R10 & Synthetic demonstration and improvement & Synthetic API episodes and backend comparison recorded; care UI excludes synthetic controls & S/E\\\bottomrule
+R10 & Synthetic demonstration and improvement & Isolated Learning insights; API episodes and matched backend comparison & E/F\\\bottomrule
 \end{tabularx}
 \end{table}}
 
@@ -27,8 +27,8 @@ Approve or revoke caregiver & Own circle & Cannot self approve\\
 Review alert & View own history & Own acknowledgement only\\
 Account and connection settings & After sign in & After sign in\\
 Guided wearable connection & Own wearable only & Controls unavailable\\
-Reading chart navigation & Outside care navigation & Outside care navigation\\
-AI label and confidence & API only & API only\\
+Metric chart and period navigation & Own retained readings & Linked adult's readings\\
+Synthetic AI class and confidence & Add and review own exercises & Review linked adult's exercises\\
 Registration accessibility & 200\% layout checked & 200\% layout checked\\\bottomrule
 \end{tabularx}
 \end{table}}
@@ -73,21 +73,25 @@ False Warning delivered to caregiver & \multicolumn{2}{l}{Outside server benchma
 
 \newcommand{\VerificationTable}{%
 \begin{table}[H]\small
-\caption{Executed verification and its scope. Counts are not added because the units differ.}\label{tab:verification}
+\caption{Current revision and dated baseline verification. Counts are not added because the units and campaigns differ.}\label{tab:verification}
 \begin{tabularx}{\textwidth}{@{}P{34mm}P{25mm}Y@{}}\toprule
 Evidence & Result & Scope and exclusions\\\midrule
-Python suite & 88/88 tests & Backend contracts, models, CLI and data preparation; current rerun recorded\\
-Mobile JVM suite & 2,830 assertions & Pure Java logic; no Android UI or KeyStore runtime\\
-HTTPS integration & 17/17 checks & Real loopback TLS, fictional accounts; no phone or Bluetooth\\
-Android release & Installed & APK 1.0.0, version code 13; signing and alignment verified; SHA-256 \texttt{417c12ef\ldots206378}\\
-Synthetic benchmark & 20/20 episodes & Temporary databases; retries and sustained samples do not duplicate\\
-Android UI on phone & 709 checks & Samsung SM-S948B, Android 17 / API 37; role setup, tabs, Settings and registration at 200\% font scale. Live Bluetooth and phone--server delivery outside scope\\\bottomrule
+Current Python suite & \CurrentPythonResult & Current revision software record; units are tests\\
+Current JVM suite & \CurrentJvmResult & Pure Java checks; not Android runtime acceptance\\
+Metric history suite & \CurrentHistoryResult & Weighted means, validity, gaps, boundaries, retention and consent\\
+Learning record suite & \CurrentLearningResult & Synthetic persistence, idempotency, authorisation and revocation\\
+Current Android scope & Code \CurrentVersionCode & \CurrentAndroidResult\\
+Current HTTPS scope & \CurrentIntegrationResult & Distinct from physical Bluetooth or caregiver delivery\\\midrule
+Baseline Python/JVM & 88 / 2,830 & 26 October records: Python tests / JVM assertions\\
+Baseline HTTPS & 17/17 checks & Loopback TLS, fictional accounts; no phone or Bluetooth\\
+Baseline APK and UI & Code 13; 709 checks & Installed on Samsung SM-S948B, Android 17; registration at 200\% font scale. APK SHA-256 \texttt{417c12ef\ldots206378}\\
+Baseline benchmark & 20/20 episodes & Temporary databases; no duplicate retry or sustained episodes\\\bottomrule
 \end{tabularx}
 \end{table}}
 
 \newcommand{\TimingTable}{%
 \begin{table}[H]\small
-\caption{Current local server processing measurements in milliseconds. Percentiles use linear interpolation; no transport or Android latency is included.}\label{tab:timing}
+\caption{26 October baseline server processing measurements in milliseconds. Percentiles use linear interpolation; no transport or Android latency is included.}\label{tab:timing}
 \begin{tabularx}{\textwidth}{@{}Y rrrr@{}}\toprule
 Timed operation & N & Mean & p50 & p95\\\midrule
 Warm authenticated classification & 25 & 17.34 & 16.85 & 19.87\\

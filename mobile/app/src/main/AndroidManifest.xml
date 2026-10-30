@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.caremonitor.demo"
-    android:versionCode="13"
+    android:versionCode="18"
     android:versionName="1.0.0">
     <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="37" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
@@ -37,6 +37,8 @@
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="User-enabled self-hosted care-alert inbox monitoring, with a visible connection notification and Stop control; no external push infrastructure." />
         </service>
         <service android:name=".NotificationJobService" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE" />
+        <activity android:name=".LearningActivity" android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

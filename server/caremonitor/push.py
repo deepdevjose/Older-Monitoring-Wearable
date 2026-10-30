@@ -4,6 +4,7 @@ This local deployment does not pretend to have FCM/APNs delivery. Notifications 
 in SQLite across restarts; each device acknowledges receipt separately from alert review.
 """
 import time
+from .system_text import REMINDER_MESSAGE
 
 
 def enqueue(conn, db, user_id, elder_id, kind, data, occurrence_key=None, now=None):
@@ -40,6 +41,10 @@ def process_due_reminders(db, now=None):
         conn.execute("DELETE FROM locations WHERE expires_at<=?",(now,))
         conn.execute("DELETE FROM notifications WHERE created_at<?",(now-30*86400,))
         conn.execute("DELETE FROM readings WHERE captured_at<?",(now-30*86400,))
+        conn.execute("DELETE FROM learning_records WHERE created_at<?",(now-30*86400,))
+        # Whole aggregate hours expire with raw history. The boundary hour is
+        # queried from retained raw rows, so older samples are never disclosed.
+        conn.execute("DELETE FROM metric_history_rollups WHERE hour_start<?",((now-30*86400)//3600*3600,))
         conn.execute("DELETE FROM events WHERE created_at<?",(now-30*86400,))
         conn.execute("DELETE FROM sessions WHERE expires_at<?",(now-7*86400,))
         conn.execute("DELETE FROM rate_limits WHERE window_start<?",(now-86400,))
@@ -60,7 +65,7 @@ def process_due_reminders(db, now=None):
                 detail = db.vault.open(reminder["detail"],f"reminder:{reminder['id']}")
                 data = {"patient_id":reminder["elder_id"],"reminder_id":reminder["id"],**detail,
                         "due_at":iso(occurrence_due),"missed_occurrences":missed,
-                        "message":"Recordatorio de cuidado. Confirma la indicación acordada; no dupliques una dosis omitida."}
+                        "message":REMINDER_MESSAGE}
                 fanout(conn,db,reminder["elder_id"],"reminder",data,include_elder=True,
                        occurrence_key=f"reminder:{reminder['id']}:{occurrence_due}",now=now)
             if repeat:

@@ -13,6 +13,8 @@ import android.os.Handler;
 import android.os.Looper;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -20,17 +22,16 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Secure Classic Bluetooth SPP client for the group's unchanged BluetoothSerial
- * firmware. Socket connection and reading never run on the Android main thread.
- * The system controls pairing; this client never accepts a passkey or bypasses it.
+ * Secure Classic Bluetooth SPP plus per-wearable mutual application authentication.
+ * Pairing stays under Android control. No serial-monitor confirmation is needed.
  */
 public final class SppSensorClient implements SensorTransport {
     public static final UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
     public static final String EXPECTED_NAME = "ElderSensors-elder-demo-01";
     public static final int UNKNOWN_RSSI = Integer.MIN_VALUE;
     private static final long SCAN_MS = 20_000L;
-    // The unchanged ESP32 firmware permits up to 30 s for its serial Y approval.
     private static final long CONNECT_MS = 45_000L;
+    private static final long AUTH_MS = 10_000L;
     private static final int DELIVERY_BATCH = 4;
 
     private final Context context;
@@ -206,6 +207,12 @@ public final class SppSensorClient implements SensorTransport {
         }
         final long session = generation;
         try {
+            String setupKey=WearableKeys.load(context,address);
+            if(setupKey.isEmpty()) {
+                failAuthentication("Add your wearable's setup key in the app before connecting.");
+                return;
+            }
+            final WearableAuth authentication=new WearableAuth(setupKey);
             BluetoothAdapter adapter = adapter();
             if (adapter == null || !adapter.isEnabled()) {
                 fail("Turn on Bluetooth before connecting.");
@@ -213,7 +220,7 @@ public final class SppSensorClient implements SensorTransport {
             }
             BluetoothDevice device = adapter.getRemoteDevice(address);
             if (device.getType() == BluetoothDevice.DEVICE_TYPE_LE) {
-                fail("This is a BLE-only device. Choose BLE mode for Care Monitor BLE firmware.");
+                fail("This device supports BLE only. Use BLE mode with compatible CareMonitor firmware.");
                 return;
             }
             ensureReceiver();
@@ -222,18 +229,20 @@ public final class SppSensorClient implements SensorTransport {
             currentSocket = socket;
             listener.onState("connecting");
             connectTimeout = () -> {
-                if (active(socket, session)) fail("La conexión Bluetooth agotó el tiempo de espera. Confirma el código en el teléfono y escribe Y en el monitor serie del ESP32 antes de que venza la solicitud; después vuelve a intentarlo.");
+                if (active(socket, session)) fail("Bluetooth connection timed out. Confirm any pairing request on your phone. If another phone is connected, disconnect it first.");
             };
             main.postDelayed(connectTimeout, CONNECT_MS);
-            worker = new Thread(() -> connectAndRead(socket, session), "care-monitor-spp");
+            worker = new Thread(() -> connectAndRead(socket, session, authentication), "care-monitor-spp");
             worker.setDaemon(true);
             worker.start();
         } catch (SecurityException exception) {
             fail("Bluetooth permission is required to connect. Grant Nearby devices permission and retry.");
         } catch (IOException exception) {
-            fail("Could not open the secure SPP socket. Check that the group's Classic Bluetooth firmware is running.");
+            fail("The secure Bluetooth connection could not be opened. Check that your wearable is running Classic Bluetooth firmware.");
         } catch (RuntimeException exception) {
             fail("Classic Bluetooth connection could not start. Check Bluetooth and retry.");
+        } catch (Exception exception) {
+            failAuthentication("Your private wearable key could not be opened. Update its setup key in the app and retry.");
         }
     }
 
@@ -241,18 +250,23 @@ public final class SppSensorClient implements SensorTransport {
         return !closed && currentSocket == socket && generation == session;
     }
 
-    private void connectAndRead(BluetoothSocket socket, long session) {
+    private void connectAndRead(BluetoothSocket socket, long session, WearableAuth authentication) {
+        boolean connected=false;
         try {
             if (!active(socket, session)) return;
             socket.connect();
+            connected=true;
             if (!active(socket, session)) return;
             main.post(() -> {
                 if (!active(socket, session)) return;
                 cancelConnectTimeout();
-                ready = true;
-                listener.onState("ready");
+                listener.onState("authenticating");
+                connectTimeout=()->{if(active(socket,session))failAuthentication("Wearable authorisation timed out. Check its setup key and reconnect from the app.");};
+                main.postDelayed(connectTimeout,AUTH_MS);
             });
             InputStream input = socket.getInputStream();
+            OutputStream output=socket.getOutputStream();
+            writeCommand(output,authentication.hello());
             // Framing state belongs to this socket only. It can never be reused by
             // a subsequent connection, even when an old blocked read wakes late.
             NdjsonFramer framer = new NdjsonFramer();
@@ -263,18 +277,43 @@ public final class SppSensorClient implements SensorTransport {
                 if (count == 0) continue;
                 if (!active(socket, session)) return;
                 for (String line : framer.feed(Arrays.copyOf(buffer, count))) {
+                    if(!authentication.isReady()) {
+                        String response=authentication.receive(line);
+                        if(response!=null)writeCommand(output,response);
+                        if(authentication.isReady())main.post(()->{
+                            if(!active(socket,session))return;
+                            cancelConnectTimeout();ready=true;listener.onState("ready");
+                        });
+                        continue;
+                    }
+                    if(line.startsWith("CM1 "))throw new SecurityException("Unexpected authentication command");
                     if (!enqueue(socket, session, line)) return;
                 }
             }
         } catch (SecurityException exception) {
-            postFailure(socket, session, "Bluetooth permission was revoked. Grant Nearby devices permission and reconnect.");
+            postAuthenticationFailure(socket,session,"Wearable authorisation failed. Update its setup key in the app and try again.");
         } catch (IOException exception) {
-            postFailure(socket, session, "The Classic Bluetooth link ended or pairing was not completed. Keep the ESP32 nearby, confirm the phone pairing code and enter Y in its Serial Monitor when asked.");
+            if(connected&&!authentication.isReady())postAuthenticationFailure(socket,session,"The wearable closed the connection before authorisation. Check its setup key and disconnect any other phone first.");
+            else postFailure(socket, session, "The Bluetooth link ended. Keep the ESP32 nearby, confirm any pairing request on your phone, and disconnect any other phone using the wearable.");
         } catch (RuntimeException exception) {
             postFailure(socket, session, "The Classic Bluetooth link could not read sensor data. Reconnect the ESP32.");
         } finally {
             closeSocket(socket);
         }
+    }
+
+    private static void writeCommand(OutputStream output,String line)throws IOException {
+        output.write((line+"\n").getBytes(StandardCharsets.UTF_8));output.flush();
+    }
+
+    private void postAuthenticationFailure(BluetoothSocket socket,long session,String message) {
+        main.post(()->{if(active(socket,session))failAuthentication(message);});
+    }
+
+    private void failAuthentication(String message) {
+        if(closed)return;
+        releaseSocket();unregisterIfIdle();
+        listener.onState("authentication_failed");listener.onError(message);
     }
 
     private boolean enqueue(BluetoothSocket socket, long session, String line) {
