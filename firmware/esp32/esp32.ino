@@ -250,20 +250,6 @@ float ambientTemp = NAN;
 
 
 // =====================================================
-// MICROPHONE
-// =====================================================
-
-int micValue = 0;
-
-
-// =====================================================
-// PHOTORESISTOR
-// =====================================================
-
-int photoValue = 0;
-
-
-// =====================================================
 // I2C HELPER
 // =====================================================
 
@@ -735,28 +721,6 @@ void updateMAX30102()
 
 
 // =====================================================
-// UPDATE MICROPHONE
-// =====================================================
-
-void updateMicrophone()
-{
-  micValue =
-    analogRead(MIC_PIN);
-}
-
-
-// =====================================================
-// UPDATE PHOTORESISTOR
-// =====================================================
-
-void updatePhotoresistor()
-{
-  photoValue =
-    analogRead(PHOTO_PIN);
-}
-
-
-// =====================================================
 // PRINT JSON
 // =====================================================
 
@@ -920,40 +884,6 @@ void printJSON()
 
 
   // -------------------------------------------------
-  // Microphone
-  // -------------------------------------------------
-
-  JsonObject microphone =
-    doc["microphone"].to<JsonObject>();
-
-
-  microphone["pin"] =
-    MIC_PIN;
-
-  microphone["adc_raw"] =
-    micValue;
-
-
-  // -------------------------------------------------
-  // Photoresistor
-  // -------------------------------------------------
-
-  JsonObject photo =
-    doc["photoresistor"].to<JsonObject>();
-
-
-  photo["pin"] =
-    PHOTO_PIN;
-
-  photo["adc_raw"] =
-    photoValue;
-
-
-  photo["percent"] =
-    photoValue * 100.0 / 4095.0;
-
-
-  // -------------------------------------------------
   // Buzzer
   // -------------------------------------------------
 
@@ -1044,20 +974,6 @@ void setup()
     BUZZER_PIN,
     LOW
   );
-
-
-  pinMode(
-    MIC_PIN,
-    INPUT
-  );
-
-  pinMode(
-    PHOTO_PIN,
-    INPUT
-  );
-
-
-  analogReadResolution(12);
 
 
   // -------------------------------------------------
@@ -1177,20 +1093,6 @@ void loop()
     lastTemp = millis();
 
     updateGY906();
-  }
-
-
-  static unsigned long lastAnalog = 0;
-
-  if (
-    millis() - lastAnalog >= 100
-  )
-  {
-    lastAnalog = millis();
-
-    updateMicrophone();
-
-    updatePhotoresistor();
   }
 
 

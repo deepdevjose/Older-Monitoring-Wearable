@@ -7,7 +7,7 @@ import java.util.*;
 
 /** The only account session. Token is encrypted on disk and expires fail-closed. */
 final class ApiSession {
-    static final String DEFAULT_BASE="https://192.168.3.3:8443/api/v1";
+    static final String DEFAULT_BASE="https://127.0.0.1:19443/api/v1";
     private static final String FILE="session_v2.enc";
     private static volatile boolean locallyClosed;
     final String base,token,id,role,name,email,expires;

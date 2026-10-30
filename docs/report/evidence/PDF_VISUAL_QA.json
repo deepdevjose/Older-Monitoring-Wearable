@@ -1,0 +1,11 @@
+{
+  "reviewed_at": "2026-10-30T18:25:08.350044+00:00",
+  "pdf_sha256": "9a3a220858a0ab1fab98582fc994bf2689b26a94cd495824aa0c69abc68aef34",
+  "pages_rendered_and_visually_reviewed": 42,
+  "rasterizer": "pdftoppm, 1600-pixel longest edge",
+  "review": "All 42 pages reviewed in contact sheets; deployment, wiring, mobile classes, server classes and security figures additionally inspected at full raster size. Fixed overlapping diagram labels, routing through text and an orphan page.",
+  "overfull_boxes": 0,
+  "undefined_references": 0,
+  "wordcount": 3278,
+  "limits": "Visual document QA does not establish sensor calibration or operational/clinical capability beyond the separately recorded system evidence."
+}

@@ -1,0 +1,180 @@
+% Source-audited vector diagrams. All dimensions are in cm.
+% A solid line means an implemented responsibility, not clinical validation.
+\tikzset{
+  archbox/.style={draw=ink!35,fill=white,rounded corners=3pt,align=left,inner sep=7pt,font=\sffamily\small},
+  archflow/.style={-{Stealth[length=2mm]},draw=accent,line width=.9pt},
+  archreturn/.style={-{Stealth[length=2mm]},draw=muted,dashed,line width=.7pt},
+  archlabel/.style={font=\sffamily\scriptsize,align=center,fill=white,inner sep=3pt,text=ink},
+  archnote/.style={font=\sffamily\scriptsize,align=left,text=muted},
+  archfuture/.style={draw=warning,dashed,fill=warning!4,rounded corners=3pt,align=left,inner sep=7pt,font=\sffamily\small}
+}
+
+\newcommand{\ArchitectureDiagram}{%
+\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\scriptsize]
+\path[fill=light,rounded corners=5pt] (-.2,-.25) rectangle (16.45,10.1);
+\node[anchor=west,font=\sffamily\bfseries\large,text=ink] at (.15,9.65) {One wearable. A phone gateway. A local server.};
+\draw[ink!55,fill=white,rounded corners=5pt] (0,3) rectangle (4,9.1);
+\node[anchor=north west,font=\sffamily\scriptsize\bfseries,text=accent,text width=3.5cm] at (.25,8.8) {WEARABLE / KEYES ESP32};
+\draw[ink,line width=1pt] (.8,7.65) circle (.23);
+\draw[ink,line width=1.2pt,line cap=round] (.8,7.42)--(.8,6.65)
+(.8,7.2)--(.35,6.9) (.8,7.2)--(1.28,6.9)
+(.8,6.65)--(.48,6.2) (.8,6.65)--(1.1,6.2);
+\draw[accent,fill=accent!15] (1.12,6.85) rectangle (1.4,7.04);
+\node[anchor=north west,align=left,text width=2.1cm] at (1.65,7.8) {Optical signals\\Surface / ambient\\Acceleration / gyro};
+\node[anchor=north west,align=left,text width=3.4cm] at (.25,5.6)
+ {MAX30102 / GY906\\MPU6050 / buzzer GPIO25\\[5pt]I\textsuperscript{2}C: SDA21 / SCL22\\Acquisition and validity flags};
+\draw[ink,line width=1pt,fill=white,rounded corners=7pt] (6.1,3) rectangle (10.1,9.1);
+\draw[ink!30,line width=2pt,line cap=round] (7.55,8.85)--(8.65,8.85);
+\node[anchor=north west,font=\sffamily\scriptsize\bfseries,text=accent,text width=3.4cm] at (6.38,8.5) {ANDROID\\CareMonitor};
+\node[anchor=north west,align=left,text width=3.35cm] at (6.38,7.8)
+ {Authenticate wearable\\Validate and frame JSON\\Encrypt upload queue\\Readings and metric history\\Consented phone location\\Private care notifications};
+\node[archnote,anchor=north west,text width=3.35cm] at (6.38,4.65)
+ {Phone GPS, network and speaker.\\Battery benefit is unmeasured.};
+\draw[ink,line width=1pt,fill=white,rounded corners=3pt] (12.2,3.7) rectangle (16.2,9.1);
+\draw[ink,line width=1pt] (14.2,3.7)--(14.2,3.05) (13.4,3.05)--(15,3.05);
+\node[anchor=north west,font=\sffamily\scriptsize\bfseries,text=accent,text width=3.4cm] at (12.48,8.8) {PC / SELF-HOSTED SERVER};
+\node[anchor=north west,align=left,text width=3.35cm] at (12.48,7.8)
+ {FastAPI / Python\\Role and care-link checks\\SQLite / encrypted fields\\Rules and reminders\\Private durable inboxes\\Separate synthetic ML};
+\draw[archflow] (4,6)--(6.1,6);
+\node[archlabel,text width=1.8cm,font=\sffamily\tiny] at (5.05,7.25) {Bluetooth Classic\\SPP / RFCOMM};
+\node[archnote,align=center,text width=1.75cm] at (5.05,4.95) {CM1 proofs\\NDJSON data};
+\draw[archflow] (10.1,6)--(12.2,6);\draw[archreturn] (12.2,5.5)--(10.1,5.5);
+\node[archlabel,text width=1.8cm,font=\sffamily\tiny] at (11.15,7.25) {HTTPS REST\\JSON + Bearer};
+\node[archnote,align=center,text width=1.75cm] at (11.15,4.65) {TLS inside the\\USB tunnel here};
+\node[archbox,text width=7cm,font=\sffamily\scriptsize,anchor=north west] at (.25,2.05)
+ {\textbf{Approved caregiver account}\\Reads the selected adult's retained data; reviews its own notices. Server approval and revocation control access.};
+\node[archbox,text width=7cm,font=\sffamily\scriptsize,anchor=north west] at (8.5,2.05)
+ {\textbf{Two deployment routes, same HTTPS API}\\USB: adb reverse to PC loopback. Wi-Fi: reachable LAN. Another caregiver phone needs its own route to this PC.};
+\end{tikzpicture}}
+\caption{Current deployment and device responsibilities, audited against firmware, Android classes and FastAPI routes. This bench run uses USB forwarding while preserving laptop Wi-Fi/VPN. Bluetooth Classic SPP is this ESP32's transport; its firmware does not provide BLE. Roles are exercised successively on one Samsung, rather than on simultaneous phones.}\label{fig:architecture}
+\end{figure}}
+
+\newcommand{\ProtocolStackFigure}{%
+\begin{table}[H]\centering\small
+\caption{Every communication boundary and its implemented contract. Local database calls and cryptographic primitives are labelled separately from network protocols.}\label{tab:protocol-stack}
+\begin{tabularx}{\textwidth}{@{}P{27mm}P{43mm}Y@{}}\toprule
+Boundary & Protocol / format & Meaning and protection\\\midrule
+Sensors $\leftrightarrow$ ESP32 & I\textsuperscript{2}C; MLX90614 SMBus register reads & SDA GPIO21, SCL GPIO22; addresses 0x57, 0x5A, 0x68. Shared ground and compatible logic levels. No radio or TLS here.\\
+ESP32 $\leftrightarrow$ phone & Classic Bluetooth SPP / RFCOMM; UUID 0x1101; UTF-8 NDJSON & Encrypted Bluetooth link; CM1 mutual HMAC-SHA256 using a private 128-bit installation key and fresh nonces. One active owner. No BLE GATT telemetry in this firmware.\\
+Phone $\leftrightarrow$ PC over USB & adb reverse; TCP tunnel & Phone 127.0.0.1:19443 maps to PC 127.0.0.1:19443. USB is the carrier; the application still verifies HTTPS certificates.\\
+Phone $\leftrightarrow$ PC over LAN & IEEE 802.11 / IP / TCP / HTTPS & Alternative LAN deployment, normally port 8443. Local Wi-Fi and routability are required; internet and cloud services are not.\\
+App $\leftrightarrow$ FastAPI & REST JSON under /api/v1; HTTPS / TLS & Certificate chain and host checked by ApiClient. Bearer session token; role plus approved-patient authorisation. No plaintext HTTP fallback.\\
+Server $\rightarrow$ caregiver & Authenticated HTTPS long polling; durable private inbox & NotificationSync reads incremental inbox IDs. Delivery acknowledgement, human review and alert recovery are distinct. Android channels produce local notification sound.\\
+Services $\leftrightarrow$ SQLite & Python sqlite3; SQL transactions; WAL & Foreign keys, unique sample IDs and transactional fanout. AES-256-GCM protects selected fields, not the entire SQLite file or visible index metadata.\\
+Optional ESP32 clock & Wi-Fi / IP / UDP / NTP & pool.ntp.org requires reachability. If the wearable omits a timestamp, Android records phone receipt time; clock sync is not sensor authentication.\\\bottomrule
+\end{tabularx}
+\end{table}}
+
+\newcommand{\ServerArchitectureDiagram}{%
+\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\small]
+\node[archbox,text width=13.8cm] (entry) at (7,0) {\textbf{HTTPS entry: Uvicorn + FastAPI}\quad /api/v1\\
+Request limits $\rightarrow$ Pydantic closed schemas $\rightarrow$ token lookup $\rightarrow$ role and approved relationship};
+\node[archbox,text width=4.05cm,minimum height=2.55cm,anchor=north] (care) at (2.15,-1.8)
+ {\textbf{Care resources}\\Accounts and care links\\Readings / overview / history\\Consent / location / events\\Reminders and acknowledgements};
+\node[archbox,text width=4.05cm,minimum height=2.55cm,anchor=north] (rules) at (7,-1.8)
+ {\textbf{Rules and private notices}\\Three valid synthetic samples\\Persistent episode + recovery\\Per-user inbox fanout\\No physiological device alerts};
+\node[archbox,text width=4.05cm,minimum height=2.55cm,anchor=north] (ml) at (11.85,-1.8)
+ {\textbf{Learning workspace}\\LR versus Random Forest\\Class + uncalibrated score\\Saved synthetic exercises\\Separate SisFall experiment};
+\draw[archflow] (entry.south)--(7,-1.35)-|(care.north);
+\draw[archflow] (7,-1.35)--(rules.north);
+\draw[archflow] (7,-1.35)-|(ml.north);
+\node[archbox,text width=13.8cm] (vault) at (7,-7.5)
+ {\textbf{Database + Vault boundary}\quad Explicit transactions; AES-256-GCM with per-record associated data\\
+Device envelopes are stored as diagnostics. Synthetic rule episodes, saved model exercises and consented phone signals retain distinct provenance.};
+\foreach \n in {care,rules,ml} \draw[archflow] (\n.south)--(\n.south|-0,-5.9)--(7,-5.9)--(vault.north);
+\node[archbox,text width=13.8cm] (db) at (7,-10)
+ {\textbf{SQLite on this PC}\quad WAL + synchronous FULL + foreign keys + unique IDs\\
+Users / sessions / care memberships; readings / rollups; alerts / inboxes; reminders; consents / location; learning records; audit metadata.};
+\draw[archflow] (vault)--(db);
+\node[archnote,text width=14.25cm,anchor=north] at (7,-11.1)
+ {Source: api.py, schemas.py, alerts.py, history.py, learning.py, routes\_ml.py, push.py, db.py and security.py. Models execute on the PC; physical wearable values are not automatically passed to the synthetic health classifier.};
+\end{tikzpicture}}
+\caption{Server components and provenance boundaries. FastAPI is the actual REST implementation. The diagram separates device storage, educational rule evaluation and model experiments instead of representing them as a single medical decision engine.}\label{fig:server-architecture}
+\end{figure}}
+
+\newcommand{\SecurityProtocolDiagram}{%
+\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\small]
+\node[archbox,text width=4cm,font=\sffamily\scriptsize] (radio) at (2.2,0) {\textbf{Wearable radio boundary}\\Classic SPP link encryption\\SSP without board keyboard};
+\node[archbox,text width=4cm,font=\sffamily\scriptsize] (phone) at (7.15,0) {\textbf{Android trust boundary}\\Private per-account wearable key\\AndroidKeyStore + AES-256-GCM};
+\node[archbox,text width=4cm,font=\sffamily\scriptsize] (server) at (12.1,0) {\textbf{Server trust boundary}\\Certificate + host verification\\Role and care-link enforcement};
+\node[archbox,text width=13.8cm] (bt) at (7.15,-2.8)
+ {\textbf{1. Establish link and prove possession of the wearable key}\\
+CM1 HELLO / CHALLENGE / AUTH / READY; fresh 128-bit random nonces; HMAC-SHA256 proofs with distinct transcript roles. Authentication expires after ten seconds; sensor JSON is withheld until READY. Other connections cannot take over the owner handle.};
+\draw[archflow] (radio.south)--(radio.south|-0,-1.5)--(7.15,-1.5)--(bt.north);
+\draw[archflow] (phone.south)--(bt.north);
+\node[archbox,text width=13.8cm] (https) at (7.15,-5.6)
+ {\textbf{2. Authenticate account and authorise each resource over HTTPS}\\
+Password verification: Argon2id (t=3, m=65,536 KiB, p=2). Random 48-byte session tokens; SHA-256 token hashes in sessions. An invitation requests access; the adult's approval creates the membership. Expiry and revocation remain server enforced.};
+\draw[archflow] (bt)--(https);
+\draw[archflow] (server.east)--++(.4,0)|-(https.east);
+\node[archbox,text width=13.8cm] (store) at (7.15,-8.4)
+ {\textbf{3. Persist once, then acknowledge}\\
+Android stores its bounded outbox encrypted before upload. SQLite commits the reading and eligible side effects before replying. Unique (elder\_id, sample\_id) plus content digest distinguish safe retries from conflicting reuse. Server Vault uses a private 256-bit key, 96-bit nonce and record-bound associated data.};
+\draw[archflow] (https)--(store);
+\node[archnote,text width=14.2cm,anchor=north] at (7.15,-10.2)
+ {Bluetooth link encryption and application key possession are distinct from MITM-resistant pairing. AES-GCM field encryption does not hide SQLite IDs and timestamps. No secrets, passwords, token values or HMAC proofs are published in these figures.};
+\end{tikzpicture}}
+\caption{Implemented authentication, authorisation and persistence controls. The labels name the actual algorithms and distinguish Bluetooth trust, HTTPS account access and encrypted storage.}\label{fig:security-boundaries}
+\end{figure}}
+
+\newcommand{\ServerClassDiagram}{%
+\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\small,
+ class/.style={archbox,text width=4.15cm,minimum height=2.15cm},
+ dep/.style={-{Stealth[length=2mm]},draw=ink!60,dashed,line width=.7pt}]
+\node[class] (settings) at (2.2,0) {\textbf{Settings}\quad dataclass\\data\_dir / session\_hours\\load\_key(); initialize\_key()\\Private paths and deployment limits};
+\node[class] (database) at (7.15,0) {\textbf{Database}\\settings / vault\\connect(); transaction()\\connection(); audit(); rate\_limit()};
+\node[class] (vault) at (12.1,0) {\textbf{Vault}\\Private AES-GCM instance\\seal(); open(); lookup()\\Authenticated fields + keyed lookups};
+\draw[dep] (database)--(settings);\draw[dep] (database)--(vault);
+\node[class] (schemas) at (2.2,-3.8) {\textbf{ClosedModel}\quad BaseModel\\Register / Login / Reading\\Reminder / Consents / Location / Event\\Closed fields and validation};
+\node[class] (api) at (7.15,-3.8) {\textbf{FastAPI route functions}\\RequestSecurity middleware\\get\_current\_user / authorize\_patient\\Care resources and transactions};
+\node[class] (health) at (12.1,-3.8) {\textbf{ModelService}\\metadata / fitted model\\Synthetic health classifications\\Hash/version checked model loading};
+\draw[dep] (api)--(database);\draw[dep] (api)--(schemas);\draw[dep] (api)--(health);
+\node[class] (learning) at (2.2,-7.6) {\textbf{LearningReading}\\extends ClassificationRequest\\UUID sample\_id; source=synthetic\\Saved learning router uses ModelService};
+\node[class] (functions) at (7.15,-7.6) {\textbf{Service functions}\quad modules\\alerts: evaluate\_reading / recovery\\history: aggregates and retention\\push: fanout / inbox / scheduler};
+\node[class] (fall) at (12.1,-7.6) {\textbf{FallModelService}\\Independent SisFall experiment\\fall-classify route + examples\\No live MPU snapshot-to-fall pipeline};
+\draw[dep] (api)--(functions);\draw[dep] (learning.north)--(schemas.south);
+\draw[dep] (api.east)--(9.65,-3.8)--(9.65,-5.7)-|(fall.north);
+\node[archnote,text width=14.2cm,anchor=north] at (7.15,-9.55)
+ {Dependency map of selected Python classes and function-based services. FastAPI routes and module functions are not presented as invented controller classes. The separate fall endpoint is an experimental model route, not a validated wearer fall alarm.};
+\end{tikzpicture}}
+\caption{Server programming structure derived from config.py, db.py, security.py, schemas.py, api.py, ml.py and fall\_ml.py. Dashed arrows indicate dependencies; inheritance is stated explicitly in the schema descriptions.}\label{fig:server-classes}
+\end{figure}}
+
+\newcommand{\DatabaseDiagram}{%
+\begin{figure}[H]\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\sffamily\small]
+\node[archbox,text width=4cm,minimum height=1.9cm] (users) at (2.2,0)
+ {\textbf{users}\\PK id; role; encrypted profile\\Argon2id password hash\\\textbf{sessions}: FK user\_id; token hash};
+\node[archbox,text width=4cm,minimum height=1.9cm] (patients) at (7.2,0)
+ {\textbf{patients}\\PK/FK id $\rightarrow$ users.id\\device\_id\\One adult resource per adult account};
+\node[archbox,text width=4cm,minimum height=1.9cm] (members) at (12.2,0)
+ {\textbf{memberships}\\PK elder\_id + caregiver\_id\\Both foreign keys enforced\\Created only after approval};
+\draw[archflow] (users)--(patients);
+\draw[archflow] (members)--(patients);
+\node[archbox,text width=6.2cm,minimum height=1.9cm] (readings) at (3.4,-2.8)
+ {\textbf{readings + metric\_history\_rollups}\\FK elder\_id; unique adult/sample identity\\Encrypted envelopes; source and capture time\\Hourly valid counts/sums/extrema for history};
+\node[archbox,text width=6.2cm,minimum height=1.9cm] (alerts) at (11,-2.8)
+ {\textbf{alerts + alert\_rule\_state}\\FK elder\_id; active episode pointer\\\textbf{alert\_acknowledgements}: alert/user key\\\textbf{notifications}: per-user durable inbox};
+\node[archbox,text width=6.2cm,minimum height=1.9cm] (privacy) at (3.4,-5.6)
+ {\textbf{consents + locations + events}\\Location/audio choices belong to the adult\\Consent-checked, expiring location records\\SOS and other events keep their provenance};
+\node[archbox,text width=6.2cm,minimum height=1.9cm] (care) at (11,-5.6)
+ {\textbf{reminders + reminder\_occurrences}\\FK adult and creator; due/repeat/cancel state\\\textbf{learning\_records}: synthetic exercises\\\textbf{invitations + link\_requests}: approval flow};
+\draw[ink!35,line width=.7pt] (patients.south)--(7.2,-7.25);
+\draw[archflow] (7.2,-2.8)--(readings.east);
+\draw[archflow] (7.2,-2.8)--(alerts.west);
+\draw[archflow] (7.2,-5.6)--(privacy.east);
+\draw[archflow] (7.2,-5.6)--(care.west);
+\node[archnote,align=center,text width=14.2cm,anchor=north] at (7.2,-7.4)
+ {users to patients is 1 to 0..1; patient to readings, alerts and learning records is 1 to many; consent is 1 to 0..1. Memberships link adults and caregivers many to many. sessions and notifications belong to users. audit and rate\_limits provide operational metadata. Table groups are expanded in db.py.};
+\end{tikzpicture}}
+\caption{SQLite data domains and principal ownership relationships. Rectangles group related real tables for readability; the diagram does not suggest that table grouping changes the physical schema. Encrypted fields and visible indexed metadata are separate.}\label{fig:database-domains}
+\end{figure}}

@@ -1,6 +1,6 @@
 # CareMonitor Android 1.0.0
 
-Esta carpeta contiene **la única fuente Android** del proyecto. El APK generado se entrega en `../release/CareMonitor-1.0.0.apk`; no contiene un servidor, credenciales compartidas ni un firmware alternativo. Aplicación nativa Java, paquete `org.caremonitor.demo`, versión 1.0.0/código 19, Android mínimo 7/API 24, objetivo Android 17/API 37.
+Esta carpeta contiene **la única fuente Android** del proyecto. El APK generado se entrega en `../release/CareMonitor-1.0.0.apk`; no contiene un servidor, credenciales compartidas ni un firmware alternativo. Aplicación nativa Java, paquete `org.caremonitor.demo`, versión 1.0.0/código 20, Android mínimo 7/API 24, objetivo Android 17/API 37.
 
 ## Preparar el teléfono
 
@@ -13,15 +13,15 @@ Esta carpeta contiene **la única fuente Android** del proyecto. El APK generado
 7. Abre **Settings → Notifications** y pulsa **Enable local notifications**. Este canal mantiene una conexión HTTPS al servidor de tu computadora y muestra una notificación permanente con **Stop**. No necesita servicios de notificación externos. Cada teléfono debe activarlo individualmente.
 8. El cuidador selecciona a la persona vinculada y crea recordatorios desde **Care**. La persona mayor confirma la toma cuando el aviso ya venció. La confirmación registra una declaración; no verifica ingestión. El botón de agua crea un recordatorio educativo, sin detectar deshidratación ni recomendar cantidades.
 
-## Revisión de interfaz: código 19
+## Revisión de interfaz: código 20
 
 **Today** comienza por la tarea del rol. La persona mayor dispone de **Ask for help**, su próximo recordatorio y sus indicadores. El cuidador elige a una persona aprobada y encuentra avisos pendientes, lecturas, próximo recordatorio y ubicación compartida cuando está autorizada. **Updates** reúne avisos y recordatorios; **Care** gestiona vínculos y el plan de cuidado; **Settings** contiene configuración y detalles técnicos.
 
-La tarjeta **Recent readings** sale del inicio. **Settings → Reading details** muestra lecturas guardadas, procedencia, antigüedad y estado del wearable. Tocar cualquiera de las seis métricas abre **Day / Week / Month**, también cuando su valor actual no está disponible. Los agregados cifrados conservan treinta días y dejan huecos donde falta una medición válida. El cuidador consulta solo a la persona seleccionada con vínculo aprobado.
+La tarjeta **Recent readings** sale del inicio. **Settings → Reading details** muestra lecturas guardadas, procedencia, antigüedad y estado del wearable. Tocar cualquiera de las cinco métricas abre **Day / Week / Month**, también cuando su valor actual no está disponible. Los agregados cifrados conservan treinta días y dejan huecos donde falta una medición válida. El cuidador consulta solo a la persona seleccionada con vínculo aprobado.
 
 Las lecturas cambian en su lugar y su antigüedad sigue avanzando sin reconstruir la pantalla ni perder el foco. Las transiciones son breves y el indicador de conexión usa movimiento limitado; no anima una mejoría clínica ni interpola valores. **Settings → Reduce motion**, las preferencias de animación del sistema y el ahorro de batería limitan el movimiento. Las pantallas se verifican con texto normal y ampliado. El [fundamento y sus referencias oficiales](../docs/STATUS.md) distinguen estas decisiones de un estudio con personas mayores y de aceptación manual con TalkBack.
 
-El código 19 está instalado en S22 SM-S901E / Android 13: **878 comprobaciones nativas** de registro/diseño y **7.273 comprobaciones de preview** con 48 capturas de ambos roles al 100 %/200 %. Los fixtures nativos conservaron preferencias, sesión, cola y permisos. La versión, el hash instalado y las comprobaciones actuales están en `release/ANDROID_BUILD.json`, `ANDROID_UI_EVIDENCE.json` y `ANDROID_HISTORY_UI_EVIDENCE.json`. El último registro distingue el APK aislado de fixtures del uso de una cuenta real. `ANDROID_CODE16_BASELINE.json` conserva la campaña de 759 comprobaciones nativas y HTTPS del 27 de octubre; no se reutiliza su resultado para el APK nuevo.
+El código 20 está instalado en S22 SM-S901E / Android 13, con hash verificado y prueba HTTPS de solo lectura del cliente instalado. Pasó **7.073 comprobaciones de preview**, con 48 capturas al 100 %/200 %, y **119 comprobaciones del sistema real** en un paquete aislado que usa los mismos Java y recursos de producción. El onboarding de la app principal se omitió al detectar una sesión cifrada existente: no se borraron datos para forzar la prueba. Las 878 comprobaciones anteriores corresponden al código 19 y se conservan en `ANDROID_CODE19_UI_BASELINE.json`. Los registros actuales están en `release/ANDROID_BUILD.json`, `ANDROID_UI_EVIDENCE.json`, `ANDROID_HISTORY_UI_EVIDENCE.json` y `DEVICE_SYSTEM_USB_EVIDENCE.json`.
 
 `BT_PROTOCOL_EVIDENCE.json` conserva 207 comprobaciones físicas del 27 de octubre: autenticación mutua, rechazo de claves incorrectas y pruebas reutilizadas, timeout y exclusión de una segunda radio. `APP_BLUETOOTH_SERVER_EVIDENCE.json` corresponde al APK **código 17**: el flujo normal recibió 138 muestras, dejó cero pendientes y obtuvo confirmación del servidor por Wi-Fi. No acredita por sí mismo una revisión posterior ni avisos a cuidadores con pantalla bloqueada.
 

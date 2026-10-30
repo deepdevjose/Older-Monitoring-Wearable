@@ -52,25 +52,28 @@
 \lstset{basicstyle=\small\ttfamily,breaklines=true,columns=fullflexible,keepspaces=true,frame=single,rulecolor=\color{muted},backgroundcolor=\color{light},aboveskip=8pt,belowskip=8pt}
 \input{metadata}
 \input{evidence/CURRENT_REVISION}
+\input{evidence/USB_RUN}
 \input{evidence/wordcount}
 \input{sections/diagrams}
+\input{sections/diagram_hardware}
+\input{sections/diagram_mobile}
 \input{sections/tables}
 \newcommand{\HardwarePhotoFigure}{%
 \begin{figure}[htbp]\centering
 \includegraphics[width=.94\textwidth]{hardware_prototype.jpg}
-\caption{Physical prototype assembly supplied by the team. The ESP32 carrier is central, with jumper wiring to surrounding modules; the buzzer and light sensor boards are visible at the upper right and right. The photograph records the physical arrangement. Module runtime observations are evaluated separately.\cite{hardwarephoto}}\label{fig:hardware-photo}
+\caption{Earlier physical prototype photograph supplied by the team. The KEYES carrier and sensor modules document the bench assembly before the microphone and light sensor were removed. The current four-module wiring map is Figure~\ref{fig:wearable-wiring}; this older photograph is not presented as a photograph of the revised arrangement.\cite{hardwarephoto}}\label{fig:hardware-photo}
 \end{figure}}
 \newcommand{\RoleScreensFigure}{%
 \begin{figure}[htbp]\centering
 \begin{subfigure}[t]{.45\textwidth}\centering
-\includegraphics[width=\linewidth,height=.67\textheight,keepaspectratio]{ui_elder_today.png}
-\caption{Older adult: connection, help and the next reminder.}
+\includegraphics[width=\linewidth,height=.67\textheight,keepaspectratio]{system/elder_live_home_top.png}
+\caption{Older adult during authenticated physical reception.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{.45\textwidth}\centering
-\includegraphics[width=\linewidth,height=.67\textheight,keepaspectratio]{ui_caregiver_today.png}
+\includegraphics[width=\linewidth,height=.67\textheight,keepaspectratio]{system/caregiver_home_top.png}
 \caption{Caregiver: selected person and notices to review.}
 \end{subfigure}
-\caption{Code 19 Today views rendered on Samsung S22 / Android 13 with fictional in-memory profiles and 100\% text. These are synthetic interface fixtures, not real accounts or patient measurements. The isolated preview has no network or Bluetooth permissions; it does not demonstrate sensor reception or server delivery. Source and image hashes are retained with the report evidence.}\label{fig:role-screens}
+\caption{Code 20 production-view captures on S22 / Android 13, using real HTTPS test accounts in an isolated package/database and 100\% text. The adult is captured during physical SPP reception; the caregiver is captured later after an approved link, reminder and controlled help event. These are successive observations, not simultaneous phones or in-memory fixtures. Full provenance and additional views appear in Appendix~\ref{app:usb-run}.}\label{fig:role-screens}
 \end{figure}}
 \begin{document}
 \hypersetup{pageanchor=false}
@@ -83,7 +86,7 @@
 {\sffamily\fontsize{21}{26}\selectfont Mobile IoT monitoring\par}
 {\sffamily\fontsize{16}{22}\selectfont Technical report and evaluation\par}
 \vspace{12mm}
-{\large Synthetic health classification and\par consent based caregiver communication\par}
+{\large Wearable sensing, native Android care and\par secure self-hosted analytics\par}
 \vspace{16mm}
 \begin{tabularx}{\textwidth}{@{}P{39mm}Y@{}}
 Team members & \ReportMembers\\
@@ -93,7 +96,7 @@ Repository & \url{https://github.com/deepdevjose/Older-Monitoring-Wearable}\\
 \end{tabularx}
 \vfill
 \colorbox{light}{\parbox{\dimexpr\textwidth-2\fboxsep\relax}{\small\textbf{Educational use only}\par
-This prototype must not be used for diagnosis, treatment or clinical decision making. Evaluation uses synthetic fixtures. Results distinguish server experiments, Android interface tests and hardware observations.}}
+This prototype must not be used for diagnosis, treatment or clinical decision making. Evaluation separates synthetic model exercises, Android checks and controlled physical bench observations.}}
 \end{titlepage}
 \pagenumbering{roman}
 \hypersetup{pageanchor=true}
@@ -107,4 +110,6 @@ This prototype must not be used for diagnosis, treatment or clinical decision ma
 \clearpage
 \appendix
 \input{sections/appendices}
+\input{sections/system_run}
+\input{sections/system_atlas}
 \end{document}

@@ -51,7 +51,7 @@ El comando anterior es temporal; verificar antes de hacerlo permanente. La app n
 
 ## 4. Instalar en los Samsung
 
-El artefacto es `release/CareMonitor-1.0.0.apk`, revisión de interfaz código 19, compilada con API 37. `release/ANDROID_BUILD.json` identifica su hash; `ANDROID_UI_EVIDENCE.json` registra el equipo y el alcance de su instalación. El SM-S948B con Android 17 conserva su instalación anterior hasta volver a conectarse para actualizarlo. El recorrido Bluetooth–teléfono–servidor se comprobó el 27 de octubre con código 17 en el S22 SM-S901E / Android 13, mediante Network; no se atribuye automáticamente al APK nuevo.
+El artefacto es `release/CareMonitor-1.0.0.apk`, revisión de interfaz código 20, compilada con API 37. `release/ANDROID_BUILD.json` identifica su hash; `ANDROID_UI_EVIDENCE.json` registra el equipo y el alcance de su instalación. El SM-S948B con Android 17 conserva su instalación anterior hasta volver a conectarse para actualizarlo. El recorrido Bluetooth–teléfono–servidor se comprobó el 27 de octubre con código 17 en el S22 SM-S901E / Android 13, mediante Network; no se atribuye automáticamente al APK nuevo.
 
 1. Copiar el APK al teléfono e instalar desde una fuente local confiable. Autorizar temporalmente a esa aplicación de archivos para instalar APK. También puede usarse `adb install -r release/CareMonitor-1.0.0.apk` cuando USB debugging esté autorizado.
 2. Si una instalación antigua tiene otro certificado, Android rechazará actualizarla. Conseguir la clave original o decidir conscientemente si se elimina esa instalación y sus datos locales. No se desinstala automáticamente nada.
@@ -134,3 +134,7 @@ Se pide passphrase de al menos quince caracteres. La copia contiene base y clave
 ```
 
 Mantener `.local/dev-signing.jks` para actualizar esta instalación de desarrollo. Antes de compilar, `mobile/app/src/main/assets/server_ca.crt` debe corresponder a la CA pública activa. No copiar una clave privada al APK. El manifiesto distingue compilación, lógica, fixtures Android, instalación y campañas físicas fechadas. El empaquetador rechaza un preview fallido o cuyos hashes no coincidan con las fuentes del APK; no convierte ese resultado en aceptación de sensores o entrega a cuidadores.
+
+## Comprobación actual: 30 de octubre de 2026
+
+El S22 conserva la app principal y su sesión. Se comprobó su cliente HTTPS por USB en `127.0.0.1:19443`; este transporte no acredita conectividad Wi-Fi. Una campaña separada, con el mismo código de producción y cuentas controladas en una base aislada, recibió el wearable por SPP, retuvo 76 lecturas y confirmó cero pendientes. La entrega nativa final fue 30/30; el límite de tarjetas se corrigió tras observar nueve timeouts en la línea base. La red y VPN de la laptop no se cambiaron. Los detalles y diagramas están en [ARCHITECTURE.md](ARCHITECTURE.md) y en el informe.

@@ -459,7 +459,7 @@ public final class MainActivity extends Activity {
         }
         metrics(readingsPayload());
         LinearLayout limits=card(content);labelIn(limits,"Understanding your readings",23,INK,true);
-        labelIn(limits,"Surface temperature is not core body temperature. Light is an uncalibrated signal and does not confirm that the wearable is worn. These sensors do not measure blood pressure or dehydration.",17,MUTED,false);
+        labelIn(limits,"Surface temperature is not core body temperature. Missing readings can mean poor contact, movement or a connection problem; they do not prove the wearable is off. These sensors do not measure blood pressure or dehydration.",17,MUTED,false);
         labelIn(limits,"A connection or a normal-looking value is not a medical assessment. Missing or older readings do not confirm that someone is okay.",17,MUTED,false);
         textAction(content,"Refresh saved readings",this::refresh,true);updateReadingViews();
     }
@@ -509,7 +509,7 @@ public final class MainActivity extends Activity {
         label(elder()?"Around you":"Their surroundings",23,INK,true);
         row=metricRow();metricTile(row,"Surface temperature",metricValue(raw,"surface_temp_c",false),R.drawable.ic_temperature,0xFF98631D,"surface_temp_c");
         metricTile(row,"Ambient temperature",metricValue(raw,"ambient_temp_c",false),R.drawable.ic_temperature,BLUE,"ambient_temp_c");
-        row=metricRow();metricTile(row,"Light",metricValue(raw,"light_adc",page.equals("reading_details")),R.drawable.ic_light,0xFF98631D,"light_adc");
+        row=metricRow();row.setOrientation(LinearLayout.VERTICAL);
         metricTile(row,"Movement",metricValue(raw,"acceleration_g",false),R.drawable.ic_motion,0xFF6554A4,"acceleration_g");
         if(page.equals("home"))labelIn(content,"Tap a card to see its history. Readings are not a medical assessment.",16,MUTED,false);
     }

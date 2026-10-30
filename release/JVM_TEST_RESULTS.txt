@@ -24,4 +24,6 @@ PASS: 2065 PrivacyBoundary checks
 Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
 PASS: 13 NotificationCursor checks
 Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
+PASS: 36 NotificationWindow checks
+Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
 PASS: 142 AccountSetup checks

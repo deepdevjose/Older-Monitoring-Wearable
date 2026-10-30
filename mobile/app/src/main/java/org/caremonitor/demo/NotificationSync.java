@@ -10,6 +10,7 @@ import android.service.notification.StatusBarNotification;
 import org.json.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 
 /** Self-hosted durable inbox -> private native notifications. No external push service or SDK. */
@@ -52,6 +53,9 @@ final class NotificationSync {
     private static synchronized void deliver(Context context,ApiSession session,String file,JSONObject result,BooleanSupplier active)throws Exception{
         long last=cursor(context,file);JSONArray items=result.optJSONArray("items");if(items==null||!active.getAsBoolean()||!permitted(context))return;
         NotificationManager manager=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        ArrayList<Integer> activeIds=new ArrayList<>();
+        for(StatusBarNotification posted:manager.getActiveNotifications())if(TAG.equals(posted.getTag()))activeIds.add(posted.getId());
+        NotificationWindow visible=new NotificationWindow(activeIds);
         if(Build.VERSION.SDK_INT>=26){NotificationChannel channel=new NotificationChannel(CHANNEL,"Care alerts",NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription("Care alerts and reminders from your server");channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);manager.createNotificationChannel(channel);}
         for(int i=0;i<items.length();i++){
@@ -64,6 +68,11 @@ final class NotificationSync {
             Notification.Builder builder=Build.VERSION.SDK_INT>=26?new Notification.Builder(context,CHANNEL):new Notification.Builder(context);
             String title=data.optString("title","Care alert"),text=data.optString("message",data.optString("instructions","Open CareMonitor to review the alert."));
             Notification.Builder publicVersion=Build.VERSION.SDK_INT>=26?new Notification.Builder(context,CHANNEL):new Notification.Builder(context);
+            // Android/OEM limits can silently reject a new card. Keep a bounded
+            // native window, including IDs posted earlier in this same batch.
+            // Cancelling an old native card neither acknowledges nor deletes its
+            // durable inbox item, alert or the user's in-app history.
+            for(int old:visible.beforePost(id))manager.cancel(TAG,old);
             manager.notify(TAG,id,builder.setSmallIcon(R.drawable.ic_care_monitor).setContentTitle(title).setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(text)).setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true)
                 .setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(publicVersion.setSmallIcon(R.drawable.ic_care_monitor)

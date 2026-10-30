@@ -7,8 +7,8 @@ Informe académico en inglés, revisado contra `rubrik.docx` y la implementació
 - `IndiCare_Report.pdf`: informe compilado y revisado visualmente.
 - `IndiCare_Report.tex`: entrada principal del proyecto LaTeX.
 - `metadata.tex`: cuatro integrantes con sus IDs, tutora Matilda Isaac y datos de portada.
-- `sections/`: prosa, tablas, cuatro diagramas TikZ, bibliografía y apéndices.
-- `figures/`: fotografía real del prototipo, tres gráficos vectoriales de resultados, dos vistas actuales de Today con perfiles ficticios y cinco capturas históricas recortadas.
+- `sections/`: prosa, tablas, diagramas TikZ de despliegue, cableado, actores, flujo, clases, permisos, servidor, datos y seguridad, bibliografía y apéndices.
+- `figures/`: fotografía real del prototipo, tres gráficos vectoriales de resultados, 32 capturas nativas actuales de ambos roles con cuentas controladas y cinco capturas históricas recortadas.
 - `evidence/`: instantáneas de compilación y pruebas, metadatos de modelos, muestras de tiempos, comparación inicial/final y procedencia de imágenes.
 - `REVISION_RUBRICA.md`: correspondencia entre criterios, contenido del informe y alcance de la evidencia.
 
@@ -40,15 +40,17 @@ python3 tools/make_figures.py
 
 ## Evidencia y alcance
 
-La revisión de interfaz del **29 de octubre de 2026**, código **19**, organiza Today por rol: ayuda y próximo recordatorio para la persona mayor; persona aprobada, avisos pendientes y lecturas para el cuidador. Updates y Care mantienen navegación estable. La tarjeta técnica Recent readings se traslada a **Settings → Reading details**. Las seis métricas conservan Day/Week/Month y los ejercicios de Learning insights permanecen separados de las lecturas físicas.
+La revisión del **30 de octubre de 2026**, código **20**, prioriza ayuda y plan para el adulto, y persona seleccionada y avisos para el cuidador. Settings → Reading details contiene el diagnóstico técnico. Las cinco métricas actuales abren Day/Week/Month. El movimiento de conexión es breve y reducible; no interpola datos ni atribuye resultados a un estudio de usabilidad no realizado.
 
-La actualización de valores y antigüedad conserva las vistas y el foco. El movimiento de conexión es breve, se puede reducir y no interpola mediciones. Son decisiones de diseño orientadas a tareas de mayores y cuidadores; no se atribuyen a un estudio de usabilidad con participantes ni a evaluación manual con TalkBack.
+El S22 SM-S901E / Android 13 conserva su sesión. La identidad del APK y su cliente HTTPS se comprobaron sin crear cuentas ni borrar datos; el onboarding actual se omitió por sesión existente. Las 878 comprobaciones de onboarding pertenecen al código 19. La revisión actual pasó **229 pruebas Python, 3.276 comprobaciones JVM, 24 verificaciones HTTPS loopback y 7.073 controles de preview**, con 48 capturas al 100 %/200 %.
 
-El código 19 quedó instalado en el S22 SM-S901E / Android 13 con identidad de APK comprobada. La revisión pasó **229 pruebas Python**, **3.240 comprobaciones JVM**, **24 verificaciones HTTPS loopback**, **878 comprobaciones nativas** y **7.273 comprobaciones de preview**, con 48 capturas y texto al 100 %/200 %. Las dos vistas de Today del informe son fixtures sintéticos; no muestran pacientes ni sesiones reales.
+Una campaña separada ejecutó **119 comprobaciones del sistema real**, con producción Java/recursos en `org.caremonitor.reportqa`, cuentas controladas y SQLite aislada. Recibió el wearable por SPP autenticado, retuvo 76 lecturas y alcanzó cero pendientes. Las **32 capturas nativas originales** muestran respuestas HTTPS reales: historia y Learning por ambos roles, vínculo aprobado, recordatorio y aviso de ayuda de prueba. Los ejercicios de IA siguen siendo sintéticos. No son fixtures en memoria, pacientes reales ni dos teléfonos simultáneos. La fecha visible UTC+8 del teléfono puede diferir de los registros UTC.
 
-Los conteos ejecutados, versión, hash y alcance de la instalación están centralizados en [CURRENT_REVISION.tex](evidence/CURRENT_REVISION.tex). Los registros de la revisión están en [evidence/current/](evidence/current/) y [release/](../../release/). La campaña de preview utiliza los mismos Java y recursos de producción en una app aislada, con ambos roles y texto al 100 %/200 %. Sus fixtures no autentican cuentas ni se conectan a sensores o al servidor.
+La línea base notificó 21/30; tras corregir el límite de tarjetas, dos campañas posteriores notificaron 30/30. La medición final fue p95 1.094,37 ms hasta publicación nativa, con pantalla encendida en el mismo S22 y HTTPS por USB. No mide sonido, respuesta humana, bloqueo de pantalla ni Wi-Fi. Se conserva el fallo inicial y su corrección en `evidence/usb_performance.json`.
 
-Las pruebas físicas del **27 de octubre** se conservan aparte: `BT_PROTOCOL_EVIDENCE.json` registra 207 comprobaciones de autenticación y exclusividad; `APP_BLUETOOTH_SERVER_EVIDENCE.json` acredita el flujo normal del **código 17**, con 138 muestras, cero pendientes y confirmación del servidor. Su fecha y versión no se trasladan al APK posterior. `ANDROID_CODE16_BASELINE.json` conserva las 759 comprobaciones nativas y HTTPS de esa versión.
+Los conteos y versiones se centralizan en [CURRENT_REVISION.tex](evidence/CURRENT_REVISION.tex); la procedencia de capturas, en [system_screenshots.json](evidence/system_screenshots.json). Las evidencias fechadas están en [evidence/current/](evidence/current/) y [release/](../../release/). El atlas diferencia las capacidades implementadas de pasos, caídas autónomas y respaldo sonoro todavía no implementados en el firmware. No se deduce deshidratación de estos sensores.
+
+Las pruebas físicas del **27 de octubre** se conservan aparte: `BT_PROTOCOL_EVIDENCE.json` registra 207 comprobaciones de autenticación y exclusividad; `APP_BLUETOOTH_SERVER_EVIDENCE.json` acredita el código 17 con 138 muestras y cero pendientes. No identifican el APK actual.
 
 Los archivos [ANDROID_BUILD.json](evidence/ANDROID_BUILD.json), [ANDROID_UI_EVIDENCE.json](evidence/ANDROID_UI_EVIDENCE.json), [VALIDATION.json](evidence/VALIDATION.json), [jvm-current.txt](evidence/jvm-current.txt), [pytest-current.xml](evidence/pytest-current.xml) e [INTEGRATION_EVIDENCE.json](evidence/INTEGRATION_EVIDENCE.json) se conservan como **instantáneas de la línea base del 26 de octubre**: código 13, 709 comprobaciones de interfaz, 88 pruebas Python y 17 verificaciones HTTPS. No identifican el APK actual. Los tiempos de clasificación, episodios e idempotencia también mantienen su fecha y condiciones originales; no se han vuelto a medir para esta revisión.
 
@@ -58,16 +60,10 @@ La fotografía [hardware_prototype.jpg](figures/hardware_prototype.jpg) reproduc
 
 Las métricas de clasificación corresponden a las etiquetas y particiones sintéticas descritas. La temperatura superficial del GY906 nunca se transforma en temperatura corporal para este modelo. La procedencia institucional del CSV y la atribución individual de tareas no se deducen de los resultados ni de una identidad Git.
 
-El ODT, la rúbrica y las imágenes originales se conservan. Esta revisión documental no modifica firmware ni flashea hardware. Las pruebas y benchmarks requieren el repositorio completo y sus dependencias. Los scripts `tools/benchmark_*.py` usan bases temporales y cuentas ficticias; generan archivos `*-rerun.json` sin reemplazar las mediciones documentadas. La comparación histórica utiliza el commit `6757c0a`. No ejecutes la instrumentación de onboarding sobre una sesión real ni borres sus datos para superar la protección de sesión activa.
+El ODT, la rúbrica y las imágenes originales se conservan. Esta revisión elimina del firmware fuente las entradas retiradas de micrófono y luz; compiló sin flashear hardware. La imagen instalada conserva campos heredados. Las pruebas y benchmarks requieren el repositorio completo y sus dependencias. Los scripts `tools/benchmark_*.py` usan bases temporales y cuentas ficticias; generan archivos `*-rerun.json` sin reemplazar las mediciones documentadas. La comparación histórica utiliza el commit `6757c0a`. No ejecutes la instrumentación de onboarding sobre una sesión real ni borres sus datos para superar la protección de sesión activa.
 
-## Fotografías que complementarían el informe
+## Evidencia fotográfica complementaria
 
-La fotografía del prototipo ya está incorporada. Para ampliar la evidencia visual resultan útiles:
+El informe ya incluye los dos roles, datos retenidos y diagramas. Un primer plano actualizado con la placa KEYES y las cuatro conexiones de módulo visibles documentaría el cableado físico con más detalle que la fotografía anterior. No se ha alterado la foto para simular la retirada de módulos.
 
-- Un primer plano nítido de la placa, sensores y conexiones, con los componentes visibles.
-- El teléfono en el flujo de la persona mayor: registro por pasos y conexión del wearable.
-- El teléfono del cuidador mostrando una alerta y su revisión, con cuentas y lecturas ficticias.
-
-Cada imagen debe llevar una descripción breve de lo que muestra. Evitar contraseñas, tokens, identificadores privados y datos de pacientes reales. Una pantalla de lectura se presenta como captura del estado observado, sin atribuirle validación clínica.
-
-El alcance del APK nuevo y la retirada de los paquetes auxiliares quedan registrados en la evidencia de su propia campaña. El teléfono principal se actualiza al volver a conectarse; no se infiere su versión de las pruebas del S22.
+El teléfono principal se actualiza al volver a conectarse; no se infiere su versión de las pruebas del S22. No ejecutes onboarding sobre una sesión real ni borres datos para superar su protección.

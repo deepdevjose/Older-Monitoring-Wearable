@@ -1,6 +1,8 @@
 # Firmware y comprobación física
 
-El único fuente vigente para trabajar es `firmware/esp32/esp32.ino`, consolidado desde `data_API/esp32.ino`. Se conserva el firmware existente: en esta consolidación únicamente se extrajeron las credenciales Wi-Fi a un archivo privado. No se modificó el algoritmo óptico, la adquisición, el formato JSON ni el emparejamiento. No se flasheó, borró NVS ni aceptó una vinculación Bluetooth.
+El único fuente vigente es `firmware/esp32/esp32.ino`. El montaje indicado el **30 de octubre** conserva MAX30102, GY906/MLX90614, MPU6050 y buzzer GPIO25 en la placa KEYES/ESP32. Se retiraron micrófono y sensor de luz. El fuente deja de leer sus pines y de emitir sus campos; compiló correctamente sin flashear la placa, borrar NVS ni cambiar claves.
+
+La ejecución USB utiliza el binario ya instalado: sus mensajes todavía pueden incluir campos heredados de micrófono y fotoresistor. No representan módulos conectados en el montaje actual. El mapa del informe documenta los GPIO del fuente corregido; las capturas registran la ejecución observada. La app actual omite la tarjeta de luz y mantiene compatibilidad con registros antiguos.
 
 La revisión defectuosa del 23 de octubre permanece como evidencia local en `.local/firmware-diagnostics-20261023/`; no es una segunda fuente para compilar. El dispositivo no publica una identidad de compilación verificable. Por ello **no está demostrada la equivalencia entre el binario instalado y este fuente**. El usuario informa que el firmware instalado funciona; la captura de esta sesión comprueba únicamente el estado observado.
 
@@ -14,8 +16,7 @@ Bluetooth **Classic SPP**, nombre configurado `ElderSensors-elder-demo-01`, JSON
 | `max30102` | `status`, `finger_detected`, `heart_rate_valid`, `spo2_valid`, `heart_rate_bpm`, `spo2_percent`, ventana óptica y valores crudos |
 | `mpu6050` | `online`, `accel_g.{x,y,z}`, `gyro_dps.{x,y,z}` |
 | `gy906` | `online`, `object_temp_c` de superficie/objeto, `ambient_temp_c` ambiental |
-| `photoresistor` | ADC y porcentaje de escala del ADC; no equivale a certeza de llevar puesto el wearable |
-| `microphone` | ADC del micrófono del ESP32, cuando está conectado; no es audio del teléfono |
+| Campos heredados | `photoresistor` y `microphone` se aceptan para registros/binarios anteriores; ya no se generan en el fuente actual |
 | `buzzer` | Pin configurado; su presencia en el JSON no demuestra que se haya emitido una alarma |
 
 Los valores ópticos no válidos se transmiten como `null`. Nunca deben convertirse a cero ni usarse para disparar una alerta de pulso o de oxígeno. Un sensor `online: false`, la falta de dedo o la ausencia de muestra reciente deben mostrarse como falta de señal.
@@ -32,15 +33,14 @@ Wi-Fi se emplea para NTP; el canal de datos hacia el teléfono es SPP. La app en
 | MAX30102 | Dirección `0x57` |
 | GY906 / MLX90614 | Dirección `0x5A` |
 | MPU6050 | Dirección `0x68` |
-| Micrófono | ADC pin 34 |
-| Fotoresistor | ADC pin 35 |
+| Micrófono / fotoresistor | Retirados; GPIO34 y GPIO35 sin adquisición actual |
 | Buzzer | Pin 25 |
 
-Estos son los valores del fuente, no una certificación del cableado actual. No hay medición de presión arterial ni de hidratación. La temperatura infrarroja de superficie no es temperatura corporal central. Oscuridad, manga y orientación pueden confundir el fotoresistor; requiere calibración y no basta para declarar que una persona lleva el dispositivo.
+Estos son los valores del fuente, no una certificación del cableado actual. No hay medición de presión arterial ni de hidratación. La temperatura infrarroja de superficie no es temperatura corporal central. La ausencia de contacto óptico invita a revisar colocación y conexión. Movimiento, desconexión o fallos también pueden eliminar lecturas: no confirma que el dispositivo esté quitado.
 
 ## Configuración privada y compilación
 
-`secrets.h` contiene únicamente la configuración Wi-Fi local. Está excluido de Git y tiene permisos `0600`. En una instalación nueva:
+`secrets.h` contiene la configuración Wi-Fi local y la clave privada de instalación del wearable. Está excluido de Git y tiene permisos `0600`. En una instalación nueva:
 
 ```bash
 cp firmware/esp32/secrets.example.h firmware/esp32/secrets.h

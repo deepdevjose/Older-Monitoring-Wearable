@@ -42,7 +42,7 @@ Si la VPN impide acceder a la LAN, permite el tráfico local en ella o páusala 
 
 ## Identificar la entrega y su conexión
 
-La revisión de interfaz es **1.0.0 / código 19**, instalada en el S22 SM-S901E / Android 13. Pasó 878 comprobaciones nativas y 7.273 controles de preview con perfiles ficticios; esas pruebas conservaron los datos y permisos existentes. `release/ANDROID_BUILD.json` identifica el APK y `ANDROID_UI_EVIDENCE.json` su instalación y alcance. Los controles de ambos roles con datos ficticios están en `ANDROID_HISTORY_UI_EVIDENCE.json`. Para una actualización, conserva datos y firma: no desinstales ni vuelvas a crear una cuenta existente.
+La revisión actual es **1.0.0 / código 20**, instalada en el S22 SM-S901E / Android 13 con hash y acceso HTTPS comprobados. Pasó 7.073 controles aislados de preview y 119 comprobaciones del sistema real con producción Java/recursos en otro paquete. La sesión existente de la app principal se conservó; su onboarding no se volvió a ejecutar. Los registros están en `release/ANDROID_BUILD.json`, `ANDROID_UI_EVIDENCE.json`, `ANDROID_HISTORY_UI_EVIDENCE.json` y `DEVICE_SYSTEM_USB_EVIDENCE.json`. Para actualizar, conserva datos y firma: no desinstales ni vuelvas a crear una cuenta existente.
 
 ### Antecedentes comprobados el 27 de octubre de 2026
 

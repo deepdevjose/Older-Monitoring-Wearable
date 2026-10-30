@@ -2,72 +2,7 @@
 % Requires TikZ libraries arrows.meta, positioning, fit, backgrounds, calc,
 % shapes.geometric; graphicx; report colours ink, accent, light, muted, warning.
 
-\newcommand{\ArchitectureDiagram}{%
-\begin{figure}[htbp]
-\centering
-\resizebox{\ifdim\linewidth>15.6cm 15.6cm\else\linewidth\fi}{!}{%
-\begin{tikzpicture}[
-  font=\sffamily\scriptsize, >=Stealth,
-  box/.style={draw=ink!45,fill=white,rounded corners=2pt,
-    text width=2.55cm,minimum height=1.35cm,align=center,inner sep=5pt},
-  flow/.style={->,thick,draw=accent},
-  optional/.style={->,draw=muted!80},
-  note/.style={font=\sffamily\scriptsize,text=muted,align=center},
-  band/.style={draw=none,fill=light,rounded corners=4pt}
-]
-\begin{scope}[on background layer]
-  \path[band] (-0.35,-1.0) rectangle (14.15,1.05);
-  \path[band] (-0.35,-6.6) rectangle (14.15,-4.3);
-\end{scope}
-\node[box,draw=muted!50,text=muted] (hardware) at (1.25,2.9)
-  {\textbf{Optional ESP32}\\Sensors + status flags\\Diagnostic input only};
-\node[box,draw=muted!50,text=muted] (relay) at (4.95,2.9)
-  {\textbf{Android relay}\\SPP/BLE reception\\Encrypted retry queue};
-\draw[optional] (hardware) -- node[above,note]{Bluetooth} (relay);
-\draw[optional] (relay.south) -- node[right,note]{HTTPS} (4.95,0.68);
-\node[box] (synthetic) at (1.25,0)
-  {\textbf{Synthetic scenarios}\\CLI / test fixture\\\texttt{source=synthetic}};
-\node[box] (readings) at (4.95,0)
-  {\textbf{POST /readings}\\Auth + JSON checks\\Deduplicate snapshot};
-\node[box] (rules) at (8.65,0)
-  {\textbf{Rule evaluation}\\Three eligible samples\\Persistent episodes};
-\node[box] (db) at (12.35,0)
-  {\textbf{SQLite storage}\\Encrypted readings\\Episodes + inboxes};
-\draw[flow] (synthetic) -- (readings);
-\draw[flow] (readings) -- (rules);
-\draw[flow] (rules) -- (db);
-\draw[optional] (readings.north east) -- ++(0,0.5) -|
-  node[pos=0.42,above,note]{Device diagnostics: store; no physiological rules} (db.north);
-\node[box,text width=3.2cm] (care) at (8.65,-2.4)
-  {\textbf{Android care interface}\\Readings + metric charts + alerts\\Adult + linked caregiver};
-\draw[flow] (db.south) |- (care.east);
-\node[note,text width=2.7cm] at (10.8,-1.45) {Authorised GET\\and long polling};
-\node[box,text width=3.2cm] (learning) at (2.1,-2.4)
-  {\textbf{LearningActivity}\\Synthetic class + confidence\\Own / approved saved history};
-\node[box] (features) at (1.25,-5.3)
-  {\textbf{Synthetic features}\\Heart rate + SpO\textsubscript{2}\\Dataset body temp.};
-\node[box] (classify) at (4.95,-5.3)
-  {\textbf{Learning REST route}\\Synthetic-only input\\Validate ranges + age};
-\node[box] (forest) at (8.65,-5.3)
-  {\textbf{Random Forest}\\Server-side inference\\\texttt{predict\_proba}};
-\node[box] (json) at (12.35,-5.3)
-  {\textbf{Encrypted exercises}\\Three-class label + score\\Separate learning table};
-\draw[flow] (features) -- (classify);
-\draw[flow] (classify) -- (forest);
-\draw[flow] (forest) -- (json);
-\draw[flow] (learning.south) -- ++(0,-0.4) -| (features.north);
-\draw[flow] (json.north) -- (12.35,-3.65) -- (4.15,-3.65) |- (learning.east);
-\node[note,fill=white,inner sep=2pt] at (8.6,-3.65)
-  {Authorised saved synthetic results};
-\node[note,anchor=west] at (-0.23,-0.82)
-  {STORED SCENARIOS AND RULE ALERTS};
-\node[note,anchor=west] at (-0.23,-6.43)
-  {ISOLATED LEARNING WORKSPACE: no device values, rule episodes or care notifications};
-\end{tikzpicture}}
-\caption{Current logical architecture. Teal paths describe implemented server and mobile responsibilities; grey paths describe the optional device diagnostic contract. MainActivity retrieves authorised metric history and alerts. LearningActivity presents separately stored synthetic predictions and confidence without feeding physical readings into the classifier. Test scope is recorded separately in Table~\ref{tab:verification}.}
-\label{fig:architecture}
-\end{figure}%
-}
+\input{sections/diagram_system}
 
 \newcommand{\SequenceDiagram}{%
 \begin{figure}[htbp]

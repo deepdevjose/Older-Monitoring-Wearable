@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-10-30T18:23:22.300098+00:00",
+  "result": "PASS",
+  "operation": "compile only; no flash",
+  "fqbn": "esp32:esp32:esp32:PartitionScheme=min_spiffs",
+  "source_sha256": "98118f5f3a060eded536e2e87b7d74962aa59c17fb9f60f667ca9b31d7c55ce6",
+  "flash_bytes": 1671921,
+  "flash_capacity_bytes": 1966080,
+  "ram_bytes": 71720,
+  "ram_capacity_bytes": 327680,
+  "current_modules": [
+    "MAX30102",
+    "GY906/MLX90614",
+    "MPU6050",
+    "buzzer GPIO25 initialized LOW"
+  ],
+  "retired_inputs": [
+    "microphone GPIO34",
+    "light GPIO35"
+  ],
+  "installed_binary_is_current_source": false,
+  "autonomous_fall_alarm_implemented": false
+}

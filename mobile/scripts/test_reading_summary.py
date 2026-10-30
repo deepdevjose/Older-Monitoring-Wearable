@@ -35,6 +35,8 @@ subprocess.run([str(args.jdk / ('bin/javac' + suffix)), '-encoding', 'UTF-8',
     str(ROOT / 'tests/PrivacyBoundaryTest.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/NotificationCursor.java'),
     str(ROOT / 'tests/NotificationCursorTest.java'),
+    str(ROOT / 'app/src/main/java/org/caremonitor/demo/NotificationWindow.java'),
+    str(ROOT / 'tests/NotificationWindowTest.java'),
     str(ROOT / 'tests/ReadingSummaryTest.java'),
     str(ROOT / 'tests/AlertInboxTest.java'),
     str(ROOT / 'tests/NdjsonFramerTest.java'),
@@ -54,6 +56,8 @@ subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
 
 subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
     'org.caremonitor.demo.NotificationCursorTest'], check=True, env=env)
+subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
+    'org.caremonitor.demo.NotificationWindowTest'], check=True, env=env)
 
 subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
     'org.caremonitor.demo.AccountSetupTest'], check=True, env=env)

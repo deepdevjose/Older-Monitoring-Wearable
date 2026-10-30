@@ -120,7 +120,7 @@ public final class PreviewInstrumentation extends Instrumentation {
             check("Today omits recent readings summary",text("Recent readings")==null);
             check("Today groups readings by role and everyday meaning",caregiver?text("Their readings")!=null&&text("Their surroundings")!=null&&text("Your readings")==null:text("Your readings")!=null&&text("Around you")!=null&&text("Their readings")==null);
             check("Today hides raw light ADC",find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("1234"))==null);
-            check("Today explains light without a raw number",descriptionPrefix("Light, Signal available")!=null);
+            check("Today omits the retired light sensor",descriptionPrefix("Light,")==null);
             check("Today offers role-appropriate help",caregiver?text("Ask for help")==null:text("Ask for help")!=null);
             check("Updates is a persistent navigation destination",description("Updates")!=null);
             if(caregiver){check("caregiver sees selected person's name on Today",text("Fixture Older Adult")!=null||text("✓  Fixture Older Adult")!=null);check("caregiver can review pending updates",text("Review updates")!=null&&text("Needs your review")!=null);}
@@ -151,10 +151,10 @@ public final class PreviewInstrumentation extends Instrumentation {
             View details=description("Reading details");check("Reading details action is operable",details.isClickable()&&details.isFocusable());details.performClick();
             check("reading details opens its Settings page",get(activity,"page").equals("reading_details"));
             check("Recent readings is relocated to Settings",text("Recent readings")!=null);
-            check("details preserves raw diagnostic light value",find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("1234"))!=null);
+            check("details omits the retired light channel",descriptionPrefix("Light,")==null&&find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("1234"))==null);
             check("details explains temperature limits",find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("not core body temperature"))!=null);
             check("caregiver cannot configure the local wearable",!caregiver||text("Set up my wearable")==null);
-            for(String label:new String[]{"Heart rate","Estimated oxygen","Surface temperature","Ambient temperature","Light","Movement"})check("details retains metric history: "+label,descriptionPrefix(label+",")!=null);
+            for(String label:new String[]{"Heart rate","Estimated oxygen","Surface temperature","Ambient temperature","Movement"})check("details retains metric history: "+label,descriptionPrefix(label+",")!=null);
             check("reading details belongs to Settings navigation",description("Settings")!=null&&description("Settings").isSelected());
         });
         idle();main(()->{layout(root());targets(root());});capture(role+"_reading_details_"+size);
@@ -359,8 +359,8 @@ public final class PreviewInstrumentation extends Instrumentation {
     private void mainHistory(boolean caregiver,float scale)throws Exception{
         ApiSession session=account(caregiver);set(activity,"session",session);set(activity,"patientId",caregiver?"fixture-patient":"");set(activity,"patients",new JSONArray().put(new JSONObject().put("id","fixture-patient").put("display_name","Fixture Older Adult")));
         set(activity,"overview",new JSONObject().put("patient",new JSONObject().put("id","fixture-patient").put("display_name","Fixture Older Adult")));
-        String[] labels={"Heart rate","Estimated oxygen","Surface temperature","Ambient temperature","Light","Movement"};
-        String[] metrics={"heart_rate_bpm","spo2_percent","surface_temp_c","ambient_temp_c","light_adc","acceleration_g"};
+        String[] labels={"Heart rate","Estimated oxygen","Surface temperature","Ambient temperature","Movement"};
+        String[] metrics={"heart_rate_bpm","spo2_percent","surface_temp_c","ambient_temp_c","acceleration_g"};
         for(int i=0;i<labels.length;i++){
             set(activity,"page","home");invoke(activity,"render");check("home omits recent readings summary",text("Recent readings")==null);
             View tile=descriptionPrefix(labels[i]+",");check("metric card is accessible and clickable",tile!=null&&tile.isClickable()&&tile.isFocusable());tile.performClick();

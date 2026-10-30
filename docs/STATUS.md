@@ -1,3 +1,15 @@
+# Estado actual — 30 de octubre de 2026
+
+- App 1.0.0 / código 20 instalada en S22 SM-S901E / Android 13, identidad y HTTPS comprobados; datos existentes conservados. Onboarding actual omitido por sesión existente; 878 controles son históricos del código 19.
+- 229 pruebas Python, 3.276 comprobaciones JVM, 24/24 controles HTTPS loopback y 7.073 controles aislados de interfaz, con 48 capturas al 100 %/200 %.
+- Sistema real en paquete/base aislados con producción Java/recursos: 119 comprobaciones; SPP autenticado, 76 lecturas retenidas y cero pendientes. 32 capturas nativas originales de ambos roles.
+- Notificaciones nativas: línea base 21/30; tras limitar tarjetas activas, dos campañas 30/30. Medición final p95 1.094,37 ms, pantalla encendida y roles sucesivos en un mismo S22. No es una prueba de audibilidad ni de dos teléfonos remotos.
+- Firmware actual de tres sensores compilado sin flashear. El binario instalado conserva campos antiguos de micrófono/luz; eso no demuestra módulos conectados. Sin detector autónomo de caídas ni alarma de respaldo implementados en ese firmware.
+- Laptop: Wi-Fi y VPN conservadas. HTTPS por USB no acredita la ruta Wi-Fi; las instrucciones de LAN siguen en [PUESTA_EN_MARCHA.md](PUESTA_EN_MARCHA.md).
+- Reporte actualizado con diagramas vectoriales editables y evidencia fechada; [arquitectura](ARCHITECTURE.md).
+
+## Registro anterior
+
 # Entrega 1.0.0 y aceptación
 
 Estado de la revisión de interfaz del **29 de octubre de 2026**, código **19**. Esta es la única base activa. La identidad del APK compilado e instalado se consulta en `release/ANDROID_BUILD.json` y `ANDROID_UI_EVIDENCE.json`; cada comprobación mantiene su fecha, dispositivo y alcance. Las pruebas del código 16 y del recorrido Bluetooth del código 17 se conservan como antecedentes separados.

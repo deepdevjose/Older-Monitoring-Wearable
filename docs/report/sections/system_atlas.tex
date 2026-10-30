@@ -1,0 +1,57 @@
+\clearpage
+\section{Current system architecture atlas}
+\label{app:system-atlas}
+This atlas documents the user-specified three-sensor wearable and the canonical Android/FastAPI implementation. The removed microphone and light module are absent from the current wiring topology. Legacy JSON fields and a BLE transport client may remain compatible software contracts; they do not identify additional installed hardware. The earlier assembly photograph is retained with its date rather than altered to resemble a new photograph.
+
+\textbf{Reading the figures.} Solid teal arrows identify implemented transfers or dependencies. Dashed arrows are responses or class dependencies where stated. Amber panels identify requested behaviour requiring further implementation or validation. A line documents a technical responsibility; it does not imply that every deployment or clinical outcome has been tested.
+
+\WearablePurposeFigure
+\clearpage
+\subsection{Electrical connections and pin ownership}
+\WearableWiringFigure
+\clearpage
+\subsection{Transport protocols and wire formats}
+\ProtocolStackFigure
+\clearpage
+\subsection{Actors and approval boundaries}
+\ActorsDiagram
+\clearpage
+\subsection{Mobile navigation and task flow}
+\MobileFlowDiagram
+\clearpage
+\subsection{Selected production classes}
+\MobileClassDiagram
+\clearpage
+\subsection{Permissions and optional phone capabilities}
+\PermissionsFigure
+\clearpage
+\subsection{Server components and source separation}
+\ServerArchitectureDiagram
+\clearpage
+\subsection{Server classes and function-based services}
+\ServerClassDiagram
+\clearpage
+\subsection{Persistent data domains}
+\DatabaseDiagram
+\clearpage
+\subsection{Authentication and encryption boundaries}
+\SecurityProtocolDiagram
+\clearpage
+\subsection{Capability interpretation for the current assembly}
+\begin{table}[H]\small
+\caption{Measured inputs, implemented behaviour and requested extensions. Clinical thresholds are not specified by this diagram set.}\label{tab:current-capabilities}
+\begin{tabularx}{\textwidth}{@{}P{29mm}P{47mm}Y@{}}\toprule
+Area & Available input / behaviour & Claim boundary or next implementation\\\midrule
+Pulse and oxygen & MAX30102 optical estimates with contact, calculation and validity flags & Estimates need stable optical coupling. Invalid values stay unavailable; no clinical accuracy claim follows from sensor presence.\\
+Surface / ambient & MLX90614 object and local sensor temperature & Explain both channels. Ambient at the sensor is not a certified room measurement; surface is not core temperature. Current extreme-temperature rule demonstrations use synthetic input.\\
+Wear detection & Optical-contact and sample-quality indicators & No contact can prompt a placement/connection check. No readings can also mean motion, disconnection or a fault; it is not a definitive not-worn state.\\
+Walking / falling & MPU6050 acceleration and angular velocity & Current acquisition provides motion data. Step counting, real-time fall classification and a local fallback alarm are not implemented by this source. SisFall is an independent offline experiment.\\
+Location & Phone GPS/location with consent, accuracy and expiry & Adult permission and server consent are required; caregivers see only approved shared data. Network and OS conditions affect availability.\\
+Help and sound & Confirmed help event, durable private inbox and Android notification channel & Native posting can be measured. Audibility, hearing the alarm, response and emergency-service contact are different outcomes.\\
+Buzzer fallback & GPIO25 output configured LOW & A fallback needs detection logic, an appropriate driver and independent power. No autonomous fall-triggered tone is established.\\
+Hydration & Agreed hydration reminder in the care plan & These modules do not measure dehydration. A reminder is not a physiological assessment.\\
+Energy & Phone handles GPS, uploads, storage and notifications & Offloading simplifies the wearable. Larger battery capacity alone does not establish longer runtime; current draw and endurance require measurement.\\\bottomrule
+\end{tabularx}
+\end{table}
+
+The component roles are checked against manufacturer descriptions for MAX30102 and MLX90614, and against the actual register acquisition in the firmware.\cite{maxdatasheet,mlxproduct} Electrical labels describe breakout modules, not direct wiring to bare IC dies. The carrier's physical header order and supply selector must be checked on the actual KEYES revision; this source-derived map does not replace that inspection.

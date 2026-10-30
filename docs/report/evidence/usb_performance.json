@@ -1,0 +1,64 @@
+{
+  "baseline": {
+    "phone_api_roundtrip": {
+      "n": 30,
+      "mean_ms": 57.8032031,
+      "p50_ms": 71.193568,
+      "p95_ms": 75.685794,
+      "min_ms": 29.836875,
+      "max_ms": 76.953542
+    },
+    "native_posting_successful_only": {
+      "n": 21,
+      "mean_ms": 546.5077303809524,
+      "p50_ms": 559.349844,
+      "p95_ms": 977.376405,
+      "min_ms": 143.091927,
+      "max_ms": 988.90552
+    },
+    "attempted": 30,
+    "posted": 21,
+    "timeouts": [
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30
+    ],
+    "observation_window_s": 10,
+    "delivery_rate": 0.7,
+    "source_evidence": "captures/evidence.json"
+  },
+  "final": {
+    "phone_api_roundtrip": {
+      "n": 30,
+      "mean_ms": 58.11213026666667,
+      "p50_ms": 71.08487,
+      "p95_ms": 77.04377335,
+      "min_ms": 27.263177,
+      "max_ms": 78.472135
+    },
+    "native_posting_successful_only": {
+      "n": 30,
+      "mean_ms": 636.3596873333333,
+      "p50_ms": 662.4492705,
+      "p95_ms": 1094.3705519,
+      "min_ms": 169.963437,
+      "max_ms": 1096.998073
+    },
+    "attempted": 30,
+    "posted": 30,
+    "timeouts": [],
+    "observation_window_s": 10,
+    "delivery_rate": 1.0,
+    "source_evidence": "captures-final/evidence.json"
+  },
+  "boundary": "API dispatch through response parse on S22. Notification time: synthetic SOS dispatch to native notification posting for a controlled approved caregiver account on the same screen-on handset, HTTPS over USB; no second phone, audibility or locked-screen claim.",
+  "baseline_interpretation": "The original runner smoke result was PASS, but its recorded 9 notification timeouts fail the strict 30/30 delivery criterion. Raw baseline retained unchanged; no failed trial removed.",
+  "fix": "NotificationWindow bounds native event cards to 12 and retains all durable inbox records and in-app history. Samsung logs reported a 25-notification package limit in the baseline.",
+  "source": "NotificationSync.java and NotificationWindow.java; unit regression 36 assertions; two subsequent 30/30 native campaigns."
+}
