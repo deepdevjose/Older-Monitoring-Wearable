@@ -54,6 +54,35 @@ _LEGACY_ALERT_TEXT = {
 REMINDER_MESSAGE = "Care reminder. Confirm the agreed instructions; do not double a missed dose."
 _LEGACY_REMINDER_MESSAGE = "Recordatorio de cuidado. Confirma la indicación acordada; no dupliques una dosis omitida."
 
+EVENT_TEXT = {
+    "sos": (
+        "Help requested",
+        "The older adult confirmed a request for help. Delivery depends on connectivity; this does not contact emergency services.",
+    ),
+    "possible_fall": (
+        "Simulated incident for review",
+        "A possible incident was simulated. Ask for human confirmation; an accident detector has not been validated.",
+    ),
+    "audio_impact": (
+        "Simulated incident for review",
+        "A possible incident was simulated. Ask for human confirmation; an accident detector has not been validated.",
+    ),
+}
+_LEGACY_EVENT_TEXT = {
+    "sos": (
+        "Solicitud de ayuda",
+        "El usuario confirmó una solicitud de ayuda. La entrega depende de conectividad; no contacta servicios de emergencia.",
+    ),
+    "possible_fall": (
+        "Evento sintético para revisión",
+        "Posible incidente simulado. Solicitar confirmación humana; no se ha validado un detector de accidentes.",
+    ),
+    "audio_impact": (
+        "Evento sintético para revisión",
+        "Posible incidente simulado. Solicitar confirmación humana; no se ha validado un detector de accidentes.",
+    ),
+}
+
 
 def english_system_text(detail, kind):
     """Return English system copy without altering the original detail mapping."""
@@ -64,6 +93,10 @@ def english_system_text(detail, kind):
         for index, field in enumerate(("title", "message")):
             if result.get(field) == _LEGACY_ALERT_TEXT[kind][index]:
                 result[field] = ALERT_TEXT[kind][index]
+    elif kind in EVENT_TEXT:
+        for index, field in enumerate(("title", "message")):
+            if result.get(field) == _LEGACY_EVENT_TEXT[kind][index]:
+                result[field] = EVENT_TEXT[kind][index]
     elif kind == "reminder" and result.get("message") == _LEGACY_REMINDER_MESSAGE:
         result["message"] = REMINDER_MESSAGE
     return result

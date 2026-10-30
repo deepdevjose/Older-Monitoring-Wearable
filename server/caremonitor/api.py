@@ -22,7 +22,7 @@ from .push import iso, process_due_reminders
 from .schemas import Consents, Event, LinkRequest, Location, Login, Reading, Register, Reminder
 from .security import DUMMY_PASSWORD_HASH, check_password, hash_password, new_token, token_hash
 from .history import METRICS, index_reading, metric_history
-from .system_text import english_system_text
+from .system_text import EVENT_TEXT, english_system_text
 
 logger = logging.getLogger("caremonitor")
 PREFIX = "/api/v1"
@@ -649,9 +649,9 @@ def create_app(settings=None):
             conn.execute("INSERT INTO events VALUES (?,?,?,?,?,?)",(event_id,user["id"],data.type,occurred,now,db.vault.seal(data.model_dump(mode="json"),f"event:{event_id}")))
             alert_id=None
             if data.type=="sos":
-                alert_id=create_alert(conn,db,user["id"],"sos","Solicitud de ayuda","El usuario confirmó una solicitud de ayuda. La entrega depende de conectividad; no contacta servicios de emergencia.",data.source,now=now,severity="urgent")
+                alert_id=create_alert(conn,db,user["id"],"sos",*EVENT_TEXT["sos"],data.source,now=now,severity="urgent")
             elif data.source=="synthetic":
-                alert_id=create_alert(conn,db,user["id"],data.type,"Evento sintético para revisión","Posible incidente simulado. Solicitar confirmación humana; no se ha validado un detector de accidentes.","synthetic",now=now)
+                alert_id=create_alert(conn,db,user["id"],data.type,*EVENT_TEXT[data.type],"synthetic",now=now)
             db.audit(conn,user["id"],"event_received",event_id)
         return {"status":"received","event_id":event_id,"alert_created":bool(alert_id)}
 
