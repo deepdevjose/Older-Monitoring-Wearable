@@ -1,0 +1,28 @@
+{
+  "recorded_at": "2026-10-27T11:51:22.846996+00:00",
+  "application_id": "org.caremonitor.demo",
+  "version_code": 17,
+  "installed_apk_sha256": "0e43865981dd55e385205d4664ef7b315970db578c1292ca381e7850df6258da",
+  "firmware_app_sha256": "3e5f0c966d3451892d904482d73db5d1c26c4b2948d4be425c3d14ade63610d5",
+  "ui_started_normal_connection": true,
+  "account_created": false,
+  "account_session_preserved": true,
+  "evidence_contains_sensor_values": false,
+  "sample_counter": 138,
+  "pending_counter": 0,
+  "usb_tunnel_used": false,
+  "endpoint": "https://192.168.3.3:8443/api/v1",
+  "connection_fresh": true,
+  "relay_status": "Sample received and confirmed by the server",
+  "database_counts_after": {
+    "users": 2,
+    "patients": 1,
+    "readings": 295
+  },
+  "database_counts_before": {
+    "users": 2,
+    "patients": 1,
+    "readings": 156
+  },
+  "result": "PASS"
+}

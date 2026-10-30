@@ -72,7 +72,8 @@ False Warning delivered to caregiver & \multicolumn{2}{l}{Outside server benchma
 \end{table}}
 
 \newcommand{\VerificationTable}{%
-\begin{table}[H]\small
+\begin{table}[H]\footnotesize
+\renewcommand{\arraystretch}{1.12}
 \caption{Current revision and dated baseline verification. Counts are not added because the units and campaigns differ.}\label{tab:verification}
 \begin{tabularx}{\textwidth}{@{}P{34mm}P{25mm}Y@{}}\toprule
 Evidence & Result & Scope and exclusions\\\midrule
@@ -80,8 +81,9 @@ Current Python suite & \CurrentPythonResult & Current revision software record; 
 Current JVM suite & \CurrentJvmResult & Pure Java checks; not Android runtime acceptance\\
 Metric history suite & \CurrentHistoryResult & Weighted means, validity, gaps, boundaries, retention and consent\\
 Learning record suite & \CurrentLearningResult & Synthetic persistence, idempotency, authorisation and revocation\\
-Current Android scope & Code \CurrentVersionCode & \CurrentAndroidResult\\
-Current HTTPS scope & \CurrentIntegrationResult & Distinct from physical Bluetooth or caregiver delivery\\\midrule
+Current Android scope & Code \CurrentVersionCode & \CurrentAndroidTableResult\\
+Current HTTPS scope & \CurrentIntegrationResult & Loopback checks; distinct from physical transport\\
+27 October Bluetooth & 207 protocol checks & Exclusive authenticated link; code 17 received 138 samples with zero pending. Dated proof; current APK and caregiver delivery excluded\\\midrule
 Baseline Python/JVM & 88 / 2,830 & 26 October records: Python tests / JVM assertions\\
 Baseline HTTPS & 17/17 checks & Loopback TLS, fictional accounts; no phone or Bluetooth\\
 Baseline APK and UI & Code 13; 709 checks & Installed on Samsung SM-S948B, Android 17; registration at 200\% font scale. APK SHA-256 \texttt{417c12ef\ldots206378}\\

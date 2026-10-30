@@ -1,0 +1,50 @@
+{
+  "result": "PASS",
+  "recorded_at": "2026-10-27T11:46:49.603782+00:00",
+  "test_package": "org.caremonitor.btprobe",
+  "target_package": "org.caremonitor.btprobe",
+  "production_application_touched": false,
+  "test_mode": "physical_protocol",
+  "scope": "Isolated physical SPP checks with unchanged production WearableAuth. No account or server access; sensor values discarded.",
+  "exclusivity_scope": "Android owner and separate Linux physical Bluetooth radio",
+  "probe_apk_sha256": "b9f9e30e7523a41850275379d6f02b222e68c558c462b0c145c0bf2b21814a7e",
+  "input_sha256": {
+    "app/src/main/java/org/caremonitor/demo/WearableAuth.java": "b1593c72fada5b29d2f285e051c67cc78f4b650483005f33a3c71885a13c8e88",
+    "tests/bluetoothprobe/AndroidManifest.xml": "0968c39eb5e9bfb8d97bf35f1e29eccf9eb95172cba3fef574ab4c74cdcf17ce",
+    "tests/bluetoothprobe/BluetoothProbeInstrumentation.java": "efc69f10da1dfb4fa37d2658f9168d3d5ad21d148f26c991319fc049be584a05",
+    "scripts/check_bluetooth_device.py": "9892c70de6514c93f5fe1245d2e3849935c3f96277917b4f579a909817b1f06c"
+  },
+  "network_permission": false,
+  "account_storage_access": false,
+  "private_key_in_argv_or_apk": false,
+  "external_contender": {
+    "attempted": true,
+    "connection_rejected": true,
+    "outcome": "TIMEOUT",
+    "sensor_frames_received": 0,
+    "rfcomm_channel": 1,
+    "scope": "separate Linux physical controller while Android owner remains authenticated"
+  },
+  "instrumentation": {
+    "checks": 207,
+    "exclusivity_scope": "Android owner and separate Linux physical Bluetooth radio",
+    "mutual_authentication": true,
+    "owner_survived_external_contender": true,
+    "phase": "reconnect_after_owner_disconnect",
+    "private_key_cleanup": "PASS",
+    "reconnect_after_owner_disconnect": true,
+    "result": "PASS",
+    "sample_values_retained": false,
+    "scope": "physical Bluetooth SPP, no account, backend or retained sample values",
+    "sensor_frames_discarded": 23,
+    "server_access": false,
+    "stale_proof_rejected": true,
+    "unauthenticated_disconnect_ms": 11057,
+    "unauthenticated_timeout": true,
+    "wrong_key_rejected": true
+  },
+  "probe_package_removed": true,
+  "cleanup_force_stop": "PASS",
+  "cleanup_remove_private_key": "PASS",
+  "cleanup_uninstall": "PASS"
+}

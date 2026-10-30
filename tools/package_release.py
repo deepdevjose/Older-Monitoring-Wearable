@@ -19,6 +19,25 @@ def verify_hashes(base,entries):
         if not path.is_file() or sha(path)!=digest: raise SystemExit(f'Stale evidence: {name}')
 
 
+def verify_preview(build):
+    """Require the isolated UI campaign to match every production build input."""
+    path=RELEASE/'ANDROID_HISTORY_UI_EVIDENCE.json'
+    if not path.is_file(): raise SystemExit('Missing isolated Android UI evidence')
+    preview=json.loads(path.read_text())
+    if (preview.get('result')!='PASS' or not preview.get('checks',0)
+            or preview.get('production_application_touched') is not False
+            or preview.get('preview_package_removed') is not True):
+        raise SystemExit('Failed or incomplete isolated Android UI evidence')
+    entries=preview.get('input_sha256',{})
+    production={name:digest for name,digest in build['input_sha256'].items()
+                if name.startswith('app/src/main/')}
+    tested={name:digest for name,digest in entries.items()
+            if name.startswith('app/src/main/')}
+    if tested!=production: raise SystemExit('Isolated Android UI evidence does not match the production build')
+    verify_hashes(ROOT/'mobile',entries)
+    return preview
+
+
 def main():
     RELEASE.mkdir(exist_ok=True)
     build=json.loads((ROOT/'mobile/artifacts/BUILD_EVIDENCE.json').read_text())
@@ -34,12 +53,20 @@ def main():
     if ui is not None and (ui['apk_sha256']!=build['sha256'] or ui['result']!='PASS'):
         raise SystemExit('Stale or failed Android UI evidence; rerun device checks for this APK')
     if ui is not None: verify_hashes(ROOT,ui['input_sha256'])
+    preview=verify_preview(build)
     validation=json.loads((RELEASE/'VALIDATION.json').read_text())
     verify_hashes(ROOT,validation['input_sha256'])
     if any(c['exit_code'] for c in validation['commands']): raise SystemExit('Failed validation command')
     if validation['python']['errors'] or validation['python']['failures']:raise SystemExit('Failed Python tests')
     integration=json.loads((RELEASE/'INTEGRATION_EVIDENCE.json').read_text())
     if integration['passed']!=integration['total'] or not all(integration['checks'].values()):raise SystemExit('Integration evidence failed')
+    protocol=json.loads((RELEASE/'BT_PROTOCOL_EVIDENCE.json').read_text())
+    delivery=json.loads((RELEASE/'APP_BLUETOOTH_SERVER_EVIDENCE.json').read_text())
+    if (protocol.get('result')!='PASS' or delivery.get('result')!='PASS'
+            or not protocol.get('recorded_at','').startswith('2026-10-27')
+            or not delivery.get('recorded_at','').startswith('2026-10-27')
+            or delivery.get('version_code')!=17):
+        raise SystemExit('Historical Bluetooth evidence identity mismatch')
     for directory in (ROOT/'models').iterdir():
         if not directory.is_dir():continue
         metadata=json.loads((directory/'metadata.json').read_text())
@@ -83,6 +110,14 @@ def main():
             'https_integration_checks':integration['passed'],'private_keys_packaged':False,
             'physical_phone_tested':ui is not None,
             'physical_phone_test_scope':ui['scope'] if ui else [],
+            'isolated_android_ui_checks':preview['checks'],
+            'isolated_android_ui_scope':preview['scope'],
+            'historical_bluetooth_evidence':{
+                'recorded_date':'2026-10-27','normal_application_version_code':17,
+                'normal_application_apk_sha256':delivery['installed_apk_sha256'],
+                'protocol':'BT_PROTOCOL_EVIDENCE.json',
+                'normal_application_delivery':'APP_BLUETOOTH_SERVER_EVIDENCE.json',
+                'current_apk_flow_retested':False},
             'full_bluetooth_phone_server_tested':False,'cloud_services_used':False,
             'signing':'Local development certificate; retain private .local/dev-signing.jks for updates'}
     (RELEASE/'MANIFEST.json').write_text(json.dumps(report,indent=2)+'\n')

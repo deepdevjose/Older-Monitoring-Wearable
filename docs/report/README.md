@@ -8,7 +8,7 @@ Informe académico en inglés, revisado contra `rubrik.docx` y la implementació
 - `IndiCare_Report.tex`: entrada principal del proyecto LaTeX.
 - `metadata.tex`: cuatro integrantes con sus IDs, tutora Matilda Isaac y datos de portada.
 - `sections/`: prosa, tablas, cuatro diagramas TikZ, bibliografía y apéndices.
-- `figures/`: fotografía real del prototipo, tres gráficos vectoriales de resultados y cinco capturas históricas recortadas.
+- `figures/`: fotografía real del prototipo, tres gráficos vectoriales de resultados, dos vistas actuales de Today con perfiles ficticios y cinco capturas históricas recortadas.
 - `evidence/`: instantáneas de compilación y pruebas, metadatos de modelos, muestras de tiempos, comparación inicial/final y procedencia de imágenes.
 - `REVISION_RUBRICA.md`: correspondencia entre criterios, contenido del informe y alcance de la evidencia.
 
@@ -40,9 +40,15 @@ python3 tools/make_figures.py
 
 ## Evidencia y alcance
 
-La revisión del **27 de octubre de 2026** corresponde al código de versión **16**: toda la interfaz está en inglés, las seis tarjetas abren históricos con Day/Week/Month y Ajustes incorpora **Learning insights**. La persona mayor puede clasificar ejemplos sintéticos y guardar etiqueta y confianza; un cuidador aprobado puede consultar su historial. Los ejercicios se almacenan aparte de las lecturas del wearable y no generan avisos de cuidado.
+La revisión de interfaz del **29 de octubre de 2026**, código **19**, organiza Today por rol: ayuda y próximo recordatorio para la persona mayor; persona aprobada, avisos pendientes y lecturas para el cuidador. Updates y Care mantienen navegación estable. La tarjeta técnica Recent readings se traslada a **Settings → Reading details**. Las seis métricas conservan Day/Week/Month y los ejercicios de Learning insights permanecen separados de las lecturas físicas.
 
-La revisión ejecutó **241 pruebas Python**, **2.830 comprobaciones JVM** y **24 verificaciones HTTPS por loopback**. En un APK de vista previa aislado, compilado con los mismos Java y recursos de producción, se ejecutaron **641 comprobaciones de interfaz** en el S22 SM-S901E con Android 13. Esta prueba utiliza estado ficticio y no autentica cuentas reales ni se conecta al servidor; tampoco demuestra el recorrido Bluetooth. El alcance final de la instalación y el hash están centralizados en [CURRENT_REVISION.tex](evidence/CURRENT_REVISION.tex); los registros completos de la revisión están en [release/](../../release/).
+La actualización de valores y antigüedad conserva las vistas y el foco. El movimiento de conexión es breve, se puede reducir y no interpola mediciones. Son decisiones de diseño orientadas a tareas de mayores y cuidadores; no se atribuyen a un estudio de usabilidad con participantes ni a evaluación manual con TalkBack.
+
+El código 19 quedó instalado en el S22 SM-S901E / Android 13 con identidad de APK comprobada. La revisión pasó **229 pruebas Python**, **3.240 comprobaciones JVM**, **24 verificaciones HTTPS loopback**, **878 comprobaciones nativas** y **7.273 comprobaciones de preview**, con 48 capturas y texto al 100 %/200 %. Las dos vistas de Today del informe son fixtures sintéticos; no muestran pacientes ni sesiones reales.
+
+Los conteos ejecutados, versión, hash y alcance de la instalación están centralizados en [CURRENT_REVISION.tex](evidence/CURRENT_REVISION.tex). Los registros de la revisión están en [evidence/current/](evidence/current/) y [release/](../../release/). La campaña de preview utiliza los mismos Java y recursos de producción en una app aislada, con ambos roles y texto al 100 %/200 %. Sus fixtures no autentican cuentas ni se conectan a sensores o al servidor.
+
+Las pruebas físicas del **27 de octubre** se conservan aparte: `BT_PROTOCOL_EVIDENCE.json` registra 207 comprobaciones de autenticación y exclusividad; `APP_BLUETOOTH_SERVER_EVIDENCE.json` acredita el flujo normal del **código 17**, con 138 muestras, cero pendientes y confirmación del servidor. Su fecha y versión no se trasladan al APK posterior. `ANDROID_CODE16_BASELINE.json` conserva las 759 comprobaciones nativas y HTTPS de esa versión.
 
 Los archivos [ANDROID_BUILD.json](evidence/ANDROID_BUILD.json), [ANDROID_UI_EVIDENCE.json](evidence/ANDROID_UI_EVIDENCE.json), [VALIDATION.json](evidence/VALIDATION.json), [jvm-current.txt](evidence/jvm-current.txt), [pytest-current.xml](evidence/pytest-current.xml) e [INTEGRATION_EVIDENCE.json](evidence/INTEGRATION_EVIDENCE.json) se conservan como **instantáneas de la línea base del 26 de octubre**: código 13, 709 comprobaciones de interfaz, 88 pruebas Python y 17 verificaciones HTTPS. No identifican el APK actual. Los tiempos de clasificación, episodios e idempotencia también mantienen su fecha y condiciones originales; no se han vuelto a medir para esta revisión.
 
@@ -64,4 +70,4 @@ La fotografía del prototipo ya está incorporada. Para ampliar la evidencia vis
 
 Cada imagen debe llevar una descripción breve de lo que muestra. Evitar contraseñas, tokens, identificadores privados y datos de pacientes reales. Una pantalla de lectura se presenta como captura del estado observado, sin atribuirle validación clínica.
 
-El APK código 16 también quedó instalado en el Galaxy S22 SM-S901E con Android 13: 759 comprobaciones nativas de registro y diseño y HTTPS por Wi-Fi con el cliente instalado. Los paquetes auxiliares se retiraron y la evidencia actual se conserva en `evidence/current/`. El teléfono principal se actualizará al volver a conectarse.
+El alcance del APK nuevo y la retirada de los paquetes auxiliares quedan registrados en la evidencia de su propia campaña. El teléfono principal se actualiza al volver a conectarse; no se infiere su versión de las pruebas del S22.

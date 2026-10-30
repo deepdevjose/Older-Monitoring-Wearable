@@ -1,14 +1,16 @@
 \begin{thebibliography}{99}
 \addcontentsline{toc}{section}{References}
-\small
+\footnotesize
+\setlength{\itemsep}{2pt}
+\setlength{\parskip}{0pt}
 \bibitem{rubric} IOT308TC. \emph{Assessment 2 AI Enabled Mobile IoT Healthcare Monitoring Application}. Supplied assessment brief and marking rubric, \path{rubrik.docx}. 3,000 words $\pm$10\%; eight weighted criteria.
-\bibitem{snapshot} IndiCare project. \emph{CareMonitor 1.0.0 implementation and acceptance status}. Repository commit \texttt{5c650c1}, \path{README.md}, \path{docs/STATUS.md}, \path{docs/SECURITY_ETHICS.md} and \path{release/FIRMWARE_DIAGNOSTIC.json}. \url{https://github.com/deepdevjose/Older-Monitoring-Wearable}.
+\bibitem{snapshot} IndiCare project. \emph{CareMonitor 1.0.0 implementation and acceptance status}. Canonical \path{README.md}, \path{docs/STATUS.md}, \path{docs/SECURITY_ETHICS.md} and \path{release/FIRMWARE_DIAGNOSTIC.json}. \url{https://github.com/deepdevjose/Older-Monitoring-Wearable}.
 \bibitem{api} IndiCare project. \emph{Versioned API and implementation}. \path{docs/API.md}, \path{server/caremonitor/api.py}, \path{schemas.py}, \path{alerts.py}, \path{db.py}, \path{routes_ml.py} and Android source in \path{mobile/app/src/main/java/org/caremonitor/demo/}.
 \bibitem{mlartifact} IndiCare project. \emph{Synthetic health model training and evaluation}. \path{tools/train_models.py}; \path{models/synthetic-health-v1/metadata.json}. Seed 42; scikit learn 1.8.0. Snapshot included as \path{evidence/model-metadata.json}.
 \bibitem{validation} IndiCare project. \emph{Release software validation, Android build and device interface checks}. \path{evidence/VALIDATION.json}, \path{ANDROID_BUILD.json}, \path{ANDROID_UI_EVIDENCE.json}, \path{pytest-current.xml} and \path{jvm-current.txt}, 26 October 2026. APK code 13; 709 checks on Samsung SM-S948B with Android 17.
-\bibitem{currentrevision} IndiCare project. \emph{Metric history and synthetic learning revision}. \path{evidence/CURRENT_REVISION.tex}, \path{server/caremonitor/history.py}, \path{learning.py}, \path{tests/test_history.py}, \path{tests/test_learning.py}, \path{MainActivity.java}, \path{LearningActivity.java} and \path{MetricHistoryChartView.java}, \CurrentRevisionDate. Current test and device scope is distinguished from the baseline snapshots.
+\bibitem{currentrevision} IndiCare project. \emph{Role based interface, metric history and synthetic learning revision}. \path{evidence/CURRENT_REVISION.tex}, \path{server/caremonitor/history.py}, \path{learning.py}, \path{tests/test_history.py}, \path{tests/test_learning.py}, \path{MainActivity.java}, \path{LearningActivity.java}, \path{MetricHistoryChartView.java}, \path{CareMotion.java} and \path{CareStatusView.java}, \CurrentRevisionDate. Current test and device scope is distinguished from the baseline snapshots.
 \bibitem{hardwarephoto} IndiCare team. \emph{Physical prototype assembly photograph}. Supplied 26 October 2026; reproduced as \path{figures/hardware_prototype.jpg}. Original source path and SHA-256 recorded in \path{evidence/hardware_photo.json}.
-\bibitem{integration} IndiCare project. \emph{Isolated HTTPS integration evidence}. \path{release/INTEGRATION_EVIDENCE.json}, 25 October 2026. Seventeen checks; fictional accounts; no physical phone.
+\bibitem{integration} IndiCare project. \emph{Isolated HTTPS integration evidence}. \path{evidence/current/INTEGRATION_EVIDENCE.json}. Current record: 24 checks; fictional accounts in a loopback server; no physical phone.
 \bibitem{benchmark} IndiCare report audit. \emph{Current server processing benchmark}. \path{tools/benchmark_api.py} and \path{evidence/benchmark-current.json}, 26 October 2026. In process ASGI, temporary databases; raw samples and boundaries retained.
 \bibitem{improvement} IndiCare report audit. \emph{Lost response retry comparison}. \path{tools/benchmark_idempotency.py} and \path{evidence/idempotency-before-after.json}, 26 October 2026. Initial \texttt{6757c0a:main.py} compared with current API using twenty matched synthetic pairs.
 \bibitem{git} IndiCare project. \emph{Main branch version history}. Four commits, 25--26 October 2026; evidence in Appendix~\ref{app:contribution}. \url{https://github.com/deepdevjose/Older-Monitoring-Wearable/commits/}.
@@ -19,4 +21,7 @@
 \bibitem{owasp} OWASP. \emph{Password Storage Cheat Sheet}. \url{https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html}. Accessed 26 October 2026.
 \bibitem{sqlite} SQLite. \emph{Isolation in SQLite}. Official documentation. \url{https://www.sqlite.org/isolation.html}. Accessed 26 October 2026.
 \bibitem{firmwarenetwork} IndiCare project. \emph{Controlled ESP32 application upload and Network commissioning}. \path{evidence/current/FIRMWARE_NETWORK_EVIDENCE.json} and \path{FIRMWARE_DIAGNOSTIC.json}, 27 October 2026. App-only write, private backup, verified boot, Wi-Fi/NTP and aggregate sensor status; no physiological measurement study.
+\bibitem{bluetoothphysical} IndiCare project. \emph{Physical authenticated SPP protocol and normal application delivery}. \path{evidence/current/BT_PROTOCOL_EVIDENCE.json} and \path{APP_BLUETOOTH_SERVER_EVIDENCE.json}, 27 October 2026. 207 isolated protocol checks and a separate code 17 application to server observation; no caregiver notification acceptance.
+\bibitem{olderusers} W3C Web Accessibility Initiative. \emph{Developing Websites for Older People: How WCAG 2.0 Applies}. \url{https://www.w3.org/WAI/older-users/developing/}. Accessed 29 October 2026.
+\bibitem{appleaccessibility} Apple. \emph{Human Interface Guidelines: Accessibility}. \url{https://developer.apple.com/design/human-interface-guidelines/accessibility}. Accessed 29 October 2026.
 \end{thebibliography}

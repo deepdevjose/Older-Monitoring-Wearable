@@ -25,9 +25,11 @@ def main():
     parser.add_argument("--sdk", type=Path, default=Path.home() / "Android/Sdk")
     parser.add_argument("--jdk", type=Path, default=Path("/usr"))
     parser.add_argument("--build-only", action="store_true")
+    parser.add_argument("--only-wearable", action="store_true", help="Focused synthetic setup-dialog checks at 100/200 percent font")
     parser.add_argument("--screenshots-dir", type=Path, help="Save synthetic preview Canvas captures; never captures the production application")
-    parser.add_argument("--evidence", type=Path, default=ROOT.parent / "release/ANDROID_HISTORY_UI_EVIDENCE.json")
+    parser.add_argument("--evidence", type=Path, help="Result JSON; focused runs default to a private diagnostic file")
     args = parser.parse_args()
+    args.evidence = args.evidence or ROOT.parent / (".local/ui-preview-wearable-evidence.json" if args.only_wearable else "release/ANDROID_HISTORY_UI_EVIDENCE.json")
     if not args.build_only and (not args.serial or args.serial.startswith("-")):
         parser.error("--serial must name one explicit device")
     sdk, jdk = args.sdk.resolve(), args.jdk.resolve()
@@ -94,7 +96,7 @@ def main():
     installed = False
     evidence = {"result": "FAIL", "recorded_at": datetime.now(timezone.utc).isoformat(), "test_package": PACKAGE,
                 "target_package": PACKAGE, "production_application_touched": False,
-                "scope": "Synthetic role-specific Today, Updates, Settings reading details, histories, finite connection motion, learning and wearable-key privacy/role/cancel fixtures at 100/200 percent font in unchanged production Java/resources inside a separate permission-free package. No real accounts, server or Bluetooth operations.",
+                "scope": "Synthetic wearable-setup dialog privacy/role/cancel and font checks only; no server or Bluetooth operations." if args.only_wearable else "Synthetic role-specific Today, Updates, Care, Settings reading details, histories, approved-person selection/reminder guards, stable live-callback views/scroll, expiring cached freshness/offline banner, help presentation callbacks without queued requests, reduced and finite connection motion, learning and wearable-key privacy/role/cancel fixtures at 100/200 percent font in unchanged production Java/resources inside a separate permission-free package. No real accounts, server or Bluetooth operations.",
                 "preview_apk_sha256": hashlib.sha256(apk.read_bytes()).hexdigest(), "input_sha256": hashes}
     try:
         installed = "Success" in run([*selected, "install", "-r", "-t", apk])
@@ -103,6 +105,8 @@ def main():
         instrumentation = [*selected, "shell", "am", "instrument", "-w", "-r"]
         if args.screenshots_dir:
             instrumentation.extend(["-e", "capture_screenshots", "true"])
+        if args.only_wearable:
+            instrumentation.extend(["-e", "only_wearable", "true"])
         outcome = run([*instrumentation, PACKAGE + "/org.caremonitor.demo.PreviewInstrumentation"], verbose=True)
         passed = "INSTRUMENTATION_RESULT: result=PASS" in outcome and "INSTRUMENTATION_CODE: -1" in outcome
         count = re.search(r"INSTRUMENTATION_RESULT: checks=(\d+)", outcome)
@@ -112,7 +116,7 @@ def main():
             directory = args.screenshots_dir.resolve()
             directory.mkdir(parents=True, exist_ok=True)
             captured = run([*selected, "shell", "run-as", PACKAGE, "ls", "files/ui-previews"], check=False).splitlines()
-            files = sorted(name.strip() for name in captured if re.fullmatch(r"(?:elder|caregiver)_[a-z_]+_(?:100|200)_(?:top|bottom)\.png", name.strip()))
+            files = sorted(name.strip() for name in captured if re.fullmatch(r"(?:elder|caregiver|fixture)_[a-z_]+_(?:100|200)_(?:top|bottom)\.png", name.strip()))
             screenshots = {}
             for name in files:
                 target = directory / name
@@ -126,7 +130,7 @@ def main():
                 screenshots[name] = hashlib.sha256(content).hexdigest()
             evidence["synthetic_preview_screenshots_sha256"] = screenshots
             expected_count = re.search(r"INSTRUMENTATION_RESULT: screenshots=(\d+)", outcome)
-            if not expected_count or len(screenshots) != int(expected_count.group(1)) or (passed and len(screenshots) != 32):
+            if not expected_count or len(screenshots) != int(expected_count.group(1)) or (passed and len(screenshots) != (0 if args.only_wearable else 48)):
                 raise RuntimeError("Synthetic preview capture count did not match")
         if not passed:
             raise RuntimeError("Isolated on-device UI checks failed")

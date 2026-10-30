@@ -22,8 +22,6 @@
 #define SDA_PIN     21
 #define SCL_PIN     22
 
-#define MIC_PIN     34
-#define PHOTO_PIN   35
 #define BUZZER_PIN  25
 
 // =====================================================

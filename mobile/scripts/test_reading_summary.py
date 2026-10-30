@@ -25,6 +25,8 @@ subprocess.run([str(args.jdk / ('bin/javac' + suffix)), '-encoding', 'UTF-8',
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/AlertInbox.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/NdjsonFramer.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/LiveSampleFreshness.java'),
+    str(ROOT / 'app/src/main/java/org/caremonitor/demo/ReadingAge.java'),
+    str(ROOT / 'tests/ReadingAgeTest.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/RelayPolicy.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/SessionLineBuffer.java'),
     str(ROOT / 'app/src/main/java/org/caremonitor/demo/WearableAuth.java'),
@@ -43,7 +45,7 @@ subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
     'org.caremonitor.demo.ReadingSummaryTest'], check=True, env=env)
 subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
     'org.caremonitor.demo.AlertInboxTest'], check=True, env=env)
-for name in ['org.caremonitor.demo.NdjsonFramerTest','org.caremonitor.demo.LiveSampleFreshnessTest','RelayPolicyTest','org.caremonitor.demo.SessionLineBufferTest','org.caremonitor.demo.WearableAuthTest']:
+for name in ['org.caremonitor.demo.NdjsonFramerTest','org.caremonitor.demo.LiveSampleFreshnessTest','org.caremonitor.demo.ReadingAgeTest','RelayPolicyTest','org.caremonitor.demo.SessionLineBufferTest','org.caremonitor.demo.WearableAuthTest']:
     subprocess.run([str(args.jdk / ('bin/java' + suffix)), '-cp', str(folder),
         name], check=True, env=env)
 

@@ -34,7 +34,12 @@ public final class MainActivity extends Activity {
     private long epoch;
     private LiveMonitorService monitor;
     private TextView connectionLabel,readingLabel,deviceHeading;
-    private TextView homeConnection,homeReadingContext,detailFreshness,detailStored,detailSource,emptyReadingNote,emptyReadingHint;
+    private TextView homeConnection,homeReadingContext,detailFreshness,detailStored,detailSource,emptyReadingNote,emptyReadingHint,syncLabel,helpStatus;
+    private Button showUpdatesButton,helpButton;
+    private String syncProblem="",builtPageData="",helpOutcome="";
+    private long overviewReceivedAt=SystemClock.elapsedRealtime();
+    private boolean manualRefresh;
+    private HelpAttempt helpAttempt;
     private Button homeWearableButton;
     private CareStatusView homeStatus;
     private boolean animateNextPage;
@@ -52,7 +57,7 @@ public final class MainActivity extends Activity {
     private String loginEmail="";
     private boolean acknowledged;
     private int deviceStep;
-    private String historyMetric="heart_rate_bpm",historyPeriod="day",historyError="";
+    private String historyMetric="heart_rate_bpm",historyPeriod="day",historyError="",historyOrigin="home";
     private JSONObject historyData;
     private long historyEndMillis,historyRequest;
     private boolean historyLoading;
@@ -65,6 +70,17 @@ public final class MainActivity extends Activity {
         synchronized void complete(JSONObject response,String error){this.response=response;this.error=error;finished=true;notifyOwner();}
         synchronized void attach(MainActivity activity){owner=activity;if(finished)notifyOwner();}
         private void notifyOwner(){final MainActivity activity=owner;if(activity!=null)activity.main.post(()->activity.finishAuthentication(this));}
+    }
+    private static final class HelpAttempt {
+        final String accountId,base; MainActivity owner; boolean finished; String outcome;
+        HelpAttempt(ApiSession account){accountId=account.id;base=account.base;}
+        synchronized void attach(MainActivity activity){owner=activity;if(finished)notifyOwner();}
+        synchronized void complete(String value){outcome=value;finished=true;notifyOwner();}
+        private void notifyOwner(){MainActivity activity=owner;if(activity!=null)activity.main.post(()->activity.finishHelp(this));}
+    }
+    private static final class RetainedRequests {
+        final AuthAttempt auth; final HelpAttempt help;
+        RetainedRequests(AuthAttempt auth,HelpAttempt help){this.auth=auth;this.help=help;}
     }
     private Object backCallback;
     private final ServiceConnection serviceConnection=new ServiceConnection(){
@@ -82,8 +98,11 @@ public final class MainActivity extends Activity {
             registering=state.getBoolean("registering",false);setup.step=Math.max(0,Math.min(3,state.getInt("setup_step",0)));
             setup.role=state.getString("setup_role","");setup.name=state.getString("setup_name","");setup.email=state.getString("setup_email","");
             loginEmail=state.getString("login_email","");acknowledged=state.getBoolean("acknowledged",false);deviceStep=Math.max(0,Math.min(3,state.getInt("device_step",0)));
+            helpOutcome=state.getString("help_outcome","");historyOrigin=state.getString("history_origin","home");
             historyMetric=state.getString("history_metric","heart_rate_bpm");historyPeriod=state.getString("history_period","day");historyEndMillis=state.getLong("history_end",0);}
-        Object retained=getLastNonConfigurationInstance();if(retained instanceof AuthAttempt){authentication=(AuthAttempt)retained;busy=true;authentication.attach(this);}
+        Object retained=getLastNonConfigurationInstance();
+        if(retained instanceof RetainedRequests){RetainedRequests requests=(RetainedRequests)retained;helpAttempt=requests.help;if(helpAttempt!=null)helpAttempt.attach(this);retained=requests.auth;}
+        if(retained instanceof AuthAttempt){authentication=(AuthAttempt)retained;busy=true;authentication.attach(this);}
         else if(state!=null&&state.getBoolean("auth_in_flight",false))notice="The request was interrupted. If your account was created, choose I already have an account to sign in.";
         bound=bindService(new Intent(this,LiveMonitorService.class),serviceConnection,BIND_AUTO_CREATE);
         if(Build.VERSION.SDK_INT>=33){android.window.OnBackInvokedCallback callback=this::goBack;
@@ -99,31 +118,41 @@ public final class MainActivity extends Activity {
     @Override protected void onSaveInstanceState(Bundle state){rememberAuth();super.onSaveInstanceState(state);state.putString("page",page);state.putString("patient",patientId);
         state.putBoolean("registering",registering);state.putInt("setup_step",setup.step);state.putString("setup_role",setup.role);state.putString("setup_name",setup.name);
         state.putString("setup_email",setup.email);state.putString("login_email",loginEmail);state.putBoolean("acknowledged",acknowledged);state.putInt("device_step",deviceStep);state.putBoolean("auth_in_flight",busy);
-        state.putString("history_metric",historyMetric);state.putString("history_period",historyPeriod);state.putLong("history_end",historyEndMillis);}
-    @Override public Object onRetainNonConfigurationInstance(){return authentication;}
+        state.putString("help_outcome",helpOutcome);state.putString("history_origin",historyOrigin);state.putString("history_metric",historyMetric);state.putString("history_period",historyPeriod);state.putLong("history_end",historyEndMillis);}
+    @Override public Object onRetainNonConfigurationInstance(){return new RetainedRequests(authentication,helpAttempt);}
     @Override public void onBackPressed(){goBack();}
     private void goBack(){
         if(busy){toast("Please wait for the request to finish.");return;}
         if(session==null){rememberAuth();notice="";if(registering&&setup.step>0)setup.back();else if(registering)registering=false;else{moveTaskToBack(true);return;}}
         else if(page.equals("device")&&deviceStep>0)deviceStep--;
+        else if(page.equals("history"))page=historyOrigin;
         else if(isSettingsDetail())page="account";else page="home";
         if(!page.equals("history"))clearHistory();
         hideKeyboard();
         render();
     }
-    @Override protected void onStart(){super.onStart();visible=true;if(homeStatus!=null)homeStatus.setActive(true);main.post(poll);}
-    @Override protected void onStop(){visible=false;main.removeCallbacks(poll);stopPageMotion();super.onStop();}
+    @Override protected void onStart(){super.onStart();visible=true;if(homeStatus!=null)homeStatus.setActive(true);main.post(poll);main.post(presentationTick);}
+    @Override protected void onStop(){visible=false;main.removeCallbacks(poll);main.removeCallbacks(presentationTick);stopPageMotion();super.onStop();}
     private void stopPageMotion(){if(homeStatus!=null)homeStatus.setActive(false);if(content!=null)CareMotion.cancel(content);for(MetricViews metric:metricViews.values())CareMotion.cancel(metric.value);}
     @Override protected void onDestroy(){epoch++;main.removeCallbacksAndMessages(null);if(monitor!=null)monitor.removeListener(liveListener);if(bound)unbindService(serviceConnection);
         if(authentication!=null)synchronized(authentication){if(authentication.owner==this)authentication.owner=null;}
+        if(helpAttempt!=null)synchronized(helpAttempt){if(helpAttempt.owner==this)helpAttempt.owner=null;}
         if(isChangingConfigurations())network.shutdown();else network.shutdownNow();
         if(Build.VERSION.SDK_INT>=33&&backCallback!=null)getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback((android.window.OnBackInvokedCallback)backCallback);super.onDestroy();}
     private final Runnable poll=new Runnable(){public void run(){if(visible&&session!=null){refresh();}if(visible)main.postDelayed(this,15000);}};
+    private final Runnable presentationTick=new Runnable(){public void run(){
+        if(visible){if(page.equals("home")||page.equals("reading_details"))updateReadingViews();main.postDelayed(this,1000);}
+    }};
+    private void setLabel(TextView label,String value){if(label!=null&&!value.contentEquals(label.getText()))label.setText(value);}
+    private void updateSyncLabel(){if(syncLabel!=null){setLabel(syncLabel,syncProblem);syncLabel.setVisibility(syncProblem.isEmpty()?View.GONE:View.VISIBLE);}}
+    private String pageDataKey(){return page+"|"+patientId+"|"+patients+"|"+requests+"|"+caregivers+"|"+reminders+"|"+notifications+"|"+overview.optJSONArray("alerts");}
+    private void refreshFromUser(){manualRefresh=true;refresh();}
     private boolean elder(){return session!=null&&session.elder();}
     private JSONObject json(Object... entries){JSONObject object=new JSONObject();try{for(int i=0;i<entries.length;i+=2)object.put((String)entries[i],entries[i+1]);}catch(Exception failure){throw new IllegalArgumentException(failure);}return object;}
     private void render(){
         stopPageMotion();metricViews.clear();
         connectionLabel=null;readingLabel=null;deviceList=null;deviceHeading=null;setupStatusIcon=null;
+        syncLabel=null;showUpdatesButton=null;helpStatus=null;helpButton=null;
         homeConnection=null;homeReadingContext=null;homeStatus=null;detailFreshness=null;detailStored=null;detailSource=null;emptyReadingNote=null;emptyReadingHint=null;homeWearableButton=null;
         emailInput=null;passwordInput=null;nameInput=null;serverInput=null;termsCheck=null;
         authActions=null;
@@ -146,6 +175,12 @@ public final class MainActivity extends Activity {
         else if(page.equals("security")){settingsBack();label("Your information",34,INK,true);securityDetails();}
         else if(page.equals("reading_details")){settingsBack();readingDetails();}
         else account();
+        syncLabel=text("",16,MUTED,false);syncLabel.setPadding(0,dp(10),0,dp(12));syncLabel.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);content.addView(syncLabel,1);updateSyncLabel();
+        builtPageData=pageDataKey();
+        if(page.equals("care")||page.equals("alerts")){
+            showUpdatesButton=textAction(content,"Show new updates",()->{int y=scroll.getScrollY();render();scroll.post(()->scroll.scrollTo(0,y));},true);showUpdatesButton.setVisibility(View.GONE);
+            content.removeView(showUpdatesButton);content.addView(showUpdatesButton,2);
+        }
         navigation();
         if(animateNextPage){animateNextPage=false;final View target=content;content.post(()->{if(visible&&content==target)CareMotion.enter(target);});}
     }
@@ -309,10 +344,11 @@ public final class MainActivity extends Activity {
         LinearLayout nav=new LinearLayout(this);nav.setOrientation(LinearLayout.HORIZONTAL);nav.setGravity(Gravity.CENTER_VERTICAL);nav.setPadding(dp(8),dp(6),dp(8),dp(6));nav.setBackgroundColor(Color.WHITE);root.addView(nav);
         String[] labels={"Today","Updates","Care","Settings"},pages={"home","alerts","care","account"};
         int[] symbols={R.drawable.ic_nav_overview,R.drawable.ic_nav_alerts,R.drawable.ic_people,R.drawable.ic_nav_settings};
-        for(int i=0;i<labels.length;i++){final String target=pages[i];boolean selected=page.equals(target)||(target.equals("account")&&isSettingsDetail())||(target.equals("home")&&(page.equals("device")||page.equals("history")));int tint=selected?BLUE:MUTED;
+        for(int i=0;i<labels.length;i++){final String target=pages[i];boolean selected=page.equals(target)||(target.equals("account")&&(isSettingsDetail()||(page.equals("history")&&historyOrigin.equals("reading_details"))))||(target.equals("home")&&(page.equals("device")||(page.equals("history")&&!historyOrigin.equals("reading_details"))));int tint=selected?BLUE:MUTED;
             LinearLayout item=new LinearLayout(this);item.setOrientation(LinearLayout.VERTICAL);item.setGravity(Gravity.CENTER);item.setPadding(dp(2),dp(4),dp(2),dp(4));item.setMinimumHeight(dp(60));item.setBackground(interactive(Color.WHITE,14));
             item.addView(icon(symbols[i],tint,24),new LinearLayout.LayoutParams(dp(24),dp(24)));
-            TextView label=text(labels[i],12,tint,selected);label.setGravity(Gravity.CENTER);label.setPadding(0,dp(4),0,0);label.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);item.addView(label,new LinearLayout.LayoutParams(-1,-2));
+            int navTextSize=(int)Math.min(12f,20f/getResources().getConfiguration().fontScale);
+            TextView label=text(labels[i],navTextSize,tint,selected);label.setSingleLine(true);label.setGravity(Gravity.CENTER);label.setPadding(0,dp(4),0,0);label.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);item.addView(label,new LinearLayout.LayoutParams(-1,-2));
             item.setSelected(selected);item.setContentDescription(labels[i]);item.setFocusable(true);item.setOnClickListener(v->openPage(target));nav.addView(item,new LinearLayout.LayoutParams(0,-2,1));}
     }
     private void home(){
@@ -333,7 +369,8 @@ public final class MainActivity extends Activity {
         connectionStrip();
         if(elder()){
             button(content,"Ask for help",RED,()->confirm("Send a request for help?",
-                (caregivers.length()==0?"No caregiver is linked yet, so nobody in your circle can receive this request. ":"Your approved caregivers will receive a notice. ")+"This does not call emergency services.",()->sendEvent("sos")));
+                (caregivers.length()==0?"No caregiver is linked yet, so nobody in your circle can receive this request. ":"Your approved caregivers will receive a notice. ")+"This does not call emergency services.",this::sendHelp));
+            helpButton=(Button)content.getChildAt(content.getChildCount()-1);helpStatus=labelIn(content,"",17,INK,false);helpStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);updateHelp();
             nextReminder();
         }else{
             int pending=pendingReviewCount();LinearLayout updates=card(content);
@@ -344,7 +381,7 @@ public final class MainActivity extends Activity {
         metrics(readingsPayload());
         if(!elder())nextReminder();
         if(!elder())sharedLocation();
-        textAction(content,"Refresh",this::refresh,true);
+        textAction(content,"Refresh",this::refreshFromUser,true);
         homeBuiltKey=homeStructureKey();
     }
     private int pendingReviewCount(){JSONArray alerts=overview.optJSONArray("alerts");int count=0;if(alerts!=null)for(int i=0;i<alerts.length();i++){JSONObject alert=alerts.optJSONObject(i);if(alert!=null&&!alert.optBoolean("acknowledged"))count++;}return count;}
@@ -364,12 +401,14 @@ public final class MainActivity extends Activity {
         boolean live=elder()&&monitor!=null&&monitor.isFresh();
         String freshness=readingFreshness();
         String title=live?"Wearable connected":elder()&&monitor!=null&&monitor.isRunning()?"Connecting to your wearable":elder()?"Wearable not connected":"Shared readings";
-        String subtitle=live?"Updating from your wearable":readingsPayload()==null?"No readings available yet":freshness.equals("fresh")?"Latest saved readings":"Saved readings may be out of date";
-        homeConnection.setText(title);homeReadingContext.setText(subtitle);
+        String subtitle=live?"Updating from your wearable":readingsPayload()==null?"No readings available yet":ReadingAge.description(savedReadingAge());
+        if(!live&&readingsPayload()!=null&&!freshness.equals("fresh"))subtitle+=" · saved";
+        setLabel(homeConnection,title);setLabel(homeReadingContext,subtitle);
         if(homeWearableButton!=null)homeWearableButton.setVisibility(monitor!=null&&monitor.isRunning()?View.GONE:View.VISIBLE);
-        homeStatus.setState(live?CareStatusView.State.LIVE:elder()&&monitor!=null&&monitor.isRunning()?CareStatusView.State.CONNECTING:CareStatusView.State.OFFLINE);
+        homeStatus.setState(live?CareStatusView.State.LIVE:elder()&&monitor!=null&&monitor.isRunning()?CareStatusView.State.CONNECTING:!elder()&&readingsPayload()!=null?CareStatusView.State.WAITING:CareStatusView.State.OFFLINE);
     }
-    private String readingFreshness(){JSONObject freshness=overview.optJSONObject("freshness");return freshness==null?"no_data":freshness.optString("state","no_data");}
+    private double savedReadingAge(){JSONObject freshness=overview.optJSONObject("freshness");Object age=freshness==null?null:freshness.opt("age_seconds");return ReadingAge.seconds(age instanceof Number?((Number)age).doubleValue():Double.NaN,overviewReceivedAt,SystemClock.elapsedRealtime());}
+    private String readingFreshness(){return storedReading()==null?"no_data":ReadingAge.fresh(savedReadingAge())?"fresh":"stale";}
     private JSONObject storedReading(){
         if(!elder()&&!approvedPatient(patientId))return null;
         JSONObject person=overview.optJSONObject("patient");
@@ -382,7 +421,7 @@ public final class MainActivity extends Activity {
         return reading!=null&&"device_diagnostic".equals(reading.optString("source"))?reading.optJSONObject("payload"):null;
     }
     private String homeStructureKey(){
-        return selectedPatient()+"|"+patients.toString()+"|"+reminders.toString()+"|"+pendingReviewCount()+"|"+(monitor!=null&&monitor.isRunning())+"|"+(overview.optJSONObject("location")!=null)+"|"+new java.text.SimpleDateFormat("yyyy-MM-dd",Locale.ENGLISH).format(new Date());
+        return selectedPatient()+"|"+patients.toString()+"|"+reminders.toString()+"|"+pendingReviewCount()+"|"+(monitor!=null&&monitor.isRunning())+"|"+String.valueOf(overview.optJSONObject("location"))+"|"+new java.text.SimpleDateFormat("yyyy-MM-dd",Locale.ENGLISH).format(new Date());
     }
     private void nextReminder(){
         label(elder()?"For today":"Care plan",23,INK,true);
@@ -432,11 +471,11 @@ public final class MainActivity extends Activity {
             String human=metricValue(raw,item.getKey(),page.equals("reading_details"));MetricViews views=item.getValue();
             boolean unavailable=human.equals("Unavailable")||human.equals("No valid reading");String number=unavailable?"—":human;
             if(visible)CareMotion.fadeText(views.value,number);else views.value.setText(number);
-            views.availability.setText(unavailable?human:"");views.availability.setVisibility(unavailable?View.VISIBLE:View.GONE);
+            setLabel(views.availability,unavailable?human:"");views.availability.setVisibility(unavailable?View.VISIBLE:View.GONE);
             views.tile.setContentDescription(views.title+", "+human+". View history");
         }
         if(detailFreshness!=null){
-            boolean live=elder()&&monitor!=null&&monitor.isFresh();detailFreshness.setText(live||readingFreshness().equals("fresh")?"Recent readings":readingsPayload()==null?"Waiting for readings":"Older readings");
+            boolean live=elder()&&monitor!=null&&monitor.isFresh();setLabel(detailFreshness,live||readingFreshness().equals("fresh")?"Recent readings":readingsPayload()==null?"Waiting for readings":"Older readings");
             JSONObject reading=storedReading();detailStored.setText(reading==null?"No reading has been stored yet.":"Last stored reading: "+formatTime(reading.optString("captured_at")));
             detailSource.setText(reading==null?"Measurements appear after your wearable connects.":"Source: "+sourceLabel(reading.optString("source")));
         }
@@ -463,11 +502,11 @@ public final class MainActivity extends Activity {
         }).setNegativeButton("Cancel",null).show();
     }
     private void metrics(JSONObject raw){
-        label("Your readings",23,INK,true);
+        label(elder()?"Your readings":"Their readings",23,INK,true);
         emptyReadingNote=labelIn(content,"No current readings",17,MUTED,false);emptyReadingHint=labelIn(content,"Tap a card to explore saved history.",16,MUTED,false);emptyReadingNote.setVisibility(raw==null?View.VISIBLE:View.GONE);emptyReadingHint.setVisibility(raw==null?View.VISIBLE:View.GONE);
         LinearLayout row=metricRow();metricTile(row,"Heart rate",metricValue(raw,"heart_rate_bpm",false),R.drawable.ic_heart,0xFFB52B55,"heart_rate_bpm");
         metricTile(row,"Estimated oxygen",metricValue(raw,"spo2_percent",false),R.drawable.ic_oxygen,BLUE,"spo2_percent");
-        label("Around you",23,INK,true);
+        label(elder()?"Around you":"Their surroundings",23,INK,true);
         row=metricRow();metricTile(row,"Surface temperature",metricValue(raw,"surface_temp_c",false),R.drawable.ic_temperature,0xFF98631D,"surface_temp_c");
         metricTile(row,"Ambient temperature",metricValue(raw,"ambient_temp_c",false),R.drawable.ic_temperature,BLUE,"ambient_temp_c");
         row=metricRow();metricTile(row,"Light",metricValue(raw,"light_adc",page.equals("reading_details")),R.drawable.ic_light,0xFF98631D,"light_adc");
@@ -513,6 +552,7 @@ public final class MainActivity extends Activity {
     }
     private void clearHistory(){historyRequest++;historyLoading=false;historyData=null;historyError="";}
     private void openHistory(String metric){
+        historyOrigin=page.equals("reading_details")?"reading_details":"home";
         if(!approvedPatient(selectedPatient())){toast("Link to an older adult and select them before opening history.");return;}
         hideKeyboard();clearHistory();historyMetric=metric;historyPeriod="day";historyEndMillis=0;page="history";notice="";render();loadHistory();
     }
@@ -521,7 +561,7 @@ public final class MainActivity extends Activity {
         startActivity(new Intent(this,LearningActivity.class).putExtra("patient_id",selected));
     }
     private void history(){
-        textAction(content,"Today",()->openPage("home"),false);
+        textAction(content,historyOrigin.equals("reading_details")?"Reading details":"Today",()->openPage(historyOrigin),false);
         label(metricTitle(),34,INK,true);if(!elder())labelIn(content,"For "+patientName(),17,MUTED,false);
         LinearLayout selector=new LinearLayout(this);selector.setOrientation(getResources().getConfiguration().fontScale>=1.6f?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);
         selector.setPadding(dp(4),dp(4),dp(4),dp(4));selector.setBackground(shape(LINE,16));content.addView(selector,new LinearLayout.LayoutParams(-1,-2));
@@ -643,7 +683,7 @@ public final class MainActivity extends Activity {
         }else{
             LinearLayout invite=card(content);labelIn(invite,"Link to a person",24,INK,true);EditText code=input(invite,"Four-digit code","",InputType.TYPE_CLASS_NUMBER);code.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(4)});
             button(invite,"Request access",BLUE,()->{String value=code.getText().toString();if(!value.matches("[0-9]{4}")){toast("Enter all four digits.");return;}mutate("POST","/link-requests",json("code",value),"Request sent. The older adult needs to approve it.");});
-            patientChooser();if(!patientId.isEmpty()){button(content,"Create a medication reminder",BLUE,this::reminderDialog);button(content,"Create a water reminder",SOFT,()->confirm("Create a water reminder?","A reminder in 5 minutes and every 2 hours for an agreed hydration plan. It does not detect dehydration or recommend amounts.",()->mutate("POST","/patients/"+patientId+"/reminders",json("title","Water reminder","dose","Follow the agreed plan","instructions","Remember your agreed hydration plan. This notice does not diagnose dehydration.","due_at",ApiSession.utc(System.currentTimeMillis()+300000),"repeat_hours",2),"Reminder created.")));}
+            patientChooser();if(!patientId.isEmpty()){button(content,"Create a medication reminder",BLUE,this::reminderDialog);button(content,"Create a water reminder",SOFT,this::waterReminder);}
         }
         if(elder()){LinearLayout support=card(content);labelIn(support,"Let your circle know",23,INK,true);button(support,"Report a fall",SOFT,()->confirm("Send a fall notice?","This sends your report to your approved caregivers. The wearable does not confirm a fall or call emergency services.",()->sendEvent("possible_fall")));}
         medicationCards(true);
@@ -662,24 +702,40 @@ public final class MainActivity extends Activity {
             if(!cancelled){String id=reminder.optString("id");button(card,"Cancel reminder",SOFT,()->confirm("Cancel this reminder?","No further occurrences will be sent. This does not change a prescription. Delivered notices may remain on other phones.",()->mutate("DELETE","/reminders/"+id,null,"Reminder cancelled.")));}
         }
     }
+    private boolean careSelectionCurrent(ApiSession expected,String person){
+        return expected!=null&&session!=null&&!elder()&&session.id.equals(expected.id)&&session.base.equals(expected.base)&&session.token.equals(expected.token)&&person.equals(patientId)&&approvedPatient(person);
+    }
+    private void waterReminder(){
+        final ApiSession expected=session;final String person=patientId;
+        if(!careSelectionCurrent(expected,person)){toast("Choose an approved person first.");return;}
+        confirm("Water reminder for "+patientName()+"?","A reminder in 5 minutes and every 2 hours for an agreed hydration plan. It does not detect dehydration or recommend amounts.",()->{
+            if(!careSelectionCurrent(expected,person)){toast("The selected person changed. Open the reminder again.");return;}
+            mutate("POST","/patients/"+person+"/reminders",json("title","Water reminder","dose","Follow the agreed plan","instructions","Remember your agreed hydration plan. This notice does not diagnose dehydration.","due_at",ApiSession.utc(System.currentTimeMillis()+300000),"repeat_hours",2),"Reminder created.");
+        });
+    }
     private void reminderDialog(){
+        final ApiSession expected=session;final String person=patientId;
+        if(!careSelectionCurrent(expected,person)){toast("Choose an approved person first.");return;}
         LinearLayout form=new LinearLayout(this);form.setOrientation(LinearLayout.VERTICAL);form.setPadding(dp(24),dp(8),dp(24),dp(8));
         EditText title=input(form,"Reminder name","",InputType.TYPE_CLASS_TEXT),dose=input(form,"Dose prescribed by a professional","",InputType.TYPE_CLASS_TEXT),
             instructions=input(form,"Agreed instructions","",InputType.TYPE_CLASS_TEXT),minutes=input(form,"First reminder, minutes from now","5",InputType.TYPE_CLASS_NUMBER),repeat=input(form,"Repeat every how many hours (blank = once)","",InputType.TYPE_CLASS_NUMBER);
         labelIn(form,"This does not prescribe or check interactions. Use a plan already prescribed and agreed with the older adult.",16,MUTED,false);
-        ScrollView wrap=new ScrollView(this);wrap.addView(form);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("New reminder").setView(wrap).setPositiveButton("Create",null).setNegativeButton("Cancel",null).create();
-        dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{try{
+        ScrollView wrap=new ScrollView(this);wrap.addView(form);AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Reminder for "+patientName()).setView(wrap).setPositiveButton("Create",null).setNegativeButton("Cancel",null).create();
+        dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
+            if(!careSelectionCurrent(expected,person)){dialog.dismiss();toast("The selected person changed. Open the reminder again.");return;}
+            try{
             int delay=Integer.parseInt(minutes.getText().toString());if(delay<1||delay>525600||title.getText().toString().trim().isEmpty())throw new IllegalArgumentException();
             JSONObject body=json("title",title.getText().toString().trim(),"dose",dose.getText().toString().trim(),"instructions",instructions.getText().toString().trim(),"due_at",ApiSession.utc(System.currentTimeMillis()+delay*60000L));
             if(!repeat.getText().toString().isEmpty()){int hours=Integer.parseInt(repeat.getText().toString());if(hours<1||hours>720)throw new IllegalArgumentException();body.put("repeat_hours",hours);}
-            dialog.dismiss();mutate("POST","/patients/"+patientId+"/reminders",body,"Reminder assigned.");
+            dialog.dismiss();mutate("POST","/patients/"+person+"/reminders",body,"Reminder assigned.");
         }catch(Exception failure){toast("Check the name, minutes and repeat interval.");}}));dialog.show();
     }
     private void account(){
         label("Settings",34,INK,true);paragraph("Your preferences. Your control.");
-        LinearLayout profile=card(content);LinearLayout identity=new LinearLayout(this);identity.setGravity(Gravity.CENTER_VERTICAL);profile.addView(identity);
-        TextView avatar=text(initials(session.name),23,BLUE,true);avatar.setGravity(Gravity.CENTER);avatar.setBackground(shape(SOFT,28));identity.addView(avatar,new LinearLayout.LayoutParams(dp(56),dp(56)));
-        LinearLayout copy=new LinearLayout(this);copy.setOrientation(LinearLayout.VERTICAL);LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(0,-2,1);copyLp.leftMargin=dp(16);identity.addView(copy,copyLp);
+        boolean largeProfile=getResources().getConfiguration().fontScale>=1.3f;
+        LinearLayout profile=card(content);LinearLayout identity=new LinearLayout(this);identity.setOrientation(largeProfile?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);identity.setGravity(Gravity.CENTER_VERTICAL);profile.addView(identity);
+        TextView avatar=text(initials(session.name),23,BLUE,true);avatar.setGravity(Gravity.CENTER);avatar.setBackground(shape(SOFT,28));int avatarSize=dp(Math.max(56,38*getResources().getConfiguration().fontScale));identity.addView(avatar,new LinearLayout.LayoutParams(avatarSize,avatarSize));
+        LinearLayout copy=new LinearLayout(this);copy.setOrientation(LinearLayout.VERTICAL);LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(largeProfile?-1:0,-2,largeProfile?0:1);if(largeProfile)copyLp.topMargin=dp(12);else copyLp.leftMargin=dp(16);identity.addView(copy,copyLp);
         labelIn(copy,session.name,22,INK,true);labelIn(copy,elder()?"Older adult":"Caregiver",16,MUTED,false);labelIn(profile,session.email,16,MUTED,false);
         sectionTitle("YOUR EXPERIENCE");LinearLayout preferences=group(content);
         settingsRow(preferences,"Reading details","Saved readings, source and wearable status",R.drawable.ic_nav_sensors,()->openPage("reading_details"));
@@ -786,10 +842,10 @@ public final class MainActivity extends Activity {
             LinearLayout tips=card(content);labelIn(tips,"1. Turn on your wearable",22,INK,true);labelIn(tips,"2. Check its power",22,INK,true);labelIn(tips,"3. Keep it near your phone",22,INK,true);
             button(content,"I'm ready",BLUE,()->{deviceStep=1;render();});
         }else if(deviceStep==1){
-            label("Connect your wearable",32,INK,true);paragraph("Your phone will guide you through Bluetooth pairing. Confirm any request on this phone.");
+            label("Keep your wearable nearby",32,INK,true);paragraph("Choose it in the next step. Your phone will ask you to confirm Bluetooth pairing if needed.");
             illustration(R.drawable.ic_bluetooth,"Bluetooth pairing");
-            button(content,"Open Bluetooth",BLUE,()->startActivity(new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)));
-            paragraph("Authorise your wearable here with its private setup key the first time. No computer confirmation is needed. Only one phone can use the wearable at a time.");
+            textAction(content,"Need help with Bluetooth?",()->startActivity(new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)),true);
+            paragraph("First time? Keep the private setup card that came with your wearable nearby. Someone you trust can help you with this step. Only one phone can use the wearable at a time.");
             button(content,"Continue",BLUE,()->{deviceStep=2;render();});
         }else if(deviceStep==2){
             label("Choose your wearable",32,INK,true);paragraph("Tap Search and select your wearable. Enter its setup key once when asked; it stays encrypted for your account on this phone.");
@@ -847,23 +903,25 @@ public final class MainActivity extends Activity {
                 if(WearableKeys.has(this,device.address))connectWearable(device.address);
                 else authoriseWearable(device.address);
             });
-            if(WearableKeys.has(this,device.address))textAction(deviceList,"Update setup key · "+device.address,()->authoriseWearable(device.address),false);
+            if(WearableKeys.has(this,device.address))textAction(deviceList,"Update setup code · "+device.address,()->authoriseWearable(device.address),false);
         }}}
     private void authoriseWearable(String address){
         if(!elder())return;
         final ApiSession expected=session;
         LinearLayout fields=new LinearLayout(this);fields.setOrientation(LinearLayout.VERTICAL);fields.setPadding(dp(24),dp(8),dp(24),0);
-        labelIn(fields,"Enter the private key supplied with your wearable.",17,MUTED,false);
-        EditText keyInput=input(fields,"Wearable setup key","",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        labelIn(fields,"Use the code on your private setup card.",17,MUTED,false);
+        fields.setFocusableInTouchMode(true);fields.requestFocus();
+        EditText keyInput=input(fields,"Setup code from your card","",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
         keyInput.setSaveEnabled(false);keyInput.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(128)});
         keyInput.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE|android.view.inputmethod.EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING);
         if(Build.VERSION.SDK_INT>=26)keyInput.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
         secretVisibility(fields,keyInput,"Show setup key");
         ScrollView body=new ScrollView(this);body.setFillViewport(false);body.addView(fields,new ScrollView.LayoutParams(-1,-2));
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Authorise your wearable").setView(body)
-            .setPositiveButton("Save and connect",null).setNegativeButton("Cancel",null).create();
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Your private setup code").setView(body)
+            .setPositiveButton("Connect",null).setNegativeButton("Cancel",null).create();
         dialog.setOnShowListener(ignored->{
-            if(dialog.getWindow()!=null)dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+            if(dialog.getWindow()!=null){dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE|WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);}
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setSingleLine(true);dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setSingleLine(true);
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
                 try{
                     WearableKeys.save(this,expected,address,keyInput.getText().toString());keyInput.setText("");hideKeyboard();dialog.dismiss();connectWearable(address);
@@ -893,9 +951,26 @@ public final class MainActivity extends Activity {
         catch(RuntimeException failure){toast("Android did not allow the channel to start. Open the app and check permissions.");}
     }
     private void notificationPermission(){if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},713);else toast("You can review notifications in system settings.");}
+    private void updateHelp(){
+        boolean pending=helpAttempt!=null&&!helpAttempt.finished;
+        if(helpButton!=null){helpButton.setEnabled(!pending);helpButton.setText(pending?"Sending request…":"Ask for help");}
+        if(helpStatus!=null){setLabel(helpStatus,pending?"Saving your request…":helpOutcome);helpStatus.setVisibility(pending||!helpOutcome.isEmpty()?View.VISIBLE:View.GONE);}
+    }
+    private void sendHelp(){
+        if(!elder()||(helpAttempt!=null&&!helpAttempt.finished))return;
+        final ApiSession account=session;final HelpAttempt attempt=new HelpAttempt(account);helpAttempt=attempt;helpOutcome="";attempt.attach(this);updateHelp();
+        network.execute(()->{try{
+            ApiClient.call(this,account,"POST","/events",json("type","sos","confirmed",true,"occurred_at",ApiSession.utc(System.currentTimeMillis()),"source","device_diagnostic"));
+            attempt.complete("Request saved. Your approved care circle can review it. This does not confirm they have seen it.");
+        }catch(Exception failure){attempt.complete("We could not confirm your request. Check Updates before trying again. No caregiver response is confirmed.");}});
+    }
+    private void finishHelp(HelpAttempt attempt){
+        if(helpAttempt!=attempt||session==null||!session.id.equals(attempt.accountId)||!session.base.equals(attempt.base))return;
+        helpOutcome=attempt.outcome;updateHelp();
+    }
     private void sendEvent(String type){mutate("POST","/events",json("type",type,"confirmed",true,"occurred_at",ApiSession.utc(System.currentTimeMillis()),"source","device_diagnostic"),"Request recorded.");}
     private void logout(){
-        ApiSession old=session;epoch++;clearHistory();refreshing=false;session=null;busy=false;registering=false;setup=new AccountSetup();acknowledged=false;pendingAction="";deviceStep=0;page="home";notice="Signed out.";patientId="";overview=new JSONObject();patients=new JSONArray();requests=new JSONArray();caregivers=new JSONArray();reminders=new JSONArray();notifications=new JSONArray();consents=new JSONObject();
+        ApiSession old=session;helpAttempt=null;helpOutcome="";syncProblem="";epoch++;clearHistory();refreshing=false;session=null;busy=false;registering=false;setup=new AccountSetup();acknowledged=false;pendingAction="";deviceStep=0;page="home";notice="Signed out.";patientId="";overview=new JSONObject();patients=new JSONArray();requests=new JSONArray();caregivers=new JSONArray();reminders=new JSONArray();notifications=new JSONArray();consents=new JSONObject();
         if(monitor!=null)monitor.stopMonitoring();stopService(new Intent(this,PrivacySignalService.class));ApiSession.clear(this);render();
         if(old!=null)network.execute(()->{try{ApiClient.call(this,old,"POST","/auth/logout",json());}catch(Exception ignored){}});
     }
@@ -910,11 +985,12 @@ public final class MainActivity extends Activity {
     private void mutate(String method,String path,JSONObject body,String message){run(session,account->ApiClient.call(this,account,method,path,body),result->{notice=message;refresh();render();});}
     private void refresh(){
         if(refreshing||session==null||!ApiClient.lanAllowed(this))return;if(!session.valid()){logout();notice="Your session expired. Please sign in again.";render();return;}
-        refreshing=true;ApiSession account=session;long capture=epoch;String chosen=patientId;
+        refreshing=true;final boolean requested=manualRefresh;manualRefresh=false;ApiSession account=session;long capture=epoch;String chosen=patientId;
         network.execute(()->{try{
             JSONObject p=ApiClient.call(this,account,"GET","/patients",null);JSONArray list=p.optJSONArray("patients");if(list==null)list=new JSONArray();
             String selected=chosen;boolean exists=false;for(int i=0;i<list.length();i++)if(selected.equals(list.optJSONObject(i).optString("id")))exists=true;
             if(!exists)selected=list.length()>0?list.getJSONObject(0).getString("id"):"";
+            final long viewRequestedAt=SystemClock.elapsedRealtime();
             JSONObject view=selected.isEmpty()?new JSONObject():ApiClient.call(this,account,"GET","/patients/"+selected+"/overview",null);
             JSONArray meds=selected.isEmpty()?new JSONArray():ApiClient.call(this,account,"GET","/patients/"+selected+"/reminders",null).optJSONArray("reminders");
             JSONObject c=account.elder()?ApiClient.call(this,account,"GET","/consents",null):new JSONObject();
@@ -924,18 +1000,23 @@ public final class MainActivity extends Activity {
             try{NotificationSync.sync(this);}catch(Exception ignored){}
             final JSONArray patientList=list,medicine=meds,pending=req,carers=care,messages=inbox;final String id=selected;
             main.post(()->{if(capture!=epoch||session==null||!session.id.equals(account.id))return;refreshing=false;
-                if(!selectedPatient().equals(id)){clearHistory();if(page.equals("history")){page="home";notice="Your care selection changed. Choose a person to open their history.";}}
-                patients=patientList;patientId=id;overview=view;reminders=medicine==null?new JSONArray():medicine;requests=pending==null?new JSONArray():pending;
+                boolean changedSelection=!selectedPatient().equals(id);
+                if(changedSelection){clearHistory();if(page.equals("history")){page="home";notice="Your care selection changed. Choose a person to open their history.";}}
+                patients=patientList;patientId=id;overview=view;overviewReceivedAt=viewRequestedAt;syncProblem="";updateSyncLabel();reminders=medicine==null?new JSONArray():medicine;requests=pending==null?new JSONArray():pending;
                 caregivers=carers==null?new JSONArray():carers;notifications=messages==null?new JSONArray():messages;consents=c;
                 // Preserve forms and scroll position; connection labels update independently of sensor cadence.
-                if(page.equals("home")&&homeBuiltKey.equals(homeStructureKey()))updateReadingViews();
+                if(changedSelection&&!elder()&&(page.equals("home")||page.equals("reading_details")||page.equals("care")||page.equals("alerts")))render();
+                else if(page.equals("home")&&homeBuiltKey.equals(homeStructureKey()))updateReadingViews();
                 else if(page.equals("reading_details"))updateReadingViews();
+                else if(page.equals("care")||page.equals("alerts")){
+                    if(!builtPageData.equals(pageDataKey())){if(requested){int y=scroll.getScrollY();render();scroll.post(()->scroll.scrollTo(0,y));}else if(showUpdatesButton!=null)showUpdatesButton.setVisibility(View.VISIBLE);}
+                }
                 else if(!page.equals("device")&&!page.equals("account")&&!page.equals("ready")&&!page.equals("history")&&!isSettingsDetail()&&!(getCurrentFocus() instanceof EditText)){int y=scroll==null?0:scroll.getScrollY();render();scroll.post(()->scroll.scrollTo(0,y));}
             });
         }catch(Exception failure){main.post(()->{if(capture!=epoch)return;refreshing=false;
             if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==401){logout();notice="Your session expired or was revoked. Please sign in again.";render();}
             else if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==403&&page.equals("history")){clearHistory();historyError="Access is no longer available. Return to Today and check your care circle.";render();}
-            else{notice=failure.getMessage();if(visible)toast(notice);}});}});
+            else{syncProblem="Connection unavailable. Showing saved information. Try Refresh when you are connected.";updateSyncLabel();updateReadingViews();}});}});
     }
     private void confirm(String title,String body,Runnable action){new AlertDialog.Builder(this).setTitle(title).setMessage(body).setPositiveButton("Confirm",(d,w)->action.run()).setNegativeButton("Cancel",null).show();}
     private void toast(String message){Toast.makeText(this,message==null?"Could not complete the action.":message,Toast.LENGTH_LONG).show();}

@@ -100,7 +100,7 @@ The current APK and source archive are distributed under \path{release/}. The ap
 \begin{enumerate}
 \item Prepare the Python environment from \path{requirements.txt}; initialise the local server using \code{./carectl init --host YOUR_LAN_IP}. Keep generated keys private.
 \item Use \code{./carectl start} and \code{./carectl status} to check HTTPS service readiness. Ensure the public CA bundled in the APK matches that server. Follow \path{docs/SERVER.md} when regenerating a build.
-\item Install \path{release/CareMonitor-1.0.0.apk} using Android's authorised local installation flow and retain its hash and device identity. Current production checks used Android 13/API 33; the separate preview checks used Android 17/API 37. Interface tests do not grant permissions or activate sensors.
+\item Install \path{release/CareMonitor-1.0.0.apk} using Android's authorised local installation flow and retain its hash and device identity. Both the current production checks and the separate preview used Android 13/API 33. Interface tests do not grant permissions or activate sensors.
 \item Use fictional adult and caregiver accounts for server experiments. Registration presents role, name, email and password as separate steps; the adult issues an invitation and approves the caregiver request. The server enforces that relationship.
 \item Run \code{./carectl demo} with fictional adult credentials. This sends three synthetic rule samples; verify one episode and independent caregiver review. Rule episodes are separate from saved model exercises.
 \item Tap a metric card and select Day, Week or Month. Inspect the range, chart, units, gaps and coverage statement. In caregiver mode, select an approved adult and check the same authorised history. A missing current reading must not hide retained history.
@@ -108,7 +108,11 @@ The current APK and source archive are distributed under \path{release/}. The ap
 \item Reproduce interface checks only on an isolated test device or preview application, selecting the exact serial and preserving real account state. The onboarding instrumentation uses fictional in-memory profiles and has an active-session guard. Do not clear a user's app data to satisfy that guard. Current fixture evidence is scoped separately from account, backend and Bluetooth operation.
 \end{enumerate}
 
-\clearpage
+\subsection{Application latency and improvement protocol}
+Select an initial revision and an improved revision before the experiment. Use the same device, dataset fixture IDs, server hardware, network and permissions. After identical warmup, record at least thirty trials per scenario. Measure API time from dispatch to parsed response, and caregiver latency from the first qualifying synthetic input to visible notification. Keep raw timestamps, request IDs, failed trials and timeouts. Report N, mean, p50 and p95 for both revisions; do not silently omit failed deliveries.
+
+For missed Critical alerts, divide Critical scenarios without a required visible alert within the declared observation window by all Critical scenarios that should generate one. For false Warnings, divide Normal scenarios producing an unwanted Warning by all Normal scenarios. Define the observation window before testing. Model predictions and rule alerts have different semantics; a latency experiment must identify the rule output and its observation window. Separately report duplicates and data loss after reconnection.
+
 \subsection{Scenario coverage matrix}
 \small
 \begin{longtable}{@{}P{24mm}P{62mm}P{67mm}@{}}
@@ -130,10 +134,6 @@ Recovery & Three eligible observations no longer meeting the rule; recover episo
 
 Exact automated anchors in \path{tests/test_api.py} include \path{test_sustained_condition_one_episode_valid_recovery_then_new_episode}, \path{test_idempotency_conflict_and_capture_order}, \path{test_idor_cannot_read_or_write_other_patients} and \path{test_revoke_removes_data_and_queued_notifications}. Model input boundaries are exercised by \path{tests/test_ai_api.py::test_synthetic_api_rejects_device_and_missing_features}. These names locate executable checks; they do not represent installed Android tests.
 
-\subsection{Application latency and improvement protocol}
-Select an initial revision and an improved revision before the experiment. Use the same device, dataset fixture IDs, server hardware, network and permissions. After identical warmup, record at least thirty trials per scenario. Measure API time from dispatch to parsed response, and caregiver latency from the first qualifying synthetic input to visible notification. Keep raw timestamps, request IDs, failed trials and timeouts. Report N, mean, p50 and p95 for both revisions; do not silently omit failed deliveries.
-
-For missed Critical alerts, divide Critical scenarios without a required visible alert within the declared observation window by all Critical scenarios that should generate one. For false Warnings, divide Normal scenarios producing an unwanted Warning by all Normal scenarios. Define the observation window before testing. Model predictions and rule alerts have different semantics; a latency experiment must identify the rule output and its observation window. Separately report duplicates and data loss after reconnection.
 \FloatBarrier
 \clearpage
 \section{Historical development images}

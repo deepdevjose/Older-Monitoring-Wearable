@@ -437,12 +437,12 @@ public final class SetupInstrumentation extends Instrumentation {
         });
         awaitLayout();
         main(() -> {
-            check("caregiver home visible", text("Care starts here.") != null);
+            check("caregiver home visible", text("Your care today") != null);
             check("caregiver cannot connect wearable from home", text("Connect my wearable") == null);
             navigationState("Today");
         });
         String[] pages = {"alerts", "care", "account", "connection", "privacy", "notification_settings", "security"};
-        String[] selected = {"Notifications", "Care", "Settings", "Settings", "Settings", "Settings", "Settings"};
+        String[] selected = {"Updates", "Care", "Settings", "Settings", "Settings", "Settings", "Settings"};
         for (int i = 0; i < pages.length; i++) {
             final String page = pages[i], label = selected[i];
             main(() -> {
@@ -515,7 +515,7 @@ public final class SetupInstrumentation extends Instrumentation {
                 final EditText[] field=new EditText[1];
                 main(()->{
                     check("dialog uses requested in-memory font scale",Float.compare(dialog.getResources().getConfiguration().fontScale,scale)==0);
-                    field[0]=(EditText)find(dialog,view->view instanceof EditText&&"Wearable setup key".contentEquals(view.getContentDescription()));
+                    field[0]=(EditText)find(dialog,view->view instanceof EditText&&"Setup code from your card".contentEquals(view.getContentDescription()));
                     check("setup key field is present and enabled",field[0]!=null&&field[0].isEnabled());
                     check("setup key starts masked",field[0].getTransformationMethod() instanceof PasswordTransformationMethod);
                     check("setup key view state saving disabled",!field[0].isSaveEnabled());
@@ -545,7 +545,7 @@ public final class SetupInstrumentation extends Instrumentation {
                         fullyVisible("setup dialog action",action);textNotClipped("setup dialog action",action,true);
                         check("platform dialog action at least 48dp high",action.getHeight()+1>=48*resources.getDisplayMetrics().density);
                     }
-                    check("setup save button labelled", "Save and connect".contentEquals(((TextView)dialog.findViewById(android.R.id.button1)).getText()));
+                    check("setup save button labelled", "Connect".contentEquals(((TextView)dialog.findViewById(android.R.id.button1)).getText()));
                     check("setup Cancel click handled",dialog.findViewById(android.R.id.button2).performClick());
                 });
                 main(()->{
@@ -586,7 +586,7 @@ public final class SetupInstrumentation extends Instrumentation {
     private View wearableDialog() {
         if(Build.VERSION.SDK_INT<29)return null;
         for(View window:android.view.inspector.WindowInspector.getGlobalWindowViews())
-            if(window.isAttachedToWindow()&&find(window,view->view instanceof EditText&&"Wearable setup key".contentEquals(view.getContentDescription()))!=null)return window;
+            if(window.isAttachedToWindow()&&find(window,view->view instanceof EditText&&"Setup code from your card".contentEquals(view.getContentDescription()))!=null)return window;
         return null;
     }
     private Map<String,byte[]> wearableFiles() throws Exception {
@@ -600,7 +600,7 @@ public final class SetupInstrumentation extends Instrumentation {
     }
 
     private void navigationState(String selected) throws Exception {
-        String[] labels = {"Today", "Notifications", "Care", "Settings"};
+        String[] labels = {"Today", "Updates", "Care", "Settings"};
         // Settings may legitimately contain another Notifications control. Locate
         // destinations only in the bottom navigation appended to the screen root.
         ViewGroup screen = (ViewGroup) get(activity, "root");

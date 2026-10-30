@@ -1,0 +1,23 @@
+{
+  "client_date": "2026-10-29",
+  "version_code": 19,
+  "device": "Samsung SM-S901E / Android 13",
+  "source": "release/ANDROID_HISTORY_UI_EVIDENCE.json",
+  "scope": "Synthetic in-memory interface fixtures from current production views in a separate permission-free package; no real accounts, patient measurements, network or Bluetooth operations.",
+  "preview_checks": 7273,
+  "complete_campaign_captures": 48,
+  "figures": [
+    {
+      "role": "elder",
+      "source_path": "docs/ui-preview/elder_today_100_top.png",
+      "report_path": "figures/ui_elder_today.png",
+      "sha256": "6fce1abdb60f32109ca4287f2a8789aae7f3ad897ff541324aaf9cc7ba2bc5b3"
+    },
+    {
+      "role": "caregiver",
+      "source_path": "docs/ui-preview/caregiver_today_100_top.png",
+      "report_path": "figures/ui_caregiver_today.png",
+      "sha256": "6d7c7349db932176696cde22c97ea2dae75050a0517d9d24c0767613d321f013"
+    }
+  ]
+}

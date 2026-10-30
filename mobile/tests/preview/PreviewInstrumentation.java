@@ -44,17 +44,19 @@ public final class PreviewInstrumentation extends Instrumentation {
     private int checks;
     private Throwable mainFailure;
     private boolean captureScreenshots;
+    private boolean onlyWearable;
     private int screenshots;
     private static final class DiscardExecutor extends AbstractExecutorService {
         private boolean closed;
+        private int submitted;
         public void shutdown(){closed=true;}
         public List<Runnable> shutdownNow(){closed=true;return Collections.emptyList();}
         public boolean isShutdown(){return closed;}
         public boolean isTerminated(){return closed;}
         public boolean awaitTermination(long value,TimeUnit unit){return closed;}
-        public void execute(Runnable action){/* Deliberately discard all network work. */}
+        public void execute(Runnable action){submitted++;/* Deliberately discard all network work. */}
     }
-    @Override public void onCreate(Bundle args){super.onCreate(args);captureScreenshots=args!=null&&"true".equals(args.getString("capture_screenshots"));start();}
+    @Override public void onCreate(Bundle args){super.onCreate(args);captureScreenshots=args!=null&&"true".equals(args.getString("capture_screenshots"));onlyWearable=args!=null&&"true".equals(args.getString("only_wearable"));start();}
     @Override public void callActivityOnCreate(Activity target,Bundle state){
         // Install a nonexecuting worker before production onCreate/onResume can schedule anything.
         if(target instanceof MainActivity)disableWorker(target,"network");
@@ -70,8 +72,9 @@ public final class PreviewInstrumentation extends Instrumentation {
             check("preview requests no permissions",manifest.requestedPermissions==null||manifest.requestedPermissions.length==0);
             check("preview declares no services",manifest.services==null||manifest.services.length==0);
             launch(MainActivity.class,null);
-            main(()->{((Handler)get(activity,"main")).removeCallbacks((Runnable)get(activity,"poll"));set(activity,"visible",false);});
-            for(float scale:new float[]{1f,2f}){
+            main(()->{((Handler)get(activity,"main")).removeCallbacks((Runnable)get(activity,"poll"));((Handler)get(activity,"main")).removeCallbacks((Runnable)get(activity,"presentationTick"));set(activity,"visible",false);});
+            if(onlyWearable){for(float scale:new float[]{1f,2f}){main(()->font(scale));wearableKeySetup(scale);}}
+            else{for(float scale:new float[]{1f,2f}){
                 main(()->font(scale));
                 productOverview(false,scale);
                 main(()->mainHistory(false,scale));
@@ -83,12 +86,14 @@ public final class PreviewInstrumentation extends Instrumentation {
                 capture("caregiver_history_"+fontLabel(scale));
                 wearableKeySetup(scale);
             }
+            helpFeedback();
             motion();
             close();
             for(float scale:new float[]{1f,2f})for(boolean caregiver:new boolean[]{false,true})learning(caregiver,scale);
-            result.putString("result","PASS");result.putString("scope","Isolated production UI with synthetic fixtures; role-specific Today, Updates, Settings reading details, histories, caregiver selection, loading/empty/error, accessibility, finite connection motion, learning labels/confidence and wearable-key privacy/role/cancel checks at 100/200 percent font. No real account, server or Bluetooth checks.");
+            }
+            result.putString("result","PASS");result.putString("scope",onlyWearable?"Isolated wearable-setup dialog synthetic privacy, role, cancel and large-font checks only; no server or Bluetooth operations.":"Isolated production UI with synthetic fixtures; role-specific Today, Updates, Care, Settings reading details, histories, person selection and reminder guards, stable live-callback views/scroll, expiring cached freshness/offline banner, help presentation callbacks without queued requests, loading/empty/error, accessibility, reduced/finite connection motion, learning labels/confidence and wearable-key privacy/role/cancel checks at 100/200 percent font. No real account, server or Bluetooth checks.");
             code=Activity.RESULT_OK;
-        }catch(Throwable failure){result.putString("result","FAIL");result.putString("detail",failure.getClass().getSimpleName()+": "+String.valueOf(failure.getMessage()));}
+        }catch(Throwable failure){result.putString("result","FAIL");result.putString("detail",failure.getClass().getSimpleName()+": "+String.valueOf(failure.getMessage()));try{captureFailure();}catch(Throwable ignored){/* Keep the original assertion as the result. */}}
         finally{try{close();}catch(Exception failure){result.putString("result","FAIL");result.putString("detail","Preview cleanup failed");code=Activity.RESULT_CANCELED;}result.putInt("checks",checks);result.putInt("screenshots",screenshots);finish(code,result);}
     }
     private ApiSession account(boolean caregiver)throws Exception{return new ApiSession("https://192.0.2.1:8443/api/v1",new JSONObject().put("access_token","fixture-token-never-used-for-network-123456789").put("expires_at","2099-01-01T00:00:00Z").put("user",new JSONObject().put("id",caregiver?"fixture-caregiver":"fixture-patient").put("role",caregiver?"caregiver":"elder").put("display_name",caregiver?"Fixture Caregiver":"Fixture Older Adult").put("email","fixture@example.invalid")));}
@@ -103,16 +108,17 @@ public final class PreviewInstrumentation extends Instrumentation {
             .put("alerts",new JSONArray().put(new JSONObject().put("id","fixture-alert-1").put("acknowledged",false)).put(new JSONObject().put("id","fixture-alert-2").put("acknowledged",false)).put(new JSONObject().put("id","fixture-alert-3").put("acknowledged",true)))
             .put("reading",new JSONObject().put("payload",raw).put("source","device_diagnostic").put("captured_at",ApiSession.utc(System.currentTimeMillis())));
     }
+    private void overviewFixture(JSONObject value)throws Exception{set(activity,"overview",value);set(activity,"overviewReceivedAt",android.os.SystemClock.elapsedRealtime());}
     /** Exercise the finished information hierarchy, including role and selected-person guards. */
     private void productOverview(boolean caregiver,float scale)throws Exception{
         String role=caregiver?"caregiver":"elder",size=fontLabel(scale);
         main(()->{
             set(activity,"session",account(caregiver));set(activity,"patientId",caregiver?"fixture-patient":"");
             set(activity,"patients",new JSONArray().put(new JSONObject().put("id","fixture-patient").put("display_name","Fixture Older Adult")));
-            set(activity,"overview",currentOverview());set(activity,"notifications",new JSONArray());set(activity,"reminders",new JSONArray());
+            overviewFixture(currentOverview());set(activity,"notifications",new JSONArray());set(activity,"reminders",new JSONArray());
             set(activity,"notice","");set(activity,"page","home");invoke(activity,"render");
             check("Today omits recent readings summary",text("Recent readings")==null);
-            check("Today groups readings by everyday meaning",text("Your readings")!=null&&text("Around you")!=null);
+            check("Today groups readings by role and everyday meaning",caregiver?text("Their readings")!=null&&text("Their surroundings")!=null&&text("Your readings")==null:text("Your readings")!=null&&text("Around you")!=null&&text("Their readings")==null);
             check("Today hides raw light ADC",find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("1234"))==null);
             check("Today explains light without a raw number",descriptionPrefix("Light, Signal available")!=null);
             check("Today offers role-appropriate help",caregiver?text("Ask for help")==null:text("Ask for help")!=null);
@@ -122,6 +128,23 @@ public final class PreviewInstrumentation extends Instrumentation {
             secure();
         });
         idle();main(()->{layout(root());targets(root());});capture(role+"_today_"+size);
+        stableReadings(caregiver);
+        main(()->{
+            description("Updates").performClick();
+            check("Updates opens the persistent review destination",get(activity,"page").equals("alerts")&&description("Updates").isSelected());
+            check("review actions belong to the caregiver",caregiver?text("Mark as reviewed")!=null:text("Mark as reviewed")==null);
+            check("Updates offers notification preferences",text("Set up notifications")!=null);
+            if(caregiver)check("Updates names the selected person",text("Fixture Older Adult")!=null);
+        });
+        idle();main(()->{layout(root());targets(root());});capture(role+"_updates_"+size);
+        main(()->{
+            description("Care").performClick();
+            check("Care opens the relationship and plan destination",get(activity,"page").equals("care")&&description("Care").isSelected());
+            check("care roles have appropriate invitation controls",caregiver?text("Request access")!=null&&text("Create an invitation code")==null:text("Create an invitation code")!=null&&text("Request access")==null);
+            check("manual fall reporting belongs to the older adult",caregiver?text("Report a fall")==null:text("Report a fall")!=null);
+            if(caregiver)check("Care names the selected person",text("Fixture Older Adult")!=null);
+        });
+        idle();main(()->{layout(root());targets(root());});capture(role+"_care_"+size);
         main(()->{set(activity,"page","account");invoke(activity,"render");check("Settings owns reading details",description("Reading details")!=null);check("Settings keeps learning and server controls",text("Learning insights")!=null&&text("Server connection")!=null);});
         idle();main(()->{layout(root());targets(root());});capture(role+"_settings_"+size);
         main(()->{
@@ -135,8 +158,9 @@ public final class PreviewInstrumentation extends Instrumentation {
             check("reading details belongs to Settings navigation",description("Settings")!=null&&description("Settings").isSelected());
         });
         idle();main(()->{layout(root());targets(root());});capture(role+"_reading_details_"+size);
+        if(caregiver){reminderSelectionGuard();personSelection();}
         main(()->{
-            invoke(activity,"goBack");check("reading details Back returns to Settings",get(activity,"page").equals("account"));
+            set(activity,"page","reading_details");invoke(activity,"goBack");check("reading details Back returns to Settings",get(activity,"page").equals("account"));
             if(caregiver){
                 set(activity,"patients",new JSONArray());set(activity,"patientId","");set(activity,"page","home");invoke(activity,"render");
                 check("unlinked caregiver has a clear Care action",text("Link to a person")!=null);
@@ -146,19 +170,138 @@ public final class PreviewInstrumentation extends Instrumentation {
             }
         });
     }
+    private View dialogWithTitle(String title){
+        if(Build.VERSION.SDK_INT<29)return null;
+        for(View window:android.view.inspector.WindowInspector.getGlobalWindowViews())if(window.isAttachedToWindow()&&find(window,v->v instanceof TextView&&title.contentEquals(((TextView)v).getText()))!=null)return window;
+        return null;
+    }
+    /** A confirmation opened for one person must not mutate another person's plan. */
+    private void reminderSelectionGuard()throws Exception{
+        if(Build.VERSION.SDK_INT<29)return;
+        for(boolean water:new boolean[]{true,false}){
+            String title=water?"Water reminder for Fixture Older Adult?":"Reminder for Fixture Older Adult";
+            main(()->{
+                set(activity,"patients",new JSONArray().put(new JSONObject().put("id","fixture-patient").put("display_name","Fixture Older Adult")).put(new JSONObject().put("id","fixture-other-person").put("display_name","Fixture Second Person")));
+                set(activity,"patientId","fixture-patient");overviewFixture(currentOverview());set(activity,"page","care");invoke(activity,"render");invoke(activity,water?"waterReminder":"reminderDialog");
+            });
+            idle();main(()->{
+                View dialog=dialogWithTitle(title);check("reminder confirmation identifies its intended person",dialog!=null);
+                DiscardExecutor worker=(DiscardExecutor)get(activity,"network");int before=worker.submitted;set(activity,"patientId","fixture-other-person");
+                View confirm=dialog.findViewById(android.R.id.button1);check("reminder confirmation remains operable",confirm!=null&&confirm.performClick());
+                check("changed person prevents any reminder mutation being queued",worker.submitted==before);
+            });
+            idle();
+        }
+    }
+    /** The production sensor callback updates labels without replacing controls or scrolling. */
+    private void stableReadings(boolean caregiver)throws Exception{
+        final View[] content=new View[1],tile=new View[1],status=new View[1];final int[] y=new int[1];final String[] key=new String[1];
+        main(()->{
+            content[0]=(View)get(activity,"content");tile[0]=descriptionPrefix("Heart rate,");status[0]=(View)get(activity,"homeStatus");key[0]=(String)invoke(activity,"homeStructureKey");
+            android.widget.ScrollView scroll=(android.widget.ScrollView)get(activity,"scroll");scroll.scrollTo(0,Math.round(180*activity.getResources().getDisplayMetrics().density));y[0]=scroll.getScrollY();
+            ((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
+            check("unchanged readings preserve the page object",get(activity,"content")==content[0]);
+            check("unchanged readings preserve the metric control",descriptionPrefix("Heart rate,")==tile[0]);
+            check("unchanged readings preserve connection decoration",get(activity,"homeStatus")==status[0]);
+            check("unchanged readings preserve scroll position",scroll.getScrollY()==y[0]);
+            check("connection decoration never invents a live device",((CareStatusView)status[0]).getState()==(caregiver?CareStatusView.State.WAITING:CareStatusView.State.OFFLINE)&&!((CareStatusView)status[0]).isAnimating());
+            JSONObject updated=currentOverview();updated.getJSONObject("reading").getJSONObject("payload").getJSONObject("max30102").put("heart_rate_bpm",74);overviewFixture(updated);
+            ((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
+            check("new sensor values preserve navigation and controls",get(activity,"content")==content[0]&&descriptionPrefix("Heart rate,")==tile[0]&&get(activity,"homeStatus")==status[0]);
+            check("new sensor value is shown exactly",descriptionPrefix("Heart rate, 74.0 bpm")!=null);
+            check("new sensor values preserve scroll position",scroll.getScrollY()==y[0]);
+            check("only readings changing preserves the refresh structure key",key[0].equals(invoke(activity,"homeStructureKey")));
+            check("raw protocol and storage details stay off Today",text("Source: Wearable")==null&&find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("Last stored reading:"))==null);
+            if(caregiver){
+                JSONObject mismatched=currentOverview();mismatched.getJSONObject("patient").put("id","fixture-other-person");overviewFixture(mismatched);((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
+                check("different person's payload cannot appear under the selected person",descriptionPrefix("Heart rate, Unavailable")!=null||descriptionPrefix("Heart rate, No valid reading")!=null);
+            }
+            overviewFixture(currentOverview());((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
+            check("Today shows the age of a fresh saved reading",text("Last reading: just now")!=null);
+            set(activity,"overviewReceivedAt",android.os.SystemClock.elapsedRealtime()-61000);((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
+            check("cached freshness expires without a new server response",invoke(activity,"readingFreshness").equals("stale"));
+            check("Today explains older saved readings",text("Last reading: 1 minute ago · saved")!=null);
+            check("expired saved readings never trigger live motion",!((CareStatusView)status[0]).isAnimating());
+            String offline="Connection unavailable. Showing saved information. Try Refresh when you are connected.";set(activity,"syncProblem",offline);invoke(activity,"updateSyncLabel");((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
+            check("connection failure remains readable during value updates",text(offline)!=null&&text(offline).getVisibility()==View.VISIBLE);
+            check("saved values remain accessible during a connection failure",descriptionPrefix("Heart rate, 72.0 bpm")!=null);
+            set(activity,"syncProblem","");invoke(activity,"updateSyncLabel");overviewFixture(currentOverview());((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
+        });
+    }
+    /** Selection is a visible person-first action and clears the previous person's values. */
+    private void personSelection()throws Exception{
+        if(Build.VERSION.SDK_INT<29)return;
+        main(()->{
+            set(activity,"patients",new JSONArray().put(new JSONObject().put("id","fixture-patient").put("display_name","Fixture Older Adult")).put(new JSONObject().put("id","fixture-other-person").put("display_name","Fixture Second Person")));
+            set(activity,"patientId","fixture-patient");overviewFixture(currentOverview());set(activity,"page","home");invoke(activity,"render");
+            check("care actions accept the current approved person",(Boolean)invoke(activity,"careSelectionCurrent",new Class<?>[]{ApiSession.class,String.class},get(activity,"session"),"fixture-patient"));
+            check("multiple approved people have a clear switch action",text("Change person")!=null);text("Change person").performClick();
+        });
+        idle();main(()->{
+            View dialog=null;for(View window:android.view.inspector.WindowInspector.getGlobalWindowViews())if(window.isAttachedToWindow()&&find(window,v->v instanceof TextView&&"Whose information?".contentEquals(((TextView)v).getText()))!=null){dialog=window;break;}
+            check("person switch asks whose information to show",dialog!=null);
+            android.widget.ListView people=(android.widget.ListView)find(dialog,v->v instanceof android.widget.ListView);
+            check("person switch offers only approved fixture people",people!=null&&people.getAdapter().getCount()==2);
+            check("second person can be chosen",people.performItemClick(people.getChildAt(1),1,people.getAdapter().getItemId(1)));
+            check("person switch changes the selected identity",get(activity,"patientId").equals("fixture-other-person"));
+            check("care actions reject the previous person after selection changes",!(Boolean)invoke(activity,"careSelectionCurrent",new Class<?>[]{ApiSession.class,String.class},get(activity,"session"),"fixture-patient"));
+            check("new person is named before showing any readings",text("Fixture Second Person")!=null);
+            check("person switch clears prior readings immediately",((JSONObject)get(activity,"overview")).length()==0&&descriptionPrefix("Heart rate, 72.0 bpm")==null&&descriptionPrefix("Heart rate, 74.0 bpm")==null);
+            check("person switch clears prior history",get(activity,"historyData")==null);
+        });
+    }
+    /** Only presentation callbacks are exercised; no help request is sent or queued. */
+    private void helpFeedback()throws Exception{
+        final Object[] attempt=new Object[1];
+        final int[] queued=new int[1];main(()->queued[0]=((DiscardExecutor)get(activity,"network")).submitted);
+        String failure="We could not confirm your request. Check Updates before trying again. No caregiver response is confirmed.";
+        String success="Request saved. Your approved care circle can review it. This does not confirm they have seen it.";
+        for(float scale:new float[]{1f,2f}){
+            main(()->{
+                font(scale);set(activity,"session",account(false));set(activity,"patientId","");overviewFixture(currentOverview());set(activity,"helpOutcome","");set(activity,"page","home");
+                Class<?> type=Class.forName("org.caremonitor.demo.MainActivity$HelpAttempt");java.lang.reflect.Constructor<?> constructor=type.getDeclaredConstructor(ApiSession.class);constructor.setAccessible(true);attempt[0]=constructor.newInstance(get(activity,"session"));
+                set(activity,"helpAttempt",attempt[0]);invoke(attempt[0],"attach",new Class<?>[]{MainActivity.class},activity);invoke(activity,"render");
+                check("pending help state is clear and prevents repeated activation",text("Sending request…")!=null&&!text("Sending request…").isEnabled()&&text("Saving your request…")!=null);
+                invoke(attempt[0],"complete",new Class<?>[]{String.class},failure);
+            });
+            idle();main(()->{
+                check("failed help confirmation gives an actionable outcome",text(failure)!=null&&text("Ask for help")!=null&&text("Ask for help").isEnabled());
+                invoke(activity,"render");check("help outcome survives ordinary page rebuilds",text(failure)!=null);
+                invoke(attempt[0],"complete",new Class<?>[]{String.class},success);
+            });
+            idle();main(()->{
+                check("saved help request does not claim caregiver receipt",text(success)!=null);
+                Bundle saved=new Bundle();callActivityOnSaveInstanceState(activity,saved);check("help outcome survives configuration state",success.equals(saved.getString("help_outcome")));
+                set(activity,"session",account(true));set(activity,"helpOutcome","");set(activity,"patientId","fixture-patient");invoke(activity,"render");
+                invoke(attempt[0],"complete",new Class<?>[]{String.class},success);
+            });
+            idle();main(()->{check("old account help callback cannot appear in a caregiver session",get(activity,"helpOutcome").equals("")&&text(success)==null&&text("Ask for help")==null);set(activity,"helpAttempt",null);});
+        }
+        main(()->check("help presentation fixtures queue no request",((DiscardExecutor)get(activity,"network")).submitted==queued[0]));
+    }
     /** Test actual production motion without changing system animation or power preferences. */
     private void motion()throws Exception{
         final CareStatusView[] status=new CareStatusView[1];final TextView[] value=new TextView[1];
+        final boolean[] timedPulse=new boolean[1];
         android.content.SharedPreferences appearance=getTargetContext().getSharedPreferences("caremonitor_appearance",0);
         boolean hadPreference=appearance.contains("reduce_motion"),previousPreference=appearance.getBoolean("reduce_motion",false);
         try{
         main(()->{
             set(activity,"session",account(false));set(activity,"page","account");invoke(activity,"render");
+            android.widget.Switch control=(android.widget.Switch)description("Reduce motion");check("Settings has an accessible reduced-motion switch",control!=null&&control.isEnabled()&&control.isClickable());
+            boolean before=control.isChecked();control.performClick();check("Settings motion preference persists the chosen state",appearance.getBoolean("reduce_motion",before)==!before);control.performClick();check("Settings motion preference can be restored",appearance.getBoolean("reduce_motion",!before)==before);
             status[0]=new CareStatusView(activity);((ViewGroup)get(activity,"content")).addView(status[0]);
             value[0]=new TextView(activity);value[0].setText("72 bpm");((ViewGroup)get(activity,"content")).addView(value[0]);
             check("status decoration is excluded from accessibility",status[0].getImportantForAccessibility()==View.IMPORTANT_FOR_ACCESSIBILITY_NO&&!status[0].isFocusable()&&!status[0].isClickable());
         });
         idle();main(()->{
+            CareStatusView view=status[0];view.setState(CareStatusView.State.LIVE);timedPulse[0]=view.isAnimating();
+        });
+        if(timedPulse[0]){
+            float durationScale=android.provider.Settings.Global.getFloat(activity.getContentResolver(),android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,1f);
+            android.os.SystemClock.sleep(Math.round(3100*Math.max(1f,Math.min(10f,durationScale))));idle();main(()->{check("live connection rings finish without a new reading",!status[0].isAnimating()&&status[0].getState()==CareStatusView.State.LIVE);});
+        }
+        main(()->{
             CareStatusView view=status[0];view.setState(CareStatusView.State.WAITING);check("waiting for data never pulses",!view.isAnimating());
             view.setActive(false);view.setState(CareStatusView.State.LIVE);check("inactive live status remains static",!view.isAnimating());
             view.setActive(true);check("returning to the foreground never replays a pulse",!view.isAnimating());
@@ -185,6 +328,15 @@ public final class PreviewInstrumentation extends Instrumentation {
         }
     }
     private String fontLabel(float scale){return scale==2f?"200":"100";}
+    private void captureFailure()throws Exception{
+        if(!captureScreenshots||activity==null)return;
+        main(()->{
+            View window=wearableDialog();if(window==null)window=root();if(window.getWidth()==0||window.getHeight()==0)return;
+            Bitmap bitmap=Bitmap.createBitmap(window.getWidth(),window.getHeight(),Bitmap.Config.ARGB_8888);File directory=new File(getTargetContext().getFilesDir(),"ui-previews");if(!directory.isDirectory()&&!directory.mkdir())return;
+            File target=new File(directory,"fixture_failure_"+fontLabel(activity.getResources().getConfiguration().fontScale)+"_top.png");if(target.exists()){bitmap.recycle();return;}
+            try(FileOutputStream output=new FileOutputStream(target)){window.draw(new Canvas(bitmap));if(bitmap.compress(Bitmap.CompressFormat.PNG,100,output))screenshots++;}finally{bitmap.recycle();}
+        });
+    }
     /** Canvas captures contain synthetic preview data only; FLAG_SECURE remains enabled. */
     private void capture(String name)throws Exception{
         if(!captureScreenshots)return;
@@ -194,7 +346,12 @@ public final class PreviewInstrumentation extends Instrumentation {
                 View decor=root();check("synthetic capture has measured viewport",decor.getWidth()>0&&decor.getHeight()>0);
                 Bitmap bitmap=Bitmap.createBitmap(decor.getWidth(),decor.getHeight(),Bitmap.Config.ARGB_8888);
                 File directory=new File(getTargetContext().getFilesDir(),"ui-previews");check("synthetic capture directory is private",directory.isDirectory()||directory.mkdir());
-                try(FileOutputStream output=new FileOutputStream(new File(directory,name+(bottom?"_bottom":"_top")+".png"))){decor.draw(new Canvas(bitmap));check("synthetic viewport PNG encoded",bitmap.compress(Bitmap.CompressFormat.PNG,100,output));screenshots++;}finally{bitmap.recycle();}
+                try(FileOutputStream output=new FileOutputStream(new File(directory,name+(bottom?"_bottom":"_top")+".png"))){
+                    decor.draw(new Canvas(bitmap));java.util.HashSet<Integer> colors=new java.util.HashSet<>();int opaque=0,total=0;
+                    for(int y=0;y<bitmap.getHeight();y+=Math.max(1,bitmap.getHeight()/100))for(int x=0;x<bitmap.getWidth();x+=Math.max(1,bitmap.getWidth()/100)){int pixel=bitmap.getPixel(x,y);colors.add(pixel);if((pixel>>>24)==255)opaque++;total++;}
+                    check("synthetic viewport capture contains visible content",colors.size()>=8&&opaque>=total*.9);
+                    check("synthetic viewport PNG encoded",bitmap.compress(Bitmap.CompressFormat.PNG,100,output));screenshots++;
+                }finally{bitmap.recycle();}
                 secure();
             });
         }
@@ -251,7 +408,9 @@ public final class PreviewInstrumentation extends Instrumentation {
                 check("preview has no persisted account before key UI",ApiSession.load(getTargetContext())==null);
                 set(activity,"session",account(false));set(activity,"page","device");set(activity,"deviceStep",1);invoke(activity,"render");
                 check("pairing copy removes serial assistant",find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("USB pairing assistant"))==null);
-                check("pairing copy explains app-only authorisation",text("Authorise your wearable here with its private setup key the first time. No computer confirmation is needed. Only one phone can use the wearable at a time.")!=null);
+                check("pairing starts with in-app selection",text("Choose it in the next step. Your phone will ask you to confirm Bluetooth pairing if needed.")!=null&&text("Continue")!=null);
+                check("first-time setup is explained as an assisted one-time step",text("First time? Keep the private setup card that came with your wearable nearby. Someone you trust can help you with this step. Only one phone can use the wearable at a time.")!=null);
+                check("system Bluetooth settings is optional help",text("Need help with Bluetooth?")!=null);
                 invoke(activity,"authoriseWearable",new Class<?>[]{String.class},"02:00:00:00:00:01");
             });
             // Dialog attachment and its OnShow message finish after show() returns.
@@ -260,16 +419,18 @@ public final class PreviewInstrumentation extends Instrumentation {
             main(()->{
                 View window=dialog[0];
                 check("key dialog uses requested font scale",Float.compare(window.getResources().getConfiguration().fontScale,scale)==0);
-                input[0]=(EditText)find(window,v->v instanceof EditText&&"Wearable setup key".contentEquals(v.getContentDescription()));
+                input[0]=(EditText)find(window,v->v instanceof EditText&&"Setup code from your card".contentEquals(v.getContentDescription()));
                 check("setup key input available",input[0]!=null&&input[0].isEnabled());
                 check("setup key starts masked",input[0].getTransformationMethod() instanceof PasswordTransformationMethod);
                 check("setup key saving disabled",!input[0].isSaveEnabled());
                 check("setup key autofill disabled",input[0].getImportantForAutofill()==View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
                 check("setup dialog has secure window",window.getLayoutParams() instanceof WindowManager.LayoutParams&&(((WindowManager.LayoutParams)window.getLayoutParams()).flags&WindowManager.LayoutParams.FLAG_SECURE)!=0);
+                input[0].requestRectangleOnScreen(new Rect(0,0,input[0].getWidth(),input[0].getHeight()),true);
                 visible("setup key input",input[0]);textFits("setup key input",input[0],false);
                 check("key input meets 56dp target",input[0].getHeight()+1>=56*activity.getResources().getDisplayMetrics().density);
                 TextView show=(TextView)find(window,v->v instanceof TextView&&"Show setup key".contentEquals(((TextView)v).getText()));
                 check("key visibility control accessible",show instanceof CompoundButton&&show.isClickable()&&show.isEnabled()&&"Show setup key".contentEquals(show.getContentDescription()));
+                show.requestRectangleOnScreen(new Rect(0,0,show.getWidth(),show.getHeight()),true);
                 visible("key visibility control",show);textFits("key visibility control",show,true);
                 input[0].setText(fixtureKey);show.performClick();
                 check("key reveal requires explicit toggle",!(input[0].getTransformationMethod() instanceof PasswordTransformationMethod)&&fixtureKey.contentEquals(input[0].getText()));
@@ -285,7 +446,7 @@ public final class PreviewInstrumentation extends Instrumentation {
                     visible("key dialog action",action);textFits("key dialog action",action,true);
                     check("platform dialog action meets 48dp target",action.getHeight()+1>=48*activity.getResources().getDisplayMetrics().density);
                 }
-                check("save action labelled", "Save and connect".contentEquals(((TextView)window.findViewById(android.R.id.button1)).getText()));
+                check("connect action labelled", "Connect".contentEquals(((TextView)window.findViewById(android.R.id.button1)).getText()));
                 check("Cancel works without saving",window.findViewById(android.R.id.button2).performClick());
             });
             idle();
@@ -301,28 +462,29 @@ public final class PreviewInstrumentation extends Instrumentation {
                 check("caregiver key guard requests no permission or transport",get(activity,"deviceList")==null&&"".equals(get(activity,"pendingAction")));
                 secure();
             });
-        }finally {
+        }catch(Exception|Error failure){try{captureFailure();}catch(Exception ignored){}throw failure;}finally {
             main(()->{View window=wearableDialog();if(window!=null&&window.findViewById(android.R.id.button2)!=null)window.findViewById(android.R.id.button2).performClick();});
         }
     }
     private View wearableDialog(){
         if(Build.VERSION.SDK_INT<29)return null;
         for(View window:android.view.inspector.WindowInspector.getGlobalWindowViews())
-            if(window.isAttachedToWindow()&&find(window,v->v instanceof EditText&&"Wearable setup key".contentEquals(v.getContentDescription()))!=null)return window;
+            if(window.isAttachedToWindow()&&find(window,v->v instanceof EditText&&"Setup code from your card".contentEquals(v.getContentDescription()))!=null)return window;
         return null;
     }
     private int credentialFileCount(){int count=0;File[] files=getTargetContext().getFilesDir().listFiles();if(files!=null)for(File file:files)if(file.getName().startsWith("wearable_"))count++;return count;}
     private static boolean contains(byte[] bytes,byte[] sought){outer:for(int i=0;i<=bytes.length-sought.length;i++){for(int j=0;j<sought.length;j++)if(bytes[i+j]!=sought[j])continue outer;return true;}return false;}
     private void visible(String label,View view){
-        Rect visible=new Rect(),viewport=new Rect();check(label+" laid out",view.getWidth()>0&&view.getHeight()>0);
-        check(label+" visible",view.getGlobalVisibleRect(visible)&&root().getGlobalVisibleRect(viewport));
-        int[] location=new int[2];view.getLocationOnScreen(location);Rect bounds=new Rect(location[0],location[1],location[0]+view.getWidth(),location[1]+view.getHeight());
-        check(label+" fits viewport",viewport.contains(bounds)&&visible.width()+1>=bounds.width()&&visible.height()+1>=bounds.height());
+        Rect visible=new Rect();check(label+" laid out",view.getWidth()>0&&view.getHeight()>0);
+        check(label+" visible",view.getLocalVisibleRect(visible));
+        visible.offset(-view.getScrollX(),-view.getScrollY());
+        check(label+" fits viewport [local visible="+visible+", width="+view.getWidth()+", height="+view.getHeight()+"]",visible.left<=0&&visible.top<=0&&visible.right+1>=view.getWidth()&&visible.bottom+1>=view.getHeight());
     }
     private void textFits(String label,TextView view,boolean width){
         Layout layout=view.getLayout();check(label+" text measured",layout!=null&&layout.getLineCount()>0);
         check(label+" text fits height",layout.getHeight()<=view.getHeight()-view.getCompoundPaddingTop()-view.getCompoundPaddingBottom()+1);
-        for(int line=0;line<layout.getLineCount();line++){check(label+" no ellipsis",layout.getEllipsisCount(line)==0);if(width)check(label+" text fits width",layout.getLineWidth(line)<=view.getWidth()-view.getCompoundPaddingLeft()-view.getCompoundPaddingRight()+1);}
+        // getLineWidth includes a wrapping line's trailing spaces, which are not drawn.
+        for(int line=0;line<layout.getLineCount();line++){check(label+" no ellipsis",layout.getEllipsisCount(line)==0);if(width)check(label+" text fits width",layout.getLineMax(line)<=view.getWidth()-view.getCompoundPaddingLeft()-view.getCompoundPaddingRight()+1);}
     }
     private void awaitLayout(View view)throws Exception {
         CountDownLatch frame=new CountDownLatch(1);ViewTreeObserver.OnPreDrawListener[] listener=new ViewTreeObserver.OnPreDrawListener[1];
@@ -373,6 +535,11 @@ public final class PreviewInstrumentation extends Instrumentation {
     }
     private void layout(View view){if(view instanceof TextView){TextView text=(TextView)view;if(text.getVisibility()==View.VISIBLE&&text.getLayout()!=null&&text.getText().length()>0){String value=text.getText().toString().replace('\n',' ');String label="screen text ["+value.substring(0,Math.min(value.length(),80))+"]";check(label+" is not ellipsized",text.getEllipsize()==null||text.getLayout().getEllipsisCount(text.getLayout().getLineCount()-1)==0);if(!(text instanceof EditText))textFits(label,text,true);}}if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)layout(((ViewGroup)view).getChildAt(i));}
     private void targets(View view){
+        String description=view.getContentDescription()==null?"":view.getContentDescription().toString();
+        if(view instanceof ViewGroup&&(description.equals("Today")||description.equals("Updates")||description.equals("Care")||description.equals("Settings"))){
+            TextView label=(TextView)find(view,item->item instanceof TextView&&description.contentEquals(((TextView)item).getText()));
+            check("bottom navigation words remain intact",label!=null&&label.getLayout()!=null&&label.getLayout().getLineCount()==1);
+        }
         if(view.isClickable()&&view.isEnabled()&&view.getVisibility()==View.VISIBLE){
             float minimum=56*activity.getResources().getDisplayMetrics().density;
             check("interactive target has a measured size",view.getWidth()>0&&view.getHeight()>0);

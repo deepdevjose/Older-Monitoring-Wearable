@@ -2,11 +2,11 @@
 
 Una única base de código para ESP32 → Bluetooth → Android → HTTPS → servidor local. Sin Firebase, servicios de nube ni APIs de mapas. Cuentas de adulto y cuidadores, vínculos aprobados por el adulto, avisos privados, recordatorios y experimentos de IA claramente separados de los diagnósticos del dispositivo.
 
-**Para retomar el equipo preparado:** [paso a paso y estado actual](docs/PUESTA_EN_MARCHA.md). El servidor ya funciona por Wi-Fi en **Network**, el módem Huawei del dormitorio, conservando internet en la laptop. El enlace USB queda como alternativa. **Instalación general:** [guía de servidor y teléfono](docs/SERVER.md). **Límites y consentimiento:** [seguridad y ética](docs/SECURITY_ETHICS.md). **Contrato:** [API](docs/API.md).
+**Para retomar el equipo preparado:** [arranque paso a paso sin internet](docs/PUESTA_EN_MARCHA.md). La nueva **Network** está preparada para conexión manual; la computadora conserva su red con internet hasta que decidas cambiarla. Al hacer la prueba, conecta ambos equipos a Network y utiliza la IP que imprima el arranque. No necesita descargas. El enlace USB queda como alternativa; el arranque no cambia Wi-Fi ni VPN. **Instalación general:** [guía de servidor y teléfono](docs/SERVER.md). **Límites y consentimiento:** [seguridad y ética](docs/SECURITY_ETHICS.md). **Contrato:** [API](docs/API.md).
 
 ```bash
 ./tools/start_offline.sh --check --serial R5CT20D7X6D
-# S22 conectado por USB para preparar; después usa Wi-Fi:
+# Cuando laptop y S22 ya estén en Network; USB conectado para preparar el APK:
 ./tools/start_offline.sh --serial R5CT20D7X6D
 ./carectl status
 ```
@@ -32,8 +32,10 @@ Las carpetas de versiones anteriores se retiraron del árbol activo después de 
 
 ## Alcance
 
-La versión 1.0.0/código **16**, completamente en inglés, está instalada en el Galaxy S22 SM-S901E con Android 13. Pasó 759 comprobaciones nativas de registro y diseño y HTTPS por Wi-Fi con el cliente instalado. Otros 641 controles ejercitaron los históricos y Learning insights en una app aislada con las mismas fuentes, en el S22 con Android 13. Los seis indicadores abren gráficos Day/Week/Month para la persona mayor y sus cuidadores autorizados. Settings → Learning insights muestra clases y confianza del modelo sintético, con historial cifrado separado de los sensores.
+La revisión 1.0.0/código **19**, instalada en el S22 SM-S901E / Android 13, organiza la interfaz en inglés alrededor de las tareas de cada rol. **Today** ofrece a la persona mayor una conexión comprensible, pedir ayuda, su próximo recordatorio y sus indicadores; al cuidador le muestra la persona seleccionada, avisos por revisar, lecturas y ubicación compartida si está autorizada. **Updates**, **Care** y **Settings** mantienen nombres y posiciones estables. La tarjeta técnica Recent readings se sustituye por **Settings → Reading details**; las seis métricas siguen abriendo históricos **Day / Week / Month**.
 
-El teléfono principal SM-S948B se actualizará al ejecutar el arranque con el teléfono conectado por USB cuando vuelva. El recorrido físico completo Bluetooth–teléfono–servidor requiere comprobación independiente. El canal propio de avisos necesita activarse en cada teléfono. Fuera de la LAN necesita la VPN propia descrita en la guía.
+Los controles grandes, el texto ampliable, las actualizaciones sin reconstruir la pantalla y las animaciones breves de conexión apoyan esa jerarquía. **Settings → Reduce motion** desactiva el movimiento. Las transiciones no inventan ni suavizan valores de sensores. Es un diseño orientado a personas mayores y cuidadores; no se presenta como un estudio de usabilidad con adultos mayores.
+
+El APK, su instalación y el alcance comprobado se identifican por versión y SHA-256 en [la evidencia vigente](docs/STATUS.md). Las pruebas físicas del **27 de octubre, código 17**, acreditan autenticación Bluetooth con una clave privada por placa, una sola conexión activa y recepción confirmada por el servidor, con la cola en cero. Esos registros fechados no se atribuyen a una revisión posterior de la interfaz. El canal de avisos con pantalla bloqueada, TalkBack manual y el acceso exterior mantienen su propia comprobación. Settings → Learning insights conserva los ejercicios sintéticos separados del cuidado y de los sensores.
 
 La IA se evalúa con datos sintéticos o reproducciones del dataset documentado; no diagnostica personas. No hay sensor de presión arterial ni detector validado de deshidratación. El GY906 mide superficie y ambiente, y oscuridad no prueba que el wearable esté puesto. Ver [matriz de capacidades y ética](docs/SECURITY_ETHICS.md).
