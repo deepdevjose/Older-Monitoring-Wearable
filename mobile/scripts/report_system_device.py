@@ -28,6 +28,8 @@ def main():
     parser.add_argument('--key-file',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--notification-trials',type=int,choices=range(31),default=30)
+    parser.add_argument('--capture-atlas',action='store_true',help='Capture the complete current screen atlas and registration drafts')
+    parser.add_argument('--learning-only',action='store_true',help='Capture saved synthetic model results without connecting the wearable')
     args=parser.parse_args()
     if not re.fullmatch(r'[A-Za-z0-9._:-]{1,128}',args.serial) or args.serial.startswith('-'):parser.error('Use one exact serial')
     if args.key_file.stat().st_mode & 0o077:parser.error('Installation-key file must be private (0600)')
@@ -80,7 +82,7 @@ def main():
     if any(hashlib.sha256(p.read_bytes()).hexdigest()!=hashes[p.relative_to(ROOT).as_posix()] for p in inputs):raise RuntimeError('Sources changed during build')
     evidence={'result':'FAIL','recorded_at':datetime.now(timezone.utc).isoformat(),'source_sha256':hashes,
         'apk_sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),'package':PACKAGE,'production_application_touched':False,
-        'scope':'Unchanged production Java/resources in isolated Android package and isolated HTTPS database. Physical SPP telemetry, real app HTTPS, controlled account linking, native charts, saved synthetic learning, own caregiver notifications. Not production-account, same-LAN, second-phone or clinical acceptance.'}
+        'scope':('Unchanged production Java/resources in isolated Android package and database. Saved synthetic model exercises and role-authorised real HTTPS retrieval; no physical wearable connection or care delivery trial.' if args.learning_only else 'Unchanged production Java/resources in isolated Android package and isolated HTTPS database. Physical SPP telemetry, real app HTTPS, controlled account linking, native charts, saved synthetic learning, own caregiver notifications. Not production-account, same-LAN, second-phone or clinical acceptance.')}
     installed=False
     try:
         print('Built isolated report app; production accounts and APK remain unchanged.',flush=True)
@@ -90,17 +92,19 @@ def main():
             run([*selected,'shell','pm','grant',PACKAGE,'android.permission.'+permission])
         run([*selected,'reverse','tcp:19444','tcp:19444'])
         run([*selected,'shell','run-as',PACKAGE,'mkdir','-p','files'])
-        transfer=subprocess.run([str(x) for x in [*selected,'shell','run-as',PACKAGE,'sh','-c','"umask 077; cat > files/report-setup.key"']],input=key+b'\n',stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=20)
-        if transfer.returncode:raise RuntimeError('Private USB key transfer failed')
-        print('Starting real physical/HTTPS campaign; please hold optical contact for about one minute.',flush=True)
-        log=run([*selected,'shell','am','instrument','-w','-r','-e','notification_trials',str(args.notification_trials),PACKAGE+'/org.caremonitor.demo.ReportSystemInstrumentation'],check=False,timeout=720)
+        if not args.learning_only:
+            transfer=subprocess.run([str(x) for x in [*selected,'shell','run-as',PACKAGE,'sh','-c','"umask 077; cat > files/report-setup.key"']],input=key+b'\n',stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=20)
+            if transfer.returncode:raise RuntimeError('Private USB key transfer failed')
+        print('Starting saved synthetic learning capture; no wearable connection.' if args.learning_only else 'Starting real physical/HTTPS campaign; please hold optical contact for about one minute.',flush=True)
+        log=run([*selected,'shell','am','instrument','-w','-r','-e','notification_trials',str(args.notification_trials),
+                 '-e','capture_atlas',str(args.capture_atlas).lower(),'-e','learning_only',str(args.learning_only).lower(),PACKAGE+'/org.caremonitor.demo.ReportSystemInstrumentation'],check=False,timeout=720)
         (output/'instrumentation.log').write_text(log)
         result=run([*selected,'exec-out','run-as',PACKAGE,'cat','files/report-result.json'],check=False)
         try:evidence['device_result']=json.loads(result)
         except json.JSONDecodeError:raise RuntimeError('No structured device result; see private instrumentation log')
         names=run([*selected,'shell','run-as',PACKAGE,'ls','files/report-captures'],check=False).splitlines();screens={}
         for name in names:
-            if not re.fullmatch(r'(elder|caregiver)_[a-z_]+\.png',name):continue
+            if not re.fullmatch(r'(elder|caregiver)_[a-z0-9_]+\.png',name):continue
             path=output/name
             with path.open('wb') as target:
                 copied=subprocess.run([str(x) for x in [*selected,'exec-out','run-as',PACKAGE,'cat','files/report-captures/'+name]],stdout=target,stderr=subprocess.PIPE,timeout=20)

@@ -3,7 +3,7 @@
 \label{app:system-atlas}
 This atlas documents the user-specified three-sensor wearable and the canonical Android/FastAPI implementation. The removed microphone and light module are absent from the current wiring topology. Legacy JSON fields and a BLE transport client may remain compatible software contracts; they do not identify additional installed hardware. The earlier assembly photograph is retained with its date rather than altered to resemble a new photograph.
 
-\textbf{Reading the figures.} Solid teal arrows identify implemented transfers or dependencies. Dashed arrows are responses or class dependencies where stated. Amber panels identify requested behaviour requiring further implementation or validation. A line documents a technical responsibility; it does not imply that every deployment or clinical outcome has been tested.
+\textbf{Reading the figures.} Blue and teal group technical responsibilities; colour does not assert validation. Every diagram names its arrows: runtime transfer, dependency, reply, inheritance or electrical net. The captions distinguish source-derived structure, executed campaigns and future capability.
 
 \WearablePurposeFigure
 \clearpage
@@ -12,13 +12,13 @@ This atlas documents the user-specified three-sensor wearable and the canonical 
 \clearpage
 \subsection{Transport protocols and wire formats}
 \ProtocolStackFigure
-\clearpage
+\Needspace{10cm}
 \subsection{Actors and approval boundaries}
 \ActorsDiagram
 \clearpage
 \subsection{Mobile navigation and task flow}
 \MobileFlowDiagram
-\clearpage
+\Needspace{12cm}
 \subsection{Selected production classes}
 \MobileClassDiagram
 \clearpage
@@ -27,22 +27,22 @@ This atlas documents the user-specified three-sensor wearable and the canonical 
 \clearpage
 \subsection{Server components and source separation}
 \ServerArchitectureDiagram
-\clearpage
+\Needspace{12cm}
 \subsection{Server classes and function-based services}
 \ServerClassDiagram
 \clearpage
 \subsection{Persistent data domains}
 \DatabaseDiagram
-\clearpage
+\Needspace{10cm}
 \subsection{Authentication and encryption boundaries}
 \SecurityProtocolDiagram
-\clearpage
+\Needspace{12cm}
 \subsection{Capability interpretation for the current assembly}
 \begin{table}[H]\small
 \caption{Measured inputs, implemented behaviour and requested extensions. Clinical thresholds are not specified by this diagram set.}\label{tab:current-capabilities}
 \begin{tabularx}{\textwidth}{@{}P{29mm}P{47mm}Y@{}}\toprule
 Area & Available input / behaviour & Claim boundary or next implementation\\\midrule
-Pulse and oxygen & MAX30102 optical estimates with contact, calculation and validity flags & Estimates need stable optical coupling. Invalid values stay unavailable; no clinical accuracy claim follows from sensor presence.\\
+Pulse and oxygen & MAX30102 optical estimates with contact, calculation and validity flags & Estimates need stable optical coupling. Numeric estimates remain visible with their quality flags; absent computations stay unavailable. Sensor presence does not establish clinical accuracy.\\
 Surface / ambient & MLX90614 object and local sensor temperature & Explain both channels. Ambient at the sensor is not a certified room measurement; surface is not core temperature. Current extreme-temperature rule demonstrations use synthetic input.\\
 Wear detection & Optical-contact and sample-quality indicators & No contact can prompt a placement/connection check. No readings can also mean motion, disconnection or a fault; it is not a definitive not-worn state.\\
 Walking / falling & MPU6050 acceleration and angular velocity & Current acquisition provides motion data. Step counting, real-time fall classification and a local fallback alarm are not implemented by this source. SisFall is an independent offline experiment.\\

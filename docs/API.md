@@ -1,6 +1,6 @@
 # API de CareMonitor 1.0
 
-Este servicio es una **demostración académica**. El servidor procesa las reglas sintéticas y conserva los diagnósticos del ESP32. No ofrece diagnóstico, vigilancia clínica, presión arterial, diagnóstico de deshidratación ni detección validada de caídas. Las notificaciones requieren conectividad y un cliente que consulte la bandeja; no contactan servicios de emergencia.
+Este servicio es una **demostración académica**. El servidor conserva las lecturas del ESP32 y evalúa avisos de límites configurados, separando esos episodios de los ejemplos sintéticos. No ofrece diagnóstico, vigilancia clínica, presión arterial, diagnóstico de deshidratación ni detección validada de caídas. Las notificaciones requieren conectividad y un cliente que consulte la bandeja; no contactan servicios de emergencia.
 
 Base: `https://IP_DEL_SERVIDOR:8443/api/v1`. Usa el certificado local instalado/verificado siguiendo [SERVER.md](SERVER.md). Los ejemplos de esta página son contratos JSON; las credenciales, tokens y datos de pacientes no deben copiarse a documentación o registros.
 
@@ -63,7 +63,7 @@ Una lectura conserva el JSON de sensores dentro de un contenedor de transporte:
 }
 ```
 
-`source` admite `synthetic` o `device_diagnostic`. **Los datos de dispositivo nunca activan reglas fisiológicas.** La muestra puede capturarse hasta 30 días atrás para recuperar una cola; una marca más de 30 segundos futura se rechaza. Las muestras antiguas se almacenan como historial y no pasan a ser la lectura actual por el orden de recepción.
+`source` admite `synthetic` o `device_diagnostic`. Los datos de dispositivo pueden activar avisos de límites configurados con tres muestras recientes consecutivas. Se conservan valores numéricos fuera de rango y banderas de calidad sin convertirlos en una evaluación clínica. La muestra puede capturarse hasta 30 días atrás para recuperar una cola; una marca más de 30 segundos futura se rechaza. Las muestras antiguas se almacenan como historial y no pasan a ser la lectura actual por el orden de recepción.
 
 Respuesta `201`:
 
@@ -103,12 +103,12 @@ El acuse de un cuidador responde `{ "status": "acknowledged", "patient_resolved"
 
 ### Reglas educativas
 
-Solo se evalúan tres muestras **sintéticas**, con capturas distintas, separadas entre uno y treinta segundos, dentro de una ventana de dos minutos. Las banderas de calidad/contacto son obligatorias para pulso y SpO₂. No hay sustitución de valores inválidos por ceros.
+Se evalúan tres muestras del mismo paciente y origen, con capturas distintas, separadas entre uno y treinta segundos, dentro de una ventana de dos minutos. Los episodios físicos y sintéticos se mantienen separados. Pulso y oxígeno usan la estimación numérica presente con contacto óptico; las banderas de calidad se conservan, sin ocultar estimaciones fuera de rango. Un resultado ausente o el centinela −999 del algoritmo no se sustituye por cero. Se crea un aviso por episodio; tres estimaciones normales permiten recuperarlo.
 
-| Ejemplo sintético | Condición del escenario |
+| Señal | Límite configurado |
 |---|---|
-| Pulso | Menor que 50 o mayor que 120, dentro del dominio sintético 30–220 |
-| SpO₂ | Menor que 95, dentro del dominio sintético 70–100 |
+| Pulso | Menor que 50 o mayor que 120 bpm |
+| SpO₂ | Menor que 95 % |
 | Ambiente | Menor que 10 °C o mayor que 35 °C, sensor online |
 | Superficie | Menor que 28 °C o mayor que 39 °C, con ambiente disponible |
 
@@ -215,7 +215,9 @@ El clasificador acepta únicamente el contrato del dataset sintético y muestras
 
 `GET /patients/{id}/metrics/{metric}/history?period=day&source=device_diagnostic` exige sesión y acceso al paciente. `period` admite `day`, `week` o `month` (24 horas, siete o treinta días); `end` opcional es una fecha ISO con zona horaria. Las métricas son `heart_rate_bpm`, `spo2_percent`, `surface_temp_c`, `ambient_temp_c`, `light_adc` y `acceleration_g`. `source` distingue `device_diagnostic` de `synthetic`; nunca se combinan.
 
-Devuelve `points` con hora, media, mínimo, máximo y conteo; `summary` con media ponderada, rango y última observación; `coverage` informa indexación y observaciones omitidas. Los puntos sin observaciones válidas tienen `value:null`, no cero. Rollups horarios cifrados se actualizan en la misma transacción de ingestión; las horas de los extremos se leen exactamente. La migración de históricos existentes tiene trabajo acotado y comunica cobertura parcial. Solo se muestran datos retenidos en los últimos treinta días. Las medias no equivalen a lecturas instantáneas ni a evaluaciones clínicas.
+Devuelve `points` con hora, media, mínimo, máximo y conteo; `summary` con media ponderada, rango y última observación; `coverage` informa indexación y observaciones omitidas. Las estimaciones ópticas numéricas se incluyen aunque las banderas de calidad sean falsas o superen límites. Los puntos sin estimación tienen `value:null`, no cero. La revisión de política reconstruye solamente los agregados derivados; conserva los registros originales cifrados. Rollups horarios cifrados se actualizan en la misma transacción de ingestión; las horas de los extremos se leen exactamente. La migración de históricos existentes tiene trabajo acotado y comunica cobertura parcial. Solo se muestran datos retenidos en los últimos treinta días. Las medias no equivalen a lecturas instantáneas ni a evaluaciones clínicas.
+
+`available_readings` contiene `count`, `first_at` y `latest_at` de los paquetes retenidos del mismo paciente y origen, aunque queden fuera del intervalo seleccionado. Permite ofrecer **View latest saved day** cuando el día actual está vacío. Estas fechas no afirman que todos los sensores del paquete produjeran una medición válida. Con acceso revocado o ajeno, la API devuelve `404` sin revelar la existencia de la persona. El cliente Android valida paciente, métrica, periodo y origen de cada respuesta; la consulta de históricos admite hasta quince segundos de lectura para la preparación de registros antiguos.
 
 ### Ejercicios de aprendizaje móvil
 

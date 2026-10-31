@@ -51,7 +51,7 @@ El comando anterior es temporal; verificar antes de hacerlo permanente. La app n
 
 ## 4. Instalar en los Samsung
 
-El artefacto es `release/CareMonitor-1.0.0.apk`, revisión de interfaz código 20, compilada con API 37. `release/ANDROID_BUILD.json` identifica su hash; `ANDROID_UI_EVIDENCE.json` registra el equipo y el alcance de su instalación. El SM-S948B con Android 17 conserva su instalación anterior hasta volver a conectarse para actualizarlo. El recorrido Bluetooth–teléfono–servidor se comprobó el 27 de octubre con código 17 en el S22 SM-S901E / Android 13, mediante Network; no se atribuye automáticamente al APK nuevo.
+El artefacto es `release/CareMonitor-1.0.0.apk`, revisión de interfaz y telemetría código 22, compilada con API 37. `release/ANDROID_BUILD.json` identifica su hash; `ANDROID_UI_EVIDENCE.json` registra el equipo y el alcance de su instalación. El SM-S948B con Android 17 conserva su instalación anterior hasta volver a conectarse para actualizarlo. El recorrido Bluetooth–teléfono–servidor se comprobó el 27 de octubre con código 17 en el S22 SM-S901E / Android 13, mediante Network; no se atribuye automáticamente al APK nuevo.
 
 1. Copiar el APK al teléfono e instalar desde una fuente local confiable. Autorizar temporalmente a esa aplicación de archivos para instalar APK. También puede usarse `adb install -r release/CareMonitor-1.0.0.apk` cuando USB debugging esté autorizado.
 2. Si una instalación antigua tiene otro certificado, Android rechazará actualizarla. Conseguir la clave original o decidir conscientemente si se elimina esa instalación y sus datos locales. No se desinstala automáticamente nada.

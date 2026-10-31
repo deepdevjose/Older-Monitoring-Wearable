@@ -1,0 +1,35 @@
+{
+  "version_code": 22,
+  "apk_sha256": "f9af2bcc811724c818f8df51b636cb2a8f9b60fbc78abccdcaae14f6cb741b88",
+  "client_revision_date": "2026-10-31",
+  "client_timezone": "America/Los_Angeles",
+  "device_model": "Samsung SM-S901E",
+  "android_version": "13",
+  "recorded_at": "2026-10-31T07:46:25.583244+00:00",
+  "result": "PASS",
+  "method": "Normal installed app UI, not instrumentation",
+  "transport": "Authenticated SPP readings; existing account history over HTTPS/USB",
+  "existing_session_only": true,
+  "accounts_created_or_changed": false,
+  "completed_native_history_paths": 2,
+  "nonempty_native_history_paths": 2,
+  "period": "day",
+  "query_summaries": [
+    {
+      "label": "Heart rate",
+      "history_loaded": true,
+      "reading_count": 238,
+      "error_visible": false
+    },
+    {
+      "label": "Estimated oxygen",
+      "history_loaded": true,
+      "reading_count": 315,
+      "error_visible": false,
+      "large_font_count_required_scrolling": true
+    }
+  ],
+  "health_values_or_identifiers_exported": false,
+  "instrumentation_probe_result": "ABORTED_ACTIVE_SERVICES before installation; monitoring was preserved",
+  "interpretation": "Native Day histories for heart rate and estimated oxygen loaded populated real account data. Other periods are covered by isolated tests and prior code-21 evidence, not claimed as current native checks."
+}

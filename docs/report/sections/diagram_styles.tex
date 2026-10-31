@@ -1,0 +1,18 @@
+% Shared vector-figure grammar. Nominal body text remains 8.5 pt at final size.
+\tikzset{
+ dBox/.style={draw=stroke,fill=white,line width=.65pt,rounded corners=2pt,
+   inner xsep=6pt,inner ysep=6pt,align=flush left,text=ink,
+   font=\sffamily\fontsize{8.5}{11}\selectfont,execute at begin node={\hyphenpenalty=10000\relax\exhyphenpenalty=10000\relax}},
+ dData/.style={dBox,draw=teal!50,fill=tealwash},
+ dFuture/.style={dBox,draw=warning!65,fill=warning!5,dashed},
+ dFlow/.style={-{Stealth[length=2mm,width=1.5mm]},draw=accent,line width=.85pt},
+ dReturn/.style={-{Stealth[length=2mm,width=1.5mm]},draw=muted,dashed,line width=.7pt},
+ dNote/.style={align=flush left,text=muted,inner sep=0pt,
+   font=\sffamily\fontsize{8}{10}\selectfont,execute at begin node={\hyphenpenalty=10000\relax\exhyphenpenalty=10000\relax}},
+ dLabel/.style={align=center,text=muted,fill=none,inner sep=2pt,
+   font=\sffamily\fontsize{8}{10}\selectfont,execute at begin node={\hyphenpenalty=10000\relax\exhyphenpenalty=10000\relax}},
+ dHeading/.style={align=flush left,text=ink,inner sep=0pt,
+   font=\sffamily\bfseries\fontsize{9.5}{12}\selectfont},
+ archbox/.style={dBox},archflow/.style={dFlow},archreturn/.style={dReturn},
+ archlabel/.style={dLabel},archnote/.style={dNote},archfuture/.style={dFuture}
+}

@@ -227,8 +227,8 @@ def test_revoke_removes_data_and_queued_notifications(service):
     assert client.post("/api/v1/alerts/"+note["data"]["alert_id"]+"/acknowledge",headers=caregiver).status_code==404
 
 
-@pytest.mark.parametrize("source,age",[("device_diagnostic",3),("synthetic",500)])
-def test_diagnostic_and_stale_data_never_create_health_alerts(service,source,age):
+@pytest.mark.parametrize("source,age",[("device_diagnostic",500),("synthetic",500)])
+def test_stale_data_never_create_health_alerts(service,source,age):
     client,_,_=service
     elder_id,elder,_=account(client)
     now=int(time.time())

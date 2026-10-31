@@ -1,0 +1,22 @@
+{
+  "version_code": 22,
+  "apk_sha256": "f9af2bcc811724c818f8df51b636cb2a8f9b60fbc78abccdcaae14f6cb741b88",
+  "client_revision_date": "2026-10-31",
+  "client_timezone": "America/Los_Angeles",
+  "device_model": "Samsung SM-S901E",
+  "android_version": "13",
+  "recorded_at": "2026-10-31T07:46:25.583244+00:00",
+  "result": "ACTIVE_SCOPE_DELIVERING_LEGACY_SCOPE_RETAINED",
+  "user_requested_new_reading_delivery": true,
+  "account_or_server_changed": false,
+  "opening_app_starts_uploads": false,
+  "active_scope_pending_observed": 0,
+  "legacy_other_scope_count_before": 200,
+  "legacy_other_scope_count_after": 200,
+  "queue_rebound_or_deleted": false,
+  "successful_current_scope_delivery_observed": true,
+  "server_new_packets_observed": 213,
+  "legacy_ciphertext_hash_compared_on_real_device": false,
+  "isolated_legacy_ciphertext_unchanged_test": true,
+  "interpretation": "New account/server scope uses a separate encrypted file. The old encrypted queue is never reassigned, uploaded as this account, or deleted. The normal wearable monitoring action starts new sample delivery."
+}

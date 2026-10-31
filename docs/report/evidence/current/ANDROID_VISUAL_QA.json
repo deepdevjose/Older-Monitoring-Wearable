@@ -1,0 +1,32 @@
+{
+  "version_code": 22,
+  "apk_sha256": "f9af2bcc811724c818f8df51b636cb2a8f9b60fbc78abccdcaae14f6cb741b88",
+  "client_revision_date": "2026-10-31",
+  "client_timezone": "America/Los_Angeles",
+  "device_model": "Samsung SM-S901E",
+  "android_version": "13",
+  "recorded_at": "2026-10-31T07:46:25.583244+00:00",
+  "result": "PASS",
+  "reviewed_at": "2026-10-31T07:46:25.583244+00:00",
+  "scope": "48 synthetic fixture captures reviewed; actual adult UI and histories checked via native hierarchy",
+  "font_scales": [
+    1.0,
+    2.0
+  ],
+  "roles": [
+    "elder",
+    "caregiver"
+  ],
+  "preview_checks": 7198,
+  "synthetic_screenshots_reviewed": 48,
+  "capture_hashes_match_preview_evidence": true,
+  "production_application_captured": false,
+  "review": [
+    "All 48 final captures inspected in adult/caregiver contact sheets",
+    "Large-font controls scroll; top/bottom captures do not expose every intermediate row at once",
+    "Both role views show outlying optical estimates despite false quality flags in tests",
+    "Chart coordinate test passes for positive and negative 1e308 without clipping input values",
+    "Actual S22 Today has both numerical optical estimates and a live connection; both saved Day histories loaded",
+    "No claim of new full onboarding, remote caregiver audibility or medical accuracy"
+  ]
+}

@@ -49,6 +49,9 @@ CREATE TABLE IF NOT EXISTS metric_history_rollups (
 CREATE TABLE IF NOT EXISTS metric_history_indexed (
  reading_id INTEGER PRIMARY KEY REFERENCES readings(id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS metric_history_policy (
+ id INTEGER PRIMARY KEY CHECK(id=1), version INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS learning_records (
  id TEXT PRIMARY KEY, elder_id TEXT NOT NULL REFERENCES patients(id),
  sample_id TEXT NOT NULL, created_at INTEGER NOT NULL, detail TEXT NOT NULL,
@@ -129,6 +132,19 @@ class Database:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=FULL")
             conn.executescript(SCHEMA)
+            # Rebuild only derived aggregates once when optical display policy changes.
+            # Original encrypted readings are retained; bounded lazy backfill reports coverage.
+            conn.execute("BEGIN IMMEDIATE")
+            try:
+                policy=conn.execute("SELECT version FROM metric_history_policy WHERE id=1").fetchone()
+                if policy is None or policy[0] != 2:
+                    conn.execute("DELETE FROM metric_history_indexed")
+                    conn.execute("DELETE FROM metric_history_rollups")
+                    conn.execute("INSERT INTO metric_history_policy VALUES(1,2) ON CONFLICT(id) DO UPDATE SET version=excluded.version")
+                conn.commit()
+            except BaseException:
+                conn.rollback()
+                raise
             columns={row[1] for row in conn.execute("PRAGMA table_info(alerts)")}
             if "recovered_at" not in columns:
                 conn.execute("ALTER TABLE alerts ADD COLUMN recovered_at INTEGER")

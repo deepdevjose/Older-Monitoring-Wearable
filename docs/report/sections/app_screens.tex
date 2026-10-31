@@ -1,0 +1,150 @@
+\clearpage
+\section{Current mobile application: screen-by-screen guide}
+\label{app:mobile-screens}
+
+This atlas documents the code 22 interface on a Samsung S22 running Android 13. The capture application uses the current production Java and resources, with a separate application identity, fictional account names and an isolated HTTPS database. Its wearable observations come from the physical ESP32 bench assembly. Registration panels show forms before submission; the controlled accounts used for acquisition are created separately through the API. No sensor value is painted into a screen or replaced with an example value.
+
+The older-adult live panels were captured while authenticated SPP acquisition and server upload were active. Caregiver panels subsequently retrieve the same retained observations after adult approval; their visible timestamps identify the age of the last reading. The two roles were captured successively on one handset. Learning insights uses explicitly synthetic exercises; its three-score panels come from a supplementary API-only capture pass. The application window remains protected during app-owned Canvas capture. All panels use 100\% text; the separate interface campaign also checks enlarged text.\cite{currentrevision,appatlas}
+
+\begin{table}[H]\small
+\caption{How to read the current application atlas. Each area is explained next to its native screen, rather than inferred from a photograph of the phone.}
+\begin{tabularx}{\textwidth}{@{}P{30mm}P{41mm}Y@{}}\toprule
+Area & Main task & What the reader can inspect\\\midrule
+Account entry & Sign in or create an account & Role, name, email and masked password steps\\
+Wearable setup & Connect the adult's sensor & Preparation, selection, authentication and reception state\\
+Today & Understand the latest information & Pulse, estimated oxygen, surroundings, movement and care actions\\
+Metric history & Inspect a measurement over time & Day/Week/Month, averages, dates, gaps and latest saved value\\
+Updates and Care & Coordinate with the care circle & Notices, individual review, approval and agreed reminders\\
+Settings & Reach less frequent controls & Reading details, notifications, connection and display preference\\
+Privacy and security & Understand and control sharing & Optional permissions, consent, session and encrypted storage\\
+Learning insights & Inspect model exercises & Saved synthetic classes, confidence and role-specific access\\\bottomrule
+\end{tabularx}
+\end{table}
+
+\newcommand{\AppScreenPair}[6]{%
+\begin{figure}[H]\centering
+\begin{subfigure}[t]{.46\textwidth}\centering
+\includegraphics[width=\linewidth,height=.54\textheight,keepaspectratio]{system/current/#1}
+\caption{#2}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{.46\textwidth}\centering
+\includegraphics[width=\linewidth,height=.54\textheight,keepaspectratio]{system/current/#3}
+\caption{#4}
+\end{subfigure}
+\caption{#5}\label{#6}
+\end{figure}}
+
+\clearpage
+\subsection{Account entry: a clear starting point and an explicit role}
+Sign in presents the two credentials needed to recover an existing account. Account creation starts with a role choice expressed as an everyday activity. That choice determines the later permissions and navigation: the older adult connects the wearable and approves access; a caregiver first requests access to someone else's information. Server administration is reached after authentication through Settings.
+
+\AppScreenPair{elder_signin_top.png}{Sign in: email, masked password and account creation.}{elder_register_role_top.png}{Choose older adult or caregiver before entering profile details.}{Native entry screens. These are account-entry views before submission, not a claim that the capture runner completed registration through these controls. The role has an authorisation consequence beyond changing the greeting.}{fig:app-entry}
+
+\clearpage
+\subsection{Account creation: one category of information at a time}
+The next screens ask for a name and then an email address. A progress indicator locates the person within the four-step task. Back and Continue support correction without showing an entire technical form at once. The name identifies the person in their care circle; the email is used for sign in. The fictional values in these form walkthroughs are interface examples, not participant records.
+
+\AppScreenPair{elder_register_name_top.png}{Name: the profile label used in the interface.}{elder_register_email_top.png}{Email: the account's sign-in identifier.}{Separate name and email steps illustrate the progressive registration design. The screenshots demonstrate the information hierarchy; they do not establish that this layout reduces cognitive effort for all older adults.}{fig:app-profile}
+
+\clearpage
+\subsection{A protected account and a gentle transition to the wearable}
+The final registration step requests a password and acknowledgement of the application's scope. Password visibility is an explicit choice. After signing in as the older adult, wearable setup begins with three physical preparation instructions. The app uses the phone as a gateway, so the wearable and handset must remain close enough for Bluetooth communication.
+
+\AppScreenPair{elder_register_password_top.png}{Account protection: password entry and acknowledgement.}{elder_setup_ready_top.png}{Wearable preparation: power, proximity and one next action.}{The password panel is a form before submission with no usable credential published. The wearable panel comes from the controlled adult account. The change of task separates account information from physical device setup.}{fig:app-password-ready}
+
+\clearpage
+\subsection{Wearable setup: find the correct device}
+The proximity step explains the purpose of Bluetooth before presenting device selection. The next screen lists the wearable and its connection state. Android's Bluetooth permission and pairing are separate from the application's private setup-key authentication. The commissioning key is entered once and encrypted for the adult, server and wearable; it is not printed in this atlas. The firmware allows one authenticated phone connection at a time.
+
+\AppScreenPair{elder_setup_nearby_top.png}{Proximity and pairing guidance.}{elder_setup_choose_top.png}{Search for the wearable and inspect its connection state.}{The setup sequence offers a short explanation before the technical device list. A Bluetooth device name or address identifies a candidate; successful app authentication is required before its sensor stream is accepted.}{fig:app-device-choice}
+
+\clearpage
+\subsection{Connection completion: acquisition and delivery are visible}
+The connected screen distinguishes receiving data on the phone from a server acknowledgement. Sample and pending counts are operational information, kept away from the main health summary. Reading details adds the latest saved timestamp, source, current measurements and history explanations. Counts can increase between screenshots because acquisition continues while the pages are drawn.
+
+\AppScreenPair{elder_device_top.png}{Authenticated reception and the connection checkpoint.}{elder_reading_details_top.png}{Reading details: saved state, source and wearable status.}{Live acquisition and saved-state inspection from the same controlled adult account. Server confirmation and an empty pending queue establish observed delivery during this run; a connected label alone would establish only the phone-side link.}{fig:app-delivery}
+
+\clearpage
+\subsection{Older-adult Today: readings first, details on demand}
+Today places the wearable state, help action and personal readings at the front of the task. Heart rate and estimated oxygen are shown as numerical sensor estimates with units. Scrolling reveals surface and ambient temperature and movement. Tapping a card opens that metric's saved history. The cards update their text and freshness in place; motion does not create intermediate physiological values.
+
+\AppScreenPair{elder_live_home_top.png}{Today: connection, help, pulse and estimated oxygen.}{elder_live_home_middle.png}{Further down Today: surroundings and movement.}{Current live screens acquired from the MAX30102, GY906 and MPU6050 bench assembly. Numerical optical estimates remain visible outside configured alert limits and when a quality flag is false. An unavailable computation remains absent. The visible values are sensor outputs, not independently calibrated reference measurements.}{fig:app-adult-live}
+
+\clearpage
+\subsection{Optical histories: inspect changes without hiding outliers}
+Heart rate and estimated oxygen have separate charts and units. Day, Week and Month select a time interval; the chart summarises stored readings within that interval rather than inventing a continuous trace. Earlier, Later and Choose date move the window. The latest value and range beneath the chart help distinguish the last saved estimate from the interval average.
+
+\AppScreenPair{elder_history_heart_rate_bpm_top.png}{Heart-rate history, in beats per minute.}{elder_history_spo2_percent_top.png}{Estimated-oxygen history, in percent.}{Both optical charts retrieve the adult's real stored device observations through HTTPS. The short bench run occupies only part of a day, so sparse buckets are expected. Numeric outliers are retained; missing estimates leave gaps, and quality metadata remains stored with the original packet.}{fig:app-optical-history}
+
+\clearpage
+\subsection{Dates and periods: keep the time window explicit}
+The lower part of a history view provides Earlier, Later and Choose date, followed by the latest saved estimate and range. These controls distinguish changing a time window from changing the selected person. Week and Month use wider aggregation buckets; expanding the interval does not create observations for times when the wearable was not recording.
+
+\AppScreenPair{elder_history_heart_rate_bpm_bottom.png}{Date navigation, latest saved value and range.}{elder_history_month_top.png}{Month selected for the movement metric.}{The optical range retains outlying estimates from the bench sequence. The monthly chart still contains only the short recorded interval. A selected period is a viewing window, not a claim of continuous month-long acquisition.}{fig:app-history-dates}
+
+\clearpage
+\subsection{Thermal histories: separate the person-facing surface and environment}
+Surface temperature and ambient temperature are distinct measurements from the GY906. Separate cards and histories keep their meanings visible. The surface reading depends on sensor position, distance and surroundings; it is not converted into core body temperature. Configured surface and environment notices use separate rules so the caregiver can review the relevant context.
+
+\AppScreenPair{elder_history_surface_temp_c_top.png}{Surface-temperature history from the GY906.}{elder_history_ambient_temp_c_top.png}{Ambient-temperature history from the same module.}{The two charts use degrees Celsius but represent different quantities. These screenshots document storage and presentation of bench observations, without establishing fever, hypothermia or an individual's thermal exposure.}{fig:app-thermal-history}
+
+\clearpage
+\subsection{Movement history and the meaning of a saved measurement}
+Movement history plots acceleration magnitude, including gravity, from the MPU6050. A value near one g can occur while the board is at rest; this view is not a step counter or proof of a fall. Reading details explains the source and age of measurements and provides the explicit saved-upload action. The encrypted outbox is scoped to its account and server, so changing either does not transfer someone else's pending samples.
+
+\AppScreenPair{elder_history_acceleration_g_top.png}{Movement history: acceleration magnitude in g.}{elder_reading_details_bottom.png}{Reading details: interpretation and history explanations.}{A numeric movement history complements the simpler availability card on Today. The details page provides operational and interpretation information without crowding the main care tasks. Stored averages, live values and unavailable computations remain distinct.}{fig:app-movement-details}
+
+\clearpage
+\subsection{Older-adult Updates and Care: know what happened and who can help}
+Updates gathers persistent notices and reminders. Care shows the approved circle, access requests and the agreed care plan. The adult remains the authority for approving a caregiver. A reminder is an instruction already agreed elsewhere; recording a completion is the adult's declaration and does not verify ingestion or prescribe a dose.
+
+\AppScreenPair{elder_alerts_top.png}{Updates: notices available to the older adult.}{elder_care_top.png}{Care: invitations, approved people and the care plan.}{Controlled adult views backed by the real local API. Physical threshold notices retain their device source; the explicit help event used in the capture campaign retains its synthetic test provenance. A help request does not establish autonomous fall detection or an emergency response.}{fig:app-adult-care}
+
+\clearpage
+\subsection{Caregiver Today: understand whose information is being reviewed}
+The caregiver starts with an approved person's name. Reviewable notices and that person's readings follow, then the care plan and any consented shared location. This role cannot attach the wearable on the adult's behalf. The timestamp describes the newest retained observation and remains visible when live acquisition has ended.
+
+\AppScreenPair{caregiver_home_top.png}{Selected person, notices and shared readings.}{caregiver_home_bottom.png}{Surroundings, movement and the agreed care plan.}{Current caregiver views for the approved fictional adult Alex Rivera. They retrieve the observations retained during the preceding live acquisition, rather than a separate synthetic physiological trace. The successive same-handset capture does not demonstrate simultaneous reception on two remote phones.}{fig:app-caregiver-today}
+
+\clearpage
+\subsection{Caregiver review and coordination}
+Updates supports reviewing a notice for the selected adult. Acknowledgement is recorded for the caregiver who performed it; it does not silently mark another caregiver's review complete. Care provides the link request and reminder actions allowed by the approved relationship. Revoking that relationship removes subsequent access to the adult's readings and related resources.
+
+\AppScreenPair{caregiver_alerts_top.png}{Notice context and the caregiver's review action.}{caregiver_care_bottom.png}{The approved adult's care plan and reminder actions.}{Role-specific review and coordination screens. A reviewed notice records a human action in the application; it is separate from a rule episode's recovery and from evidence that the person has received help.}{fig:app-caregiver-care}
+
+\clearpage
+\subsection{Caregiver history: the same measurement, an authorised view}
+History identifies the selected adult above the chart. The metric, period and source stay attached to each request, preventing a late response for another person or metric from replacing the current view. Reading details exposes the retained timestamp and measurement source for that same adult. The caregiver consults these data without operating the adult's sensor connection.
+
+\AppScreenPair{caregiver_history_heart_rate_bpm_top.png}{Authorised heart-rate history names the selected adult.}{caregiver_history_spo2_percent_top.png}{Authorised estimated-oxygen history for the same adult.}{These screens read the same isolated server records used by the adult's history. Access was requested and approved before capture. The role-specific wording makes patient selection visible instead of presenting an anonymous stream of numbers.}{fig:app-caregiver-history}
+
+\clearpage
+\subsection{Settings: operational controls in a predictable place}
+Settings collects less frequent tasks: Reading details, wearable setup for the adult, notifications, privacy, Learning insights, display preference, server connection, security and About. Reduce motion is a persistent preference. The notification page displays channel state and the controls for enabling, stopping and reviewing phone permissions; it does not assume that permission means a notice was heard.
+
+\AppScreenPair{elder_account_top.png}{Settings groups tasks around the signed-in person.}{elder_notification_settings_top.png}{Notification state, explicit service controls and permissions.}{Administration and technical explanations sit behind Settings while Today remains focused on care. The local notification service requires an explicit action and connectivity. Native posting, audible playback and a person's response are different observations.}{fig:app-settings-notifications}
+
+\clearpage
+\subsection{Privacy: sharing starts with the adult's decision}
+Location and local sound are optional, separate choices. The adult configures a home area before enabling outside-home location sharing. Local sound processing uses short in-memory samples and does not upload recordings. Revoke and Stop controls make the lifetime of these features visible. Android permission and server consent are both required before a feature can operate.
+
+\AppScreenPair{elder_privacy_top.png}{Outside-home location controls and consent state.}{elder_privacy_bottom.png}{Local sound choice, revocation and stop controls.}{Privacy controls were captured without enabling GPS or microphone acquisition for this campaign. The screens demonstrate the available controls and default consent state; no fabricated coordinates, location trace or audio recording are inserted into the report.}{fig:app-privacy}
+
+\clearpage
+\subsection{Connection and security: support information stays accessible}
+The server address is a Settings task for the person managing deployment. Changing it requires signing in again and leaves pending readings attached to the previous account/server scope. The security page explains encrypted session and queue storage, certificate and hostname verification, and approved-circle access. These are concrete boundaries rather than a general promise of complete security.
+
+\AppScreenPair{elder_connection_top.png}{HTTPS endpoint management after sign in.}{elder_security_top.png}{Session, encrypted storage and access information.}{The address shown is the controlled capture deployment. It is not a public service or credential. AndroidKeyStore protects phone-side secrets; the local server applies its own encryption and resource authorisation.}{fig:app-connection-security}
+
+\clearpage
+\subsection{About and Learning insights: explain scope and inspect the model}
+About explains the application's purpose and measurement limitations outside the everyday summary. Learning insights is a separate synthetic workspace. It shows the classifier identity, class and confidence for saved exercises; its body-temperature input belongs to the CSV model and is not replaced by the GY906 surface reading. An exercise does not become a wearable sample or a clinical alert.
+
+\AppScreenPair{elder_about_top.png}{About: purpose and reading limitations.}{elder_learning_results.png}{Adult Learning insights: retained synthetic predictions.}{The care summary and model exercises have different data sources. The three saved example classifications are real API responses to explicitly synthetic inputs; confidence is a model score, not medical certainty.}{fig:app-about-learning}
+
+\clearpage
+\subsection{Caregiver Settings and read-only model results}
+The caregiver receives a Settings structure appropriate to their role. They can inspect the approved adult's saved model exercises, while adding examples remains an adult action. Wearable setup and adult privacy acquisition are absent from the caregiver's controls. This keeps administration aligned with the person who owns the measurements.
+
+\AppScreenPair{caregiver_learning_results.png}{Read-only access to the selected adult's saved exercises.}{caregiver_account_top.png}{Caregiver Settings with role-appropriate destinations.}{The model results come from the same saved synthetic exercises shown in the adult view. This completes the screen-level separation between producing data, authorising access and reviewing information.}{fig:app-caregiver-learning}
+

@@ -25,10 +25,10 @@ No hay Firebase, Google Cloud, analítica, anuncios, mapas externos, geocodifica
 
 | Solicitud | Implementación y límite |
 |---|---|
-| Pulso alto/bajo y oxígeno bajo | Reglas transparentes de escenario sintético, con validez, frescura, persistencia y recuperación; los datos de dispositivo no generan diagnósticos. La regla de oxígeno del laboratorio es `<95`, sin significado clínico atribuido. |
-| Oxígeno alto | Un valor superior a 100 % se trata como inválido. No se diagnostica hiperoxia con este sensor. |
-| Temperatura corporal extrema | Se muestra temperatura **superficial** y ambiente; no se convierte a temperatura central, fiebre ni hipotermia. Los escenarios de alerta son educativos. |
-| Temperatura ambiental extrema | Escenarios educativos separados de la superficie. No establece exposición clínica individual. |
+| Pulso alto/bajo y oxígeno bajo | Avisos por límites configurados: pulso `<50` o `>120` bpm y oxígeno `<95%`, con tres estimaciones recientes consecutivas. Las estimaciones fuera de rango se muestran y almacenan con sus banderas de calidad; los avisos no son diagnósticos. Episodios físicos y sintéticos separados, con recuperación y sin repetición por episodio. |
+| Oxígeno alto | Una estimación superior a 100 % se muestra como salida del sensor y conserva su calidad, sin asignarle significado clínico. No se diagnostica hiperoxia ni se inventa un umbral superior de alerta. |
+| Temperatura corporal extrema | Se muestra temperatura **superficial** y ambiente; no se convierte a temperatura central, fiebre ni hipotermia. Los avisos de límites requieren revisión y no tienen validación clínica. |
+| Temperatura ambiental extrema | Avisos de límites configurados separados de la superficie. No establece exposición clínica individual. |
 | Wearable puesto/no puesto | Oscuridad puede provenir de una habitación, bolsillo o ropa. Se informa incertidumbre; contacto óptico puede corroborar, sin demostrar uso. |
 | Presión arterial | No disponible: no existe sensor de presión arterial ni modelo clínico validado para inferirla. |
 | Deshidratación | Recordatorio de agua, no detector. Estos sensores no establecen hidratación. |

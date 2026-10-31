@@ -1,32 +1,31 @@
 {
-  "boot_reset_performed": true,
-  "serial_byte_writes": false,
-  "frames": 63,
+  "port": "/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0",
+  "baud": 115200,
+  "duration_seconds": 25.086,
+  "frames": 25,
   "invalid_json_frames": 0,
-  "wifi_associated": true,
-  "wifi_ip": "192.168.3.8",
-  "gateway": "192.168.3.1",
-  "ntp_started": true,
-  "clock_valid_frames": 59,
-  "clock_max_error_seconds": 0.55,
-  "bluetooth_ready": true,
-  "disconnect_reasons": {},
-  "target_scan_matches": null,
-  "target_scan_metadata": [],
-  "sensor_online_flags": {
-    "mpu6050:True": 63,
-    "gy906:True": 63
+  "non_json_lines": 34,
+  "oversized_buffers_discarded": 0,
+  "uptime_discontinuities": 0,
+  "frequency_hz": 1.0,
+  "device_ids": {
+    "elder-demo-01": 25
   },
   "optical_states": {
-    "waiting": 1,
-    "no_finger": 62
+    "warming_up": 25
   },
-  "uptime_discontinuities": 0,
-  "privacy": "Only aggregate statuses; no raw sensor values, credentials, neighbouring SSIDs, MACs or pairing codes retained.",
-  "duration_seconds": 65.1,
-  "frequency_hz": 0.999,
-  "recorded_at": "2026-10-27T10:33:44.457951+00:00",
-  "canonical_source_sha256": "8e439538070aa856e83b3e74c70b315d5393f532416915fde14058090cfe38e3",
-  "firmware_identity": "Application image verified during app-only flash; see FIRMWARE_NETWORK_EVIDENCE.json.",
-  "actions": "App-only flash followed by reset and aggregate serial observation; no pairing acceptance or sensor-value retention."
+  "validity_flags": {
+    "finger_detected:True": 25,
+    "heart_rate_valid:True": 25,
+    "spo2_valid:True": 24,
+    "spo2_valid:False": 1
+  },
+  "sensor_online_flags": {
+    "mpu6050:True": 25,
+    "gy906:True": 25
+  },
+  "firmware_identity": "unknown; serial telemetry does not attest the compiled source",
+  "canonical_source_sha256": "69b02ce531dd43ba3663a4de4a2e37574356dc7691a8340a44f81ce6523c0573",
+  "privacy": "Aggregate metadata only; physiological and raw sensor values are not retained.",
+  "actions": "Read only; no serial writes, explicit reset, flash, pairing acceptance or NVS changes."
 }

@@ -3,20 +3,24 @@
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
 \usepackage{newtxtext,newtxmath}
-\usepackage[scaled=0.93]{helvet}
+\usepackage{helvet}
 \usepackage[a4paper,top=23mm,bottom=24mm,left=24mm,right=24mm,headheight=15pt]{geometry}
 \usepackage{microtype,graphicx,booktabs,tabularx,longtable,array}
 \usepackage[table]{xcolor}
 \usepackage{caption,subcaption,enumitem,fancyhdr,lastpage,float,placeins}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc,shapes.geometric}
-\usepackage{titlesec,listings,xurl}
+\usepackage{titlesec,listings,xurl,needspace}
 \usepackage[hidelinks,pdfusetitle]{hyperref}
-\definecolor{ink}{HTML}{16334A}
-\definecolor{accent}{HTML}{087E83}
-\definecolor{light}{HTML}{F0F4F6}
-\definecolor{muted}{HTML}{536573}
-\definecolor{warning}{HTML}{AC6518}
+\definecolor{ink}{HTML}{203247}
+\definecolor{accent}{HTML}{456B86}
+\definecolor{light}{HTML}{F2F5F8}
+\definecolor{muted}{HTML}{5C6979}
+\definecolor{warning}{HTML}{95642F}
+\definecolor{teal}{HTML}{39766E}
+\definecolor{stroke}{HTML}{C8D3DE}
+\definecolor{bluewash}{HTML}{EAF0F6}
+\definecolor{tealwash}{HTML}{EAF3F0}
 \hypersetup{pdftitle={IndiCare Mobile IoT Monitoring Technical Report},pdfauthor={IndiCare project},pdfsubject={IOT308TC Assessment 2 evidence based technical report}}
 \graphicspath{{figures/}}
 \setlength{\parindent}{0pt}
@@ -32,6 +36,7 @@
 \titlespacing*{\section}{0pt}{16pt}{7pt}
 \titlespacing*{\subsection}{0pt}{10pt}{4pt}
 \setlist{nosep,leftmargin=1.5em,topsep=5pt}
+\makeatletter\setlength{\@fptop}{0pt}\makeatother
 \setcounter{tocdepth}{1}
 \setcounter{topnumber}{3}
 \setcounter{bottomnumber}{2}
@@ -54,26 +59,27 @@
 \input{evidence/CURRENT_REVISION}
 \input{evidence/USB_RUN}
 \input{evidence/wordcount}
+\input{sections/diagram_styles}
 \input{sections/diagrams}
 \input{sections/diagram_hardware}
 \input{sections/diagram_mobile}
 \input{sections/tables}
 \newcommand{\HardwarePhotoFigure}{%
-\begin{figure}[htbp]\centering
+\begin{figure}[H]\centering
 \includegraphics[width=.94\textwidth]{hardware_prototype.jpg}
 \caption{Earlier physical prototype photograph supplied by the team. The KEYES carrier and sensor modules document the bench assembly before the microphone and light sensor were removed. The current four-module wiring map is Figure~\ref{fig:wearable-wiring}; this older photograph is not presented as a photograph of the revised arrangement.\cite{hardwarephoto}}\label{fig:hardware-photo}
 \end{figure}}
 \newcommand{\RoleScreensFigure}{%
-\begin{figure}[htbp]\centering
+\begin{figure}[H]\centering
 \begin{subfigure}[t]{.45\textwidth}\centering
-\includegraphics[width=\linewidth,height=.67\textheight,keepaspectratio]{system/elder_live_home_top.png}
+\includegraphics[width=\linewidth,height=.67\textheight,keepaspectratio]{system/current/elder_live_home_top.png}
 \caption{Older adult during authenticated physical reception.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{.45\textwidth}\centering
-\includegraphics[width=\linewidth,height=.67\textheight,keepaspectratio]{system/caregiver_home_top.png}
+\includegraphics[width=\linewidth,height=.67\textheight,keepaspectratio]{system/current/caregiver_home_top.png}
 \caption{Caregiver: selected person and notices to review.}
 \end{subfigure}
-\caption{Code 20 production-view captures on S22 / Android 13, using real HTTPS test accounts in an isolated package/database and 100\% text. The adult is captured during physical SPP reception; the caregiver is captured later after an approved link, reminder and controlled help event. These are successive observations, not simultaneous phones or in-memory fixtures. Full provenance and additional views appear in Appendix~\ref{app:usb-run}.}\label{fig:role-screens}
+\caption{Current code 22 views on S22 / Android 13, with controlled accounts and physical wearable observations. The adult screen was captured during authenticated acquisition and upload. The approved caregiver subsequently retrieves the same retained readings; the displayed age identifies this successive capture. The complete current screen atlas explains each destination in Appendix~\ref{app:mobile-screens}.}\label{fig:role-screens}
 \end{figure}}
 \begin{document}
 \hypersetup{pageanchor=false}
@@ -111,5 +117,6 @@ This prototype must not be used for diagnosis, treatment or clinical decision ma
 \appendix
 \input{sections/appendices}
 \input{sections/system_run}
+\input{sections/app_screens}
 \input{sections/system_atlas}
 \end{document}

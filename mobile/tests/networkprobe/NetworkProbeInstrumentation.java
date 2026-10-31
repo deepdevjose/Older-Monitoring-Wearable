@@ -4,13 +4,15 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.SystemClock;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 
-/** Public health request through the installed target's real HTTPS client. */
+/** Public health by default; existing-account read-only history is explicit opt-in. */
 public final class NetworkProbeInstrumentation extends Instrumentation {
     private Bundle arguments;
 
@@ -35,6 +37,12 @@ public final class NetworkProbeInstrumentation extends Instrumentation {
             }
             Context target = getTargetContext();
             Class<?> client = targetClass("ApiClient");
+            if ("true".equals(arguments.getString("check_history"))
+                    && "true".equals(arguments.getString("check_register_route"))) {
+                result.putString("result", "INVALID_READ_ONLY_OPTIONS");
+                finish(exitCode, result);
+                return;
+            }
             if ("true".equals(arguments.getString("check_config"))) {
                 // Read only endpoint configuration; never load an account/session/token.
                 Class<?> session = targetClass("ApiSession");
@@ -78,6 +86,11 @@ public final class NetworkProbeInstrumentation extends Instrumentation {
                         return;
                     }
                 }
+                if ("true".equals(arguments.getString("check_history"))
+                        && !checkHistory(target, client, base, result)) {
+                    finish(exitCode, result);
+                    return;
+                }
                 result.putString("result", "PASS");
                 result.putString("protocol", "HTTPS");
                 result.putString("client", "installed ApiClient.request; original CA and hostname validation");
@@ -90,6 +103,14 @@ public final class NetworkProbeInstrumentation extends Instrumentation {
             }
             String message = failure.getMessage();
             result.putString("result", "FAIL");
+            try {
+                Class<?> failureType = targetClass("ApiClient$Failure");
+                if (failureType.isInstance(failure)) {
+                    Field status = failureType.getDeclaredField("status");
+                    status.setAccessible(true);
+                    result.putInt("http_status", status.getInt(failure));
+                }
+            } catch (ReflectiveOperationException ignored) { }
             // Never emit arbitrary exception messages, response bodies or private state.
             if (message != null && message.contains("certificate or hostname")) {
                 result.putString("detail", "CERTIFICATE_OR_HOSTNAME_FAILED");
@@ -107,6 +128,61 @@ public final class NetworkProbeInstrumentation extends Instrumentation {
 
     private Class<?> targetClass(String name) throws ClassNotFoundException {
         return Class.forName("org.caremonitor.demo." + name, true, getTargetContext().getClassLoader());
+    }
+
+    private boolean checkHistory(Context target, Class<?> client, String base, Bundle result) throws Exception {
+        // This is the only call to ApiSession.load, and its caller is gated by
+        // check_history. No token, patient ID, reading value or profile is emitted.
+        Class<?> sessionClass = targetClass("ApiSession");
+        Method load = sessionClass.getDeclaredMethod("load", Context.class);
+        load.setAccessible(true);
+        Object session = load.invoke(null, target);
+        if (session == null) {
+            result.putString("result", "NO_VALID_EXISTING_SESSION");
+            return false;
+        }
+        Field sessionBase = sessionClass.getDeclaredField("base");
+        sessionBase.setAccessible(true);
+        if (!base.equals(sessionBase.get(session))) {
+            result.putString("result", "EXISTING_SESSION_ENDPOINT_MISMATCH");
+            return false;
+        }
+        Method call = client.getDeclaredMethod("call", Context.class, sessionClass, String.class, String.class, JSONObject.class);
+        call.setAccessible(true);
+        JSONObject response = (JSONObject) call.invoke(null, target, session, "GET", "/patients", null);
+        JSONArray patients = response.optJSONArray("patients");
+        if (patients == null || patients.length() == 0) {
+            result.putString("result", "NO_AUTHORIZED_HISTORY_PERSON");
+            return false;
+        }
+        String patient = patients.getJSONObject(0).getString("id");
+        if (!patient.matches("[A-Za-z0-9_-]{1,128}")) throw new IllegalArgumentException("Invalid authorized identity");
+        Method history = client.getDeclaredMethod("history", Context.class, sessionClass, String.class, String.class, String.class, long.class);
+        history.setAccessible(true);
+        JSONArray summaries = new JSONArray();
+        result.putBoolean("history_existing_session_only", true);
+        result.putBoolean("history_read_only", true);
+        result.putString("history_patient_scope", "first authorized person returned by GET /patients");
+        int queries = 0, nonempty = 0;
+        for (String metric : new String[]{"heart_rate_bpm", "spo2_percent", "surface_temp_c", "ambient_temp_c", "acceleration_g"}) {
+            for (String period : new String[]{"day", "week", "month"}) {
+                long started = SystemClock.elapsedRealtime();
+                JSONObject saved = (JSONObject) history.invoke(null, target, session, patient, metric, period, 0L);
+                long latency = SystemClock.elapsedRealtime() - started;
+                long count = saved.getJSONObject("summary").getLong("count");
+                if (count < 0) throw new IllegalArgumentException("Invalid sample count");
+                JSONObject coverage = saved.getJSONObject("coverage");
+                summaries.put(new JSONObject().put("metric", metric).put("period", period)
+                        .put("valid_sample_count", count).put("latency_ms", latency)
+                        .put("coverage_complete", coverage.getBoolean("complete")));
+                queries++; if (count > 0) nonempty++;
+                result.putInt("history_completed_queries", queries);
+                result.putInt("history_nonempty_queries", nonempty);
+                result.putString("history_summary", summaries.toString());
+            }
+        }
+        result.putString("history_client", "installed ApiClient.history; authorized wearable source only");
+        return true;
     }
 
     private boolean registrationValidationReached(Method request, Context target, String base) throws Exception {

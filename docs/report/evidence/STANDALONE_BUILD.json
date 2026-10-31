@@ -1,0 +1,14 @@
+{
+  "verified_at": "2026-10-31T10:02:54.006521+00:00",
+  "revision_date": "2026-10-31",
+  "client_timezone": "America/Los_Angeles",
+  "result": "PASS",
+  "source": "docs/IndiCare_LaTeX_Package.zip",
+  "archive_integrity": true,
+  "embedded_checksums_passed_before_build": true,
+  "clean_directory_latex_build_exit_code": 0,
+  "compiled_text_matches_reviewed_pdf": true,
+  "reviewed_pdf_sha256": "d2f0e8e10fba2fcc7d8ceac5b3c8eb619608906589599854c4b94534559fbded",
+  "pages": 56,
+  "scope": "Source-only reproduction from a clean /tmp extraction with installed TeX Live. The final archive adds this verification record; its complete entries are rechecked against the canonical sources. PDF metadata may differ; this is not a new system acceptance campaign."
+}

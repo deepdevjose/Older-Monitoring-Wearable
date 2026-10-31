@@ -41,3 +41,26 @@ def test_active_target_service_prevents_instrumentation_from_interrupting_it():
         "ACTIVITY MANAGER SERVICES\n  * ServiceRecord{1234 u0 org.other.example/.Service}\n"
     )
     assert not probe.target_services_active("ACTIVITY MANAGER SERVICES\n  (nothing)\n")
+
+
+def test_account_history_access_requires_explicit_flag():
+    args=probe.arguments(["--serial","exact-device","--base","https://127.0.0.1:19443/api/v1"])
+    assert args.check_history is False
+    options=probe.instrumentation_options(args.base)
+    assert options[options.index("check_history")+1]=="false"
+    args=probe.arguments(["--serial","exact-device","--base","https://127.0.0.1:19443/api/v1","--check-history"])
+    assert args.check_history is True
+    options=probe.instrumentation_options(args.base,check_history=args.check_history)
+    assert options[options.index("check_history")+1]=="true"
+
+
+def test_read_only_history_cannot_enable_registration_probe():
+    with pytest.raises(SystemExit):
+        probe.arguments(["--serial","exact-device","--base","https://127.0.0.1:19443/api/v1",
+                         "--check-history","--check-register-route"])
+
+
+@pytest.mark.parametrize("serial",["", "-switch", "two devices", "device\nother"])
+def test_history_never_selects_a_device_implicitly(serial):
+    with pytest.raises(SystemExit):
+        probe.arguments(["--serial",serial,"--base","https://127.0.0.1:19443/api/v1","--check-history"])

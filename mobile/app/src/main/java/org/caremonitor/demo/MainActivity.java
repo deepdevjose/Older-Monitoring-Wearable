@@ -46,8 +46,8 @@ public final class MainActivity extends Activity {
     private String homeBuiltKey="";
     private final Map<String,MetricViews> metricViews=new LinkedHashMap<>();
     private static final class MetricViews {
-        final LinearLayout tile; final TextView value,availability; final String title;
-        MetricViews(LinearLayout tile,TextView value,TextView availability,String title){this.tile=tile;this.value=value;this.availability=availability;this.title=title;}
+        final LinearLayout tile; final TextView value,availability,time; final String title;
+        MetricViews(LinearLayout tile,TextView value,TextView availability,TextView time,String title){this.tile=tile;this.value=value;this.availability=availability;this.time=time;this.title=title;}
     }
     private ImageView setupStatusIcon;
     private LinearLayout deviceList;
@@ -173,6 +173,7 @@ public final class MainActivity extends Activity {
         else if(page.equals("privacy")){settingsBack();label("Your privacy",34,INK,true);paragraph("You choose what to share and when.");if(elder())privacy();}
         else if(page.equals("notification_settings")){settingsBack();label("Notifications",34,INK,true);notificationSettings();}
         else if(page.equals("security")){settingsBack();label("Your information",34,INK,true);securityDetails();}
+        else if(page.equals("about")){settingsBack();aboutCareMonitor();}
         else if(page.equals("reading_details")){settingsBack();readingDetails();}
         else account();
         syncLabel=text("",16,MUTED,false);syncLabel.setPadding(0,dp(10),0,dp(12));syncLabel.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);content.addView(syncLabel,1);updateSyncLabel();
@@ -186,11 +187,12 @@ public final class MainActivity extends Activity {
     }
     private void brand(){
         LinearLayout brand=new LinearLayout(this);brand.setGravity(Gravity.CENTER_VERTICAL);brand.setPadding(0,0,0,dp(session==null?20:8));content.addView(brand);
-        ImageView mark=icon(R.drawable.ic_heart,BLUE,22);FrameLayout tile=new FrameLayout(this);tile.setBackground(shape(SOFT,12));tile.addView(mark,new FrameLayout.LayoutParams(dp(22),dp(22),Gravity.CENTER));brand.addView(tile,new LinearLayout.LayoutParams(dp(36),dp(36)));
-        TextView word=text("CareMonitor",17,INK,true);LinearLayout.LayoutParams wordLp=new LinearLayout.LayoutParams(0,-2,1);wordLp.leftMargin=dp(10);brand.addView(word,wordLp);
+        boolean summary=session!=null&&page.equals("home");
+        if(!summary){ImageView mark=icon(R.drawable.ic_heart,BLUE,22);FrameLayout tile=new FrameLayout(this);tile.setBackground(shape(SOFT,12));tile.addView(mark,new FrameLayout.LayoutParams(dp(22),dp(22),Gravity.CENTER));brand.addView(tile,new LinearLayout.LayoutParams(dp(36),dp(36)));}
+        TextView word=text(summary?"Today":"CareMonitor",summary?34:17,INK,true);LinearLayout.LayoutParams wordLp=new LinearLayout.LayoutParams(0,-2,1);wordLp.leftMargin=summary?0:dp(10);brand.addView(word,wordLp);
         if(session!=null){TextView profile=text(initials(session.name),16,BLUE,true);profile.setGravity(Gravity.CENTER);profile.setMinHeight(dp(56));profile.setBackground(interactive(SOFT,28));profile.setContentDescription("Open settings");profile.setOnClickListener(v->openPage("account"));brand.addView(profile,new LinearLayout.LayoutParams(dp(56),dp(56)));}
     }
-    private boolean isSettingsDetail(){return page.equals("connection")||page.equals("privacy")||page.equals("notification_settings")||page.equals("security")||page.equals("reading_details");}
+    private boolean isSettingsDetail(){return page.equals("connection")||page.equals("privacy")||page.equals("notification_settings")||page.equals("security")||page.equals("reading_details")||page.equals("about");}
     private void settingsBack(){textAction(content,"Settings",()->openPage("account"),false);}
     private void openPage(String target){hideKeyboard();if(!target.equals("history"))clearHistory();animateNextPage=!page.equals(target);page=target;notice="";render();refresh();}
     private void hideKeyboard(){View focus=getCurrentFocus();if(focus!=null)((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(focus.getWindowToken(),0);}
@@ -206,7 +208,7 @@ public final class MainActivity extends Activity {
         emailInput.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_NEXT);emailInput.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_NEXT){passwordInput.requestFocus();return true;}return false;});
         passwordInput.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);passwordInput.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_DONE){authenticate();return true;}return false;});
         authNotice();
-        reassurance("Your private space", "CareMonitor does not replace medical care or emergency services.");
+        textAction(content,"About CareMonitor",this::showAboutCareMonitor,false);
         LinearLayout actions=authFooter();button(actions,busy?"Signing in…":"Sign in",BLUE,this::authenticate);
         textAction(actions,"Create an account",()->{rememberAuth();hideKeyboard();registering=true;setup=new AccountSetup();acknowledged=false;notice="";render();},true);
         if(!getSharedPreferences("caremonitor_endpoint",0).getString("previous_base","").isEmpty())button(content,"Restore my previous connection",SOFT,()->{
@@ -245,8 +247,9 @@ public final class MainActivity extends Activity {
                 labelIn(card,setup.elder()?"Older adult":"Caregiver",17,BLUE,true);
                 passwordInput=input(card,"Choose a password","",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);passwordInput.setSaveEnabled(false);
                 passwordVisibility(card,passwordInput);
-                termsCheck=new CheckBox(this);termsCheck.setText("I understand the limitations. I will use test data and will not make medical decisions with this app.");
+                termsCheck=new CheckBox(this);termsCheck.setText("I have read About CareMonitor and understand its use and limitations.");
                 termsCheck.setTextColor(INK);termsCheck.setTextSize(17);termsCheck.setMinHeight(dp(56));termsCheck.setChecked(acknowledged);termsCheck.setEnabled(!busy);card.addView(termsCheck);
+                textAction(card,"About CareMonitor",this::showAboutCareMonitor,false);
             }
         }
         if(nameInput!=null||emailInput!=null){EditText field=nameInput!=null?nameInput:emailInput;field.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_NEXT);
@@ -352,11 +355,8 @@ public final class MainActivity extends Activity {
             item.setSelected(selected);item.setContentDescription(labels[i]);item.setFocusable(true);item.setOnClickListener(v->openPage(target));nav.addView(item,new LinearLayout.LayoutParams(0,-2,1));}
     }
     private void home(){
-        TextView date=labelIn(content,new java.text.SimpleDateFormat("EEEE, d MMMM",Locale.ENGLISH).format(new Date()).toUpperCase(Locale.ENGLISH),13,MUTED,true);
-        date.setLetterSpacing(.06f);
-        String first=session.name.trim().isEmpty()?"there":session.name.trim().split("\\s+")[0];
-        label(elder()?"Hello, "+first+".":"Your care today",34,INK,true);
-        paragraph(elder()?"Your day, one step at a time.":"Stay close to the people you support.");
+        TextView date=labelIn(content,new java.text.SimpleDateFormat("EEEE, d MMMM",Locale.ENGLISH).format(new Date()),16,MUTED,false);
+        date.setPadding(0,0,0,dp(8));
         if(!elder()){
             patientChooser();
             if(!approvedPatient(patientId)){
@@ -366,20 +366,19 @@ public final class MainActivity extends Activity {
                 button(welcome,"Link to a person",BLUE,()->openPage("care"));homeBuiltKey=homeStructureKey();return;
             }
         }
-        connectionStrip();
+        boolean largeCaregiver=!elder()&&getResources().getConfiguration().fontScale>=1.3f;
+        if(!largeCaregiver)connectionStrip();
         if(elder()){
             button(content,"Ask for help",RED,()->confirm("Send a request for help?",
                 (caregivers.length()==0?"No caregiver is linked yet, so nobody in your circle can receive this request. ":"Your approved caregivers will receive a notice. ")+"This does not call emergency services.",this::sendHelp));
             helpButton=(Button)content.getChildAt(content.getChildCount()-1);helpStatus=labelIn(content,"",17,INK,false);helpStatus.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);updateHelp();
-            nextReminder();
         }else{
-            int pending=pendingReviewCount();LinearLayout updates=card(content);
-            labelIn(updates,pending>0?"Needs your review":"Care updates",24,INK,true);
-            labelIn(updates,pending>0?pending+(pending==1?" notice is waiting.":" notices are waiting."):"No notices awaiting review.",18,MUTED,false);
-            button(updates,"Review updates",pending>0?BLUE:SOFT,()->openPage("alerts"));
+            int pending=pendingReviewCount();LinearLayout updates=group(content);
+            settingsRow(updates,pending>0?"Needs your review":"Care updates",pending>0?pending+(pending==1?" notice is waiting":" notices are waiting"):"You're all caught up",R.drawable.ic_nav_alerts,()->openPage("alerts"));
         }
         metrics(readingsPayload());
-        if(!elder())nextReminder();
+        if(largeCaregiver)connectionStrip();
+        nextReminder();
         if(!elder())sharedLocation();
         textAction(content,"Refresh",this::refreshFromUser,true);
         homeBuiltKey=homeStructureKey();
@@ -392,15 +391,15 @@ public final class MainActivity extends Activity {
         homeConnection=labelIn(copy,"",17,INK,true);homeConnection.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
         homeReadingContext=labelIn(copy,"",15,MUTED,false);
         strip.addView(icon(R.drawable.ic_chevron_right,MUTED,18),new LinearLayout.LayoutParams(dp(18),dp(18)));
-        strip.setBackground(interactive(Color.TRANSPARENT,16));strip.setFocusable(true);strip.setContentDescription("Reading details");strip.setOnClickListener(v->openPage("reading_details"));
-        if(elder()){button(content,"Connect my wearable",BLUE,()->{deviceStep=0;openPage("device");});homeWearableButton=(Button)content.getChildAt(content.getChildCount()-1);homeWearableButton.setVisibility(monitor!=null&&monitor.isRunning()?View.GONE:View.VISIBLE);}
+        strip.setBackground(interactive(Color.TRANSPARENT,16));strip.setFocusable(true);strip.setContentDescription(elder()?"Manage my wearable":"View shared reading history");
+        strip.setOnClickListener(v->{if(elder()){deviceStep=monitor!=null&&monitor.isRunning()?3:0;openPage("device");}else openHistory("heart_rate_bpm");});
         updateConnectionStrip();
     }
     private void updateConnectionStrip(){
         if(homeConnection==null||homeStatus==null)return;
         boolean live=elder()&&monitor!=null&&monitor.isFresh();
         String freshness=readingFreshness();
-        String title=live?"Wearable connected":elder()&&monitor!=null&&monitor.isRunning()?"Connecting to your wearable":elder()?"Wearable not connected":"Shared readings";
+        String title=live?"Wearable connected":elder()&&monitor!=null&&monitor.isRunning()?"Connecting to your wearable":elder()?"Connect my wearable":"Shared readings";
         String subtitle=live?"Updating from your wearable":readingsPayload()==null?"No readings available yet":ReadingAge.description(savedReadingAge());
         if(!live&&readingsPayload()!=null&&!freshness.equals("fresh"))subtitle+=" · saved";
         setLabel(homeConnection,title);setLabel(homeReadingContext,subtitle);
@@ -456,12 +455,19 @@ public final class MainActivity extends Activity {
         if(elder()){
             connectionLabel=labelIn(details,"",17,INK,true);readingLabel=labelIn(details,"",16,MUTED,false);
             button(details,monitor!=null&&monitor.isRunning()?"Manage my wearable":"Set up my wearable",SOFT,()->{deviceStep=monitor!=null&&monitor.isRunning()?3:0;openPage("device");});
+            button(details,"Sync saved readings",SOFT,()->{final ApiSession expected=session;confirm("Send saved readings?","Your pending readings will be sent only if they belong to this account and server. Readings from another account or server stay paused.",()->{
+                if(monitor==null||!monitor.resumeSavedUploads(expected)){toast("Sign in as the older adult and try again.");return;}
+                toast("Checking your saved readings. Their status appears here.");updateDevice();
+            });});
         }
         metrics(readingsPayload());
         LinearLayout limits=card(content);labelIn(limits,"Understanding your readings",23,INK,true);
         labelIn(limits,"Surface temperature is not core body temperature. Missing readings can mean poor contact, movement or a connection problem; they do not prove the wearable is off. These sensors do not measure blood pressure or dehydration.",17,MUTED,false);
         labelIn(limits,"A connection or a normal-looking value is not a medical assessment. Missing or older readings do not confirm that someone is okay.",17,MUTED,false);
-        textAction(content,"Refresh saved readings",this::refresh,true);updateReadingViews();
+        LinearLayout saved=card(content);labelIn(saved,"How history works",23,INK,true);
+        labelIn(saved,"Saved wearable readings are kept for 30 days. Day, Week and Month show averages of valid measurements in each interval. Missing measurements leave gaps; your phone may have a newer live reading than the saved chart.",17,MUTED,false);
+        labelIn(saved,"Heart rate and estimated oxygen show sensor estimates even outside the alert limits or when signal quality is low. Quality flags are retained with each sample. No estimate is shown when the sensor cannot calculate one. Movement history shows acceleration including gravity, not a step count or a confirmed fall.",17,MUTED,false);
+        textAction(content,"Refresh saved readings",this::refresh,true);updateDevice();updateReadingViews();
     }
     private void updateReadingViews(){
         if(!page.equals("home")&&!page.equals("reading_details"))return;
@@ -470,8 +476,9 @@ public final class MainActivity extends Activity {
         for(Map.Entry<String,MetricViews> item:metricViews.entrySet()){
             String human=metricValue(raw,item.getKey(),page.equals("reading_details"));MetricViews views=item.getValue();
             boolean unavailable=human.equals("Unavailable")||human.equals("No valid reading");String number=unavailable?"—":human;
-            if(visible)CareMotion.fadeText(views.value,number);else views.value.setText(number);
+            if(visible)CareMotion.fadeText(views.value,metricDisplay(number));else views.value.setText(metricDisplay(number));
             setLabel(views.availability,unavailable?human:"");views.availability.setVisibility(unavailable?View.VISIBLE:View.GONE);
+            setLabel(views.time,metricTimestamp());
             views.tile.setContentDescription(views.title+", "+human+". View history");
         }
         if(detailFreshness!=null){
@@ -503,7 +510,7 @@ public final class MainActivity extends Activity {
     }
     private void metrics(JSONObject raw){
         label(elder()?"Your readings":"Their readings",23,INK,true);
-        emptyReadingNote=labelIn(content,"No current readings",17,MUTED,false);emptyReadingHint=labelIn(content,"Tap a card to explore saved history.",16,MUTED,false);emptyReadingNote.setVisibility(raw==null?View.VISIBLE:View.GONE);emptyReadingHint.setVisibility(raw==null?View.VISIBLE:View.GONE);
+        emptyReadingNote=labelIn(content,elder()?"Waiting for your wearable":"Waiting for new readings",17,MUTED,false);emptyReadingHint=labelIn(content,"Tap any card to look through saved history.",16,MUTED,false);emptyReadingNote.setVisibility(raw==null?View.VISIBLE:View.GONE);emptyReadingHint.setVisibility(raw==null?View.VISIBLE:View.GONE);
         LinearLayout row=metricRow();metricTile(row,"Heart rate",metricValue(raw,"heart_rate_bpm",false),R.drawable.ic_heart,0xFFB52B55,"heart_rate_bpm");
         metricTile(row,"Estimated oxygen",metricValue(raw,"spo2_percent",false),R.drawable.ic_oxygen,BLUE,"spo2_percent");
         label(elder()?"Around you":"Their surroundings",23,INK,true);
@@ -511,14 +518,14 @@ public final class MainActivity extends Activity {
         metricTile(row,"Ambient temperature",metricValue(raw,"ambient_temp_c",false),R.drawable.ic_temperature,BLUE,"ambient_temp_c");
         row=metricRow();row.setOrientation(LinearLayout.VERTICAL);
         metricTile(row,"Movement",metricValue(raw,"acceleration_g",false),R.drawable.ic_motion,0xFF6554A4,"acceleration_g");
-        if(page.equals("home"))labelIn(content,"Tap a card to see its history. Readings are not a medical assessment.",16,MUTED,false);
     }
     private String metricValue(JSONObject raw,String metric,boolean details){
         if(raw==null)return metric.equals("heart_rate_bpm")||metric.equals("spo2_percent")?"No valid reading":"Unavailable";
         JSONObject optical=raw.optJSONObject("max30102"),temp=raw.optJSONObject("gy906"),light=raw.optJSONObject("photoresistor"),imu=raw.optJSONObject("mpu6050");
-        boolean valid=optical!=null&&"ok".equals(optical.optString("status"))&&!Boolean.FALSE.equals(optical.opt("online"))&&!Boolean.FALSE.equals(optical.opt("finger_detected"));
-        if(metric.equals("heart_rate_bpm"))return valid&&optical.optBoolean("heart_rate_valid")?numeric(optical,"heart_rate_bpm"," bpm"):"No valid reading";
-        if(metric.equals("spo2_percent"))return valid&&optical.optBoolean("spo2_valid")?numeric(optical,"spo2_percent"," %"):"No valid reading";
+        if(metric.equals("heart_rate_bpm")||metric.equals("spo2_percent")){
+            Double estimate=optical==null?null:OpticalReading.value(optical.opt(metric));
+            return estimate==null?"No valid reading":String.format(Locale.US,Math.abs(estimate)>=100000?"%.3g":"%.1f",estimate)+(metric.equals("heart_rate_bpm")?" bpm":" %");
+        }
         boolean tempValid=temp!=null&&temp.optBoolean("online",false)&&(!temp.has("status")||temp.optString("status").equals("ok"));
         if(metric.equals("surface_temp_c"))return tempValid?numeric(temp,"object_temp_c"," °C"):"Unavailable";
         if(metric.equals("ambient_temp_c"))return tempValid?numeric(temp,"ambient_temp_c"," °C"):"Unavailable";
@@ -526,17 +533,30 @@ public final class MainActivity extends Activity {
         return imu!=null&&imu.optBoolean("online",false)&&(!imu.has("status")||"ok".equals(imu.optString("status")))?"Signal available":"Unavailable";
     }
     private String numeric(JSONObject object,String key,String suffix){Object value=object.opt(key);if(!(value instanceof Number))return "Unavailable";double number=((Number)value).doubleValue();return Double.isNaN(number)||Double.isInfinite(number)?"Unavailable":String.format(Locale.US,"%.1f",number)+suffix;}
-    private LinearLayout metricRow(){LinearLayout row=new LinearLayout(this);row.setOrientation(getResources().getConfiguration().fontScale>=1.3f?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);content.addView(row);return row;}
+    private LinearLayout metricRow(){LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.VERTICAL);content.addView(row);return row;}
     private void metricTile(LinearLayout row,String title,String value,int symbol,int tint,String metric){
-        LinearLayout tile=new LinearLayout(this);tile.setOrientation(LinearLayout.VERTICAL);tile.setMinimumHeight(dp(156));tile.setPadding(dp(18),dp(18),dp(18),dp(18));tile.setBackground(interactive(Color.WHITE,22));
-        boolean stacked=row.getOrientation()==LinearLayout.VERTICAL;LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(stacked?-1:0,-2,stacked?0:1);lp.topMargin=dp(8);lp.bottomMargin=dp(4);if(!stacked&&row.getChildCount()==0)lp.rightMargin=dp(12);row.addView(tile,lp);
-        LinearLayout heading=new LinearLayout(this);heading.setGravity(Gravity.CENTER_VERTICAL);tile.addView(heading,new LinearLayout.LayoutParams(-1,-2));heading.addView(icon(symbol,tint,24),new LinearLayout.LayoutParams(dp(24),dp(24)));
-        View space=new View(this);heading.addView(space,new LinearLayout.LayoutParams(0,1,1));heading.addView(icon(R.drawable.ic_chevron_right,MUTED,16),new LinearLayout.LayoutParams(dp(16),dp(16)));
-        labelIn(tile,title,17,INK,true);boolean unavailable=value.equals("Unavailable")||value.equals("No valid reading");
-        TextView number=labelIn(tile,unavailable?"—":value,value.equals("Signal available")?20:29,INK,true);
+        LinearLayout tile=new LinearLayout(this);tile.setOrientation(LinearLayout.VERTICAL);tile.setMinimumHeight(dp(122));tile.setPadding(dp(18),dp(16),dp(18),dp(12));tile.setBackground(interactive(Color.WHITE,22));
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.topMargin=dp(8);lp.bottomMargin=dp(4);row.addView(tile,lp);
+        LinearLayout heading=new LinearLayout(this);heading.setGravity(Gravity.CENTER_VERTICAL);tile.addView(heading,new LinearLayout.LayoutParams(-1,-2));heading.addView(icon(symbol,tint,20),new LinearLayout.LayoutParams(dp(20),dp(20)));
+        TextView name=text(title,17,tint,true);LinearLayout.LayoutParams nameLp=new LinearLayout.LayoutParams(0,-2,1);nameLp.leftMargin=dp(8);nameLp.rightMargin=dp(10);heading.addView(name,nameLp);
+        heading.addView(icon(R.drawable.ic_chevron_right,MUTED,16),new LinearLayout.LayoutParams(dp(16),dp(16)));
+        boolean unavailable=value.equals("Unavailable")||value.equals("No valid reading");
+        TextView number=labelIn(tile,unavailable?"—":value,value.equals("Signal available")?22:34,INK,true);number.setText(metricDisplay(unavailable?"—":value));number.setPadding(0,dp(10),0,dp(2));
         TextView availability=labelIn(tile,unavailable?value:"",15,MUTED,false);availability.setVisibility(unavailable?View.VISIBLE:View.GONE);
-        labelIn(tile,"View history",14,tint,true);metricViews.put(metric,new MetricViews(tile,number,availability,title));
+        TextView time=labelIn(tile,metricTimestamp(),14,MUTED,false);time.setPadding(0,dp(2),0,0);metricViews.put(metric,new MetricViews(tile,number,availability,time,title));
         tile.setFocusable(true);tile.setContentDescription(title+", "+value+". View history");tile.setOnClickListener(v->openHistory(metric));
+    }
+    private CharSequence metricDisplay(String value){
+        android.text.SpannableString styled=new android.text.SpannableString(value);int split=value.lastIndexOf(' ');
+        if(split>0&&Character.isDigit(value.charAt(0))){styled.setSpan(new android.text.style.RelativeSizeSpan(.52f),split,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);styled.setSpan(new android.text.style.ForegroundColorSpan(MUTED),split,value.length(),android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);}
+        return styled;
+    }
+    private String metricTimestamp(){
+        if(elder()&&monitor!=null&&monitor.isFresh())return "Live from your wearable";
+        JSONObject reading=storedReading();if(reading==null)return "Tap to view history";
+        long time=ApiSession.expiryMs(reading.optString("captured_at"));if(time==0)return "Saved reading";
+        boolean today=new java.text.SimpleDateFormat("yyyyMMdd",Locale.ENGLISH).format(new Date(time)).equals(new java.text.SimpleDateFormat("yyyyMMdd",Locale.ENGLISH).format(new Date()));
+        return new java.text.SimpleDateFormat(today?"'Today at' HH:mm":"d MMM 'at' HH:mm",Locale.ENGLISH).format(new Date(time));
     }
     private String metricTitle(){
         switch(historyMetric){case "spo2_percent":return "Estimated oxygen";case "surface_temp_c":return "Surface temperature";case "ambient_temp_c":return "Ambient temperature";case "light_adc":return "Light";case "acceleration_g":return "Movement";default:return "Heart rate";}
@@ -576,7 +596,7 @@ public final class MainActivity extends Activity {
         JSONObject coverage=historyData==null?null:historyData.optJSONObject("coverage");boolean complete=coverage==null||coverage.optBoolean("complete",true);
         LinearLayout graph=card(content);
         labelIn(graph,"AVERAGE",13,MUTED,true);String average=summary==null?"—":historyValue(summary.opt("average"));
-        labelIn(graph,average+" "+metricUnit(),42,INK,true);
+        labelIn(graph,average+" "+metricUnit(),42,INK,true).setText(metricDisplay(average+" "+metricUnit()));
         String interval=historyPeriod.equals("month")?"30 days":historyPeriod.equals("week")?"7 days":"24 hours";
         if(historyData!=null)labelIn(graph,historyDate(historyData.optString("start"))+" – "+historyDate(historyData.optString("end")),15,MUTED,false);
         else labelIn(graph,"Past "+interval,15,MUTED,false);
@@ -586,41 +606,54 @@ public final class MainActivity extends Activity {
             if(!ApiClient.lanAllowed(this))button(graph,"Allow local network",BLUE,()->{pendingAction="history";requestPermissions(new String[]{"android.permission.ACCESS_LOCAL_NETWORK"},714);});
             else button(graph,"Try again",BLUE,this::loadHistory);
         }else if(historyData==null||count==0){
-            labelIn(graph,complete?"No valid readings in this period":"No indexed valid readings yet",22,INK,true);labelIn(graph,complete?"Try an earlier period, or check your wearable and server connection. Missing readings do not confirm health status.":"Older readings are still being prepared. Refresh history to check their progress.",17,MUTED,false);
+            JSONObject available=historyData==null?null:historyData.optJSONObject("available_readings");long latest=available==null?0:ApiSession.expiryMs(available.optString("latest_at"));
+            boolean noSaved=complete&&available!=null&&available.optLong("count")==0;
+            labelIn(graph,!complete?"Getting your readings ready":noSaved?"No saved readings yet":"No readings for this period",22,INK,true);
+            labelIn(graph,!complete?"Some older readings are still being prepared. Try again in a moment.":noSaved?(elder()?"Connect your wearable to start your history. Readings are saved to the account you're using now.":"Readings will appear after this person's phone connects their wearable and saves them."):"Choose another date or a longer period to see your saved readings.",17,MUTED,false);
+            if(noSaved&&elder())button(graph,"Connect my wearable",BLUE,()->{deviceStep=monitor!=null&&monitor.isRunning()?3:0;openPage("device");});
+            long rangeStart=historyData==null?0:ApiSession.expiryMs(historyData.optString("start")),rangeEnd=historyData==null?0:ApiSession.expiryMs(historyData.optString("end"));
+            if(latest>0&&(latest<rangeStart||latest>=rangeEnd))button(graph,"View latest saved day",BLUE,()->openLatestHistory(latest));
+            else if(complete&&available!=null&&available.optLong("count")>0)labelIn(graph,"Saved readings are available, but this measurement has no valid values in the selected period.",16,MUTED,false);
         }else{
             MetricHistoryChartView chart=new MetricHistoryChartView(this);chart.setHistory(historyData);graph.addView(chart,new LinearLayout.LayoutParams(-1,-2));
             labelIn(graph,"Touch the chart to inspect a stored interval.",15,MUTED,false);
-            labelIn(graph,count+" valid "+(count==1?"sample":"samples")+" · interval averages",15,MUTED,false);
+            labelIn(graph,count+" "+(count==1?"reading":"readings"),15,MUTED,false);
         }
         LinearLayout periodNavigation=new LinearLayout(this);periodNavigation.setOrientation(LinearLayout.HORIZONTAL);content.addView(periodNavigation,new LinearLayout.LayoutParams(-1,-2));
         Button earlier=textAction(periodNavigation,"Earlier",()->shiftHistory(-1),true);earlier.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1));earlier.setContentDescription("View previous "+interval);
         Button later=textAction(periodNavigation,"Later",()->shiftHistory(1),true);later.setLayoutParams(new LinearLayout.LayoutParams(0,-2,1));later.setEnabled(historyEndMillis>0&&historyEndMillis<System.currentTimeMillis()-1000);later.setContentDescription("View next "+interval);
         if(historyEndMillis>0)textAction(content,"Back to the present",()->{clearHistory();historyEndMillis=0;render();loadHistory();},true);
+        textAction(content,"Choose date",this::chooseHistoryDate,true);
         if(summary!=null&&count>0){
-            LinearLayout details=card(content);labelIn(details,"Your stored readings",23,INK,true);
+            LinearLayout details=card(content);labelIn(details,elder()?"Your readings":"Saved readings",23,INK,true);
             historySummary(details,"Latest",historyValue(summary.opt("latest"))+" "+metricUnit());
             labelIn(details,formatTime(summary.optString("latest_at")),15,MUTED,false);
             historySummary(details,"Range",historyValue(summary.opt("min"))+"–"+historyValue(summary.opt("max"))+" "+metricUnit());
         }
         if(!complete){
-            LinearLayout indexing=card(content);labelIn(indexing,"History is still being prepared",22,INK,true);labelIn(indexing,"Some older readings have not been indexed yet. The chart and summary cover indexed samples only.",17,MUTED,false);button(indexing,"Refresh history",SOFT,this::loadHistory);
+            LinearLayout indexing=card(content);labelIn(indexing,"More readings are on their way",22,INK,true);labelIn(indexing,"Your chart will update as older readings become available.",17,MUTED,false);button(indexing,"Refresh history",SOFT,this::loadHistory);
         }
-        LinearLayout context=card(content);labelIn(context,"About these readings",23,INK,true);
-        String explanation="Stored wearable samples only. Stored readings are retained for 30 days. Each point shows the mean of valid samples in its interval; gaps remain gaps. Your phone's live value can be newer than this stored history.";
-        if(historyMetric.equals("surface_temp_c"))explanation+=" Surface temperature is not core body temperature.";
-        else if(historyMetric.equals("light_adc"))explanation+=" Light is an uncalibrated sensor value and does not confirm that the wearable is worn.";
-        else if(historyMetric.equals("acceleration_g"))explanation+=" Acceleration magnitude includes gravity. It is not a step count or fall diagnosis.";
-        else if(historyMetric.equals("spo2_percent")||historyMetric.equals("heart_rate_bpm"))explanation+=" Only samples marked valid by the optical sensor are included.";
-        labelIn(context,explanation,17,MUTED,false);labelIn(context,"Not clinically validated. Do not use these readings to make medical decisions.",16,MUTED,false);
         button(content,"Refresh history",SOFT,this::loadHistory);
+        textAction(content,"Reading details",()->openPage("reading_details"),true);
     }
     private void historySummary(LinearLayout parent,String title,String value){
-        LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(8),0,dp(8));parent.addView(row,new LinearLayout.LayoutParams(-1,-2));
-        TextView name=text(title,17,MUTED,false);row.addView(name,new LinearLayout.LayoutParams(0,-2,1));TextView number=text(value,19,INK,true);number.setGravity(Gravity.END);row.addView(number,new LinearLayout.LayoutParams(0,-2,2));
+        boolean stacked=getResources().getConfiguration().fontScale>=1.3f;
+        LinearLayout row=new LinearLayout(this);row.setOrientation(stacked?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);row.setGravity(Gravity.CENTER_VERTICAL);row.setPadding(0,dp(8),0,dp(8));parent.addView(row,new LinearLayout.LayoutParams(-1,-2));
+        TextView name=text(title,17,MUTED,false);row.addView(name,new LinearLayout.LayoutParams(stacked?-1:0,-2,stacked?0:1));
+        TextView number=text(value,19,INK,true);number.setGravity(stacked?Gravity.START:Gravity.END);if(stacked)number.setPadding(0,dp(4),0,0);row.addView(number,new LinearLayout.LayoutParams(stacked?-1:0,-2,stacked?0:2));
     }
     private String historyValue(Object value){if(!(value instanceof Number))return "—";double number=((Number)value).doubleValue();return Double.isFinite(number)?String.format(Locale.ENGLISH,historyMetric.equals("light_adc")?"%.0f":historyMetric.equals("acceleration_g")?"%.2f":"%.1f",number):"—";}
     private String historyDate(String value){long time=ApiSession.expiryMs(value);return time==0?"Date unavailable":new java.text.SimpleDateFormat("d MMM, HH:mm",Locale.ENGLISH).format(new Date(time));}
     private void shiftHistory(int direction){long end=historyEndMillis==0?System.currentTimeMillis():historyEndMillis;long target=end+direction*historyDuration();clearHistory();historyEndMillis=target>=System.currentTimeMillis()-1000?0:Math.max(historyDuration(),target);render();loadHistory();}
+    private void openLatestHistory(long latest){clearHistory();historyPeriod="day";historyEndMillis=Math.min(System.currentTimeMillis(),latest+1000);render();loadHistory();}
+    private void chooseHistoryDate(){
+        final ApiSession account=session;final String person=selectedPatient(),metric=historyMetric;Calendar chosen=Calendar.getInstance();if(historyEndMillis>0)chosen.setTimeInMillis(historyEndMillis-1);
+        DatePickerDialog picker=new DatePickerDialog(this,(view,year,month,day)->{
+            if(session==null||account==null||!session.id.equals(account.id)||!session.base.equals(account.base)||!page.equals("history")||!person.equals(selectedPatient())||!metric.equals(historyMetric))return;
+            Calendar end=Calendar.getInstance();end.set(year,month,day,23,59,59);end.set(Calendar.MILLISECOND,999);long now=System.currentTimeMillis();
+            clearHistory();historyEndMillis=end.getTimeInMillis()>=now?0:end.getTimeInMillis();render();loadHistory();
+        },chosen.get(Calendar.YEAR),chosen.get(Calendar.MONTH),chosen.get(Calendar.DAY_OF_MONTH));picker.getDatePicker().setMaxDate(System.currentTimeMillis());picker.show();
+    }
     private void loadHistory(){
         if(session==null||!page.equals("history")||historyLoading)return;
         if(!session.valid()){logout();notice="Your session expired. Please sign in again.";render();return;}
@@ -629,14 +662,13 @@ public final class MainActivity extends Activity {
         if(person.isEmpty()){historyData=null;historyError="Choose an approved person from Today before opening history.";render();return;}
         historyLoading=true;historyError="";historyData=null;render();
         network.execute(()->{try{
-            String path="/patients/"+person+"/metrics/"+metric+"/history?period="+period+"&source=device_diagnostic";
-            if(end>0)path+="&end="+java.net.URLEncoder.encode(ApiSession.utc(end),"UTF-8");
-            JSONObject result=ApiClient.call(this,account,"GET",path,null);
+            JSONObject result=ApiClient.history(this,account,person,metric,period,end);
             main.post(()->{if(!historyCurrent(account,capture,request,person,metric,period,end))return;historyLoading=false;historyData=result;historyError="";int y=scroll.getScrollY();render();scroll.post(()->scroll.scrollTo(0,y));});
         }catch(Exception failure){main.post(()->{
             if(!historyCurrent(account,capture,request,person,metric,period,end))return;historyLoading=false;historyData=null;
             if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==401){logout();notice="Your session expired or was revoked. Please sign in again.";render();return;}
             if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==403)historyError="Access is no longer available. The older adult must approve your access before you can view their history.";
+            else if(failure instanceof ApiClient.Failure&&((ApiClient.Failure)failure).status==404)historyError="Saved readings are unavailable. Return to Today and check your care access and connection.";
             else historyError=failure.getMessage()==null?"Check your connection, then try again.":failure.getMessage();render();
         });}});
     }
@@ -646,7 +678,7 @@ public final class MainActivity extends Activity {
     private void alerts(){
         label("Updates",34,INK,true);paragraph(elder()?"Notices and reminders from your care circle.":"Review notices for the person you support.");
         if(!elder())patientChooser();
-        JSONArray alerts=overview.optJSONArray("alerts");if(alerts==null||alerts.length()==0){LinearLayout empty=card(content);labelIn(empty,"No notifications yet",25,INK,true);labelIn(empty,"This does not confirm health status or an active connection.",18,MUTED,false);}
+        JSONArray alerts=overview.optJSONArray("alerts");if(alerts==null||alerts.length()==0){LinearLayout empty=card(content);empty.addView(icon(R.drawable.ic_nav_alerts,BLUE,30),new LinearLayout.LayoutParams(dp(30),dp(30)));labelIn(empty,"You're all caught up",25,INK,true);labelIn(empty,"New care updates will appear here.",18,MUTED,false);}
         else for(int i=0;i<alerts.length();i++){JSONObject alert=alerts.optJSONObject(i);if(alert==null)continue;LinearLayout card=card(content);
             labelIn(card,alert.optBoolean("acknowledged")?"REVIEWED":"AWAITING REVIEW",12,BLUE,true);
             labelIn(card,alert.optString("title",alert.optString("type","Notice")),23,INK,true);
@@ -659,10 +691,7 @@ public final class MainActivity extends Activity {
             labelIn(card,data.optString("message",data.optString("instructions","Open Care to see the reminder.")),17,MUTED,false);
             int id=item.optInt("id");button(card,"I've read this",SOFT,()->mutate("POST","/notifications/"+id+"/ack",json(),"Notice read."));shown++;}
         if(shown==0)paragraph("You are all caught up.");
-        LinearLayout delivery=card(content);labelIn(delivery,"Your notifications",22,INK,true);
-        labelIn(delivery,"Choose how to receive notices from your circle. Delivery depends on your connection and phone permissions.",17,MUTED,false);
-        labelIn(delivery,NotificationChannelService.status(),17,BLUE,true);
-        button(delivery,"Set up notifications",SOFT,()->openPage("notification_settings"));button(content,"Refresh notifications",SOFT,this::refresh);
+        textAction(content,"Set up notifications",()->openPage("notification_settings"),true);button(content,"Refresh notifications",SOFT,this::refresh);
     }
     private void care(){
         label(elder()?"My care circle":"Care together",34,INK,true);paragraph(elder()?"You choose who supports you and can access your information.":"Access starts with an invitation and the older adult's approval.");
@@ -748,8 +777,17 @@ public final class MainActivity extends Activity {
         sectionTitle("CONNECTION & ACCOUNT");LinearLayout account=group(content);
         settingsRow(account,"Server connection","Manage your team's connection",R.drawable.ic_bluetooth,()->openPage("connection"));
         settingsRow(account,"Your information, protected","Session, storage and security",R.drawable.ic_lock,()->openPage("security"));
+        settingsRow(account,"About CareMonitor","How it works, safety and reading limitations",R.drawable.ic_heart,()->openPage("about"));
         textAction(content,"Sign out",()->confirm("Sign out?","Wearable monitoring, location and audio will stop. The encrypted queue stays linked to this account for a later sign-in.",this::logout),true).setTextColor(RED);
-        labelIn(content,"CareMonitor 1.0.0\nNot clinically validated. Continuous monitoring and emergency assistance are not guaranteed.",15,MUTED,false);
+        labelIn(content,"CareMonitor 1.0.0",15,MUTED,false);
+    }
+    private String careMonitorInformation(){return "CareMonitor helps you keep track of wearable readings, reminders and updates from your care circle. It is an educational prototype, not a clinically validated medical device.\n\nReadings do not diagnose a condition, measure dehydration or replace professional care. Surface temperature is not core body temperature. Missing values can result from contact, movement or connection issues.\n\nHelp notices depend on your connection, phone permissions and approved caregivers. They do not call emergency services or guarantee that someone has responded.\n\nLearning insights is a separate workspace using synthetic data; its model scores do not assess your health.";}
+    private void showAboutCareMonitor(){new AlertDialog.Builder(this).setTitle("About CareMonitor").setMessage(careMonitorInformation()).setPositiveButton("Done",null).show();}
+    private void aboutCareMonitor(){
+        label("About CareMonitor",34,INK,true);paragraph("Your care, with clear information.");
+        LinearLayout about=card(content);labelIn(about,"CareMonitor 1.0.0",24,INK,true);labelIn(about,careMonitorInformation(),17,MUTED,false);
+        textAction(content,"Reading details",()->openPage("reading_details"),false);
+        textAction(content,"Your information, protected",()->openPage("security"),false);
     }
     private void notificationSettings(){
         paragraph("Notices from your circle, your way.");
@@ -894,7 +932,7 @@ public final class MainActivity extends Activity {
         if(deviceHeading!=null){boolean fresh=monitor!=null&&monitor.isFresh();deviceHeading.setText(fresh?"Your wearable is connected":"Waiting for new readings");
             if(setupStatusIcon!=null)setupStatusIcon.setImageResource(fresh?R.drawable.ic_status_ok:R.drawable.ic_status_unknown);}
         if(connectionLabel!=null)connectionLabel.setText(monitor==null?"Wearable disconnected":monitor.bluetoothState());
-        if(readingLabel!=null&&monitor!=null)readingLabel.setText(monitor.relayState()+"\n"+monitor.packetCount()+" samples · "+monitor.queuedCount()+" pending"+(monitor.error().isEmpty()?"":"\n"+monitor.error()));
+        if(readingLabel!=null&&monitor!=null)readingLabel.setText(monitor.relayState()+"\n"+monitor.packetCount()+" samples · "+monitor.queuedCount()+" pending"+(monitor.retainedOtherCount()>0?"\n"+monitor.retainedOtherCount()+" readings retained for another account or server":"")+(monitor.error().isEmpty()?"":"\n"+monitor.error()));
         if(deviceList!=null&&monitor!=null&&elder()){deviceList.removeAllViews();List<LiveMonitorService.Device> devices=monitor.devices();
             if(devices.isEmpty())labelIn(deviceList,"Your paired devices will appear here when you search.",17,MUTED,false);
             for(LiveMonitorService.Device device:devices){

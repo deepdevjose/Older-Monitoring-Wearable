@@ -1,10 +1,27 @@
 # Poner en marcha CareMonitor y usar cada rol
 
+## Continuar por USB sin cambiar de red
+
+La actualización 1.0.0 / código 22 está instalada en el S22. Para mantener la conexión a internet y la VPN de esta computadora, deja el teléfono conectado y autorizado por USB y ejecuta desde la raíz:
+
+```bash
+./tools/start_offline.sh --usb --serial R5CT20D7X6D
+./carectl status
+```
+
+Debe aparecer `"reachable": true`; la API de este modo es `https://127.0.0.1:19443/api/v1`. Conserva el cable: al retirarlo o reiniciar el servicio adb se pierde el túnel y hay que repetir el arranque. No hace falta desconectar la VPN ni cambiar Wi-Fi, crear otra cuenta o desinstalar la app. La ruta Wi-Fi siguiente es una alternativa preparada, no un paso necesario para este modo.
+
+En Today, toca una tarjeta para abrir su gráfico; cambia Day / Week / Month o pulsa Choose date. Si hay registros de otra fecha, View latest saved day permite llegar a ellos. Un periodo sin mediciones válidas muestra un estado vacío; no genera valores ni toma lecturas de otra cuenta. Settings → About CareMonitor y Reading details reúnen los detalles técnicos y el alcance de las mediciones.
+
+Si aparece **No saved readings yet**, la cuenta no tiene paquetes retenidos. Para reenviar pendientes sin conectar Bluetooth, abre **Settings → Reading details → Sync saved readings** y confirma. La app solo envía los que corresponden a esa cuenta y a ese servidor; los demás permanecen guardados. Consulta el estado en esa misma pantalla y conserva el cable USB. No elimines la cola ni cambies de cuenta para intentar ocultar un error de envío.
+
+## Modo Wi-Fi preparado
+
 **Preparado el 30 de octubre de 2026 para la nueva red «Network», sin acceso a internet.** La computadora se conserva en su red con internet; Network tiene la contraseña actualizada y la conexión automática desactivada. Conéctala manualmente solo cuando vayas a hacer la prueba. Las credenciales quedan en la configuración privada y no se publican aquí.
 
 El servidor, la app y sus herramientas ya están instalados: el arranque no descarga dependencias. El teléfono y esta computadora deben compartir Network para comunicarse por Wi-Fi; internet no es necesario para la API local. La herramienta de arranque no cambia la Wi-Fi ni desconecta la VPN.
 
-## Arranque rápido cuando estés listo
+## Arranque por Wi-Fi cuando estés listo
 
 1. **Conecta y desbloquea el Galaxy S22 por USB.** Acepta «Permitir depuración USB» si Android lo solicita. Deja la ESP32 alimentada.
 2. **Conecta el S22 a Network**, con la contraseña que proporcionaste. Si Android avisa que no tiene internet, elige mantener la conexión. Esta contraseña es la de Wi-Fi, no la de tu cuenta de CareMonitor.
@@ -42,7 +59,7 @@ Si la VPN impide acceder a la LAN, permite el tráfico local en ella o páusala 
 
 ## Identificar la entrega y su conexión
 
-La revisión actual es **1.0.0 / código 20**, instalada en el S22 SM-S901E / Android 13 con hash y acceso HTTPS comprobados. Pasó 7.073 controles aislados de preview y 119 comprobaciones del sistema real con producción Java/recursos en otro paquete. La sesión existente de la app principal se conservó; su onboarding no se volvió a ejecutar. Los registros están en `release/ANDROID_BUILD.json`, `ANDROID_UI_EVIDENCE.json`, `ANDROID_HISTORY_UI_EVIDENCE.json` y `DEVICE_SYSTEM_USB_EVIDENCE.json`. Para actualizar, conserva datos y firma: no desinstales ni vuelvas a crear una cuenta existente.
+La revisión actual es **1.0.0 / código 22**, instalada en el S22 SM-S901E / Android 13 con hash y acceso HTTPS comprobados. Pasó 7.198 controles aislados de preview con 48 capturas al 100 %/200 % y quince consultas autenticadas de históricos desde el APK instalado. La sesión existente se conservó; su onboarding no se volvió a ejecutar. Los registros están en `release/ANDROID_BUILD.json`, `ANDROID_UI_EVIDENCE.json`, `ANDROID_HISTORY_UI_EVIDENCE.json` y `ANDROID_HISTORY_ACCESS_EVIDENCE.json`. La campaña de 119 comprobaciones físicas pertenece al código 20 y mantiene su identidad en `DEVICE_SYSTEM_USB_EVIDENCE.json`. Para actualizar, conserva datos y firma: no desinstales ni vuelvas a crear una cuenta existente.
 
 ### Antecedentes comprobados el 27 de octubre de 2026
 
@@ -255,3 +272,7 @@ Para la **persona mayor**, Today reúne **Ask for help**, el próximo recordator
 Para el **cuidador**, elige primero a la persona aprobada. Today indica qué avisos necesitan revisión, sus lecturas, próximo recordatorio y ubicación compartida si está autorizada. Usa **Review updates** para abrir el aviso y **Care** para administrar recordatorios y vínculos. La selección de una persona controla también sus históricos y detalles; una cuenta sin vínculo aprobado no ve sus datos.
 
 En **Settings**, ambos roles encuentran **Reading details**, notificaciones y conexión. La persona mayor controla además wearable y privacidad. **Reduce motion** reduce las animaciones; los valores se actualizan sin inventar una señal continua. La jerarquía mantiene las tareas cotidianas delante y los detalles técnicos en un segundo nivel. Las pruebas de texto ampliado y navegación no sustituyen una evaluación de uso con adultos mayores ni la lectura manual con TalkBack.
+
+### Estimaciones ópticas y colas — código 22
+
+Heart rate y Estimated oxygen muestran las estimaciones numéricas del sensor aunque estén fuera de rango o sus banderas de calidad sean falsas. Si no existe una estimación, la app mantiene un hueco; no inventa un valor. Los avisos usan los límites documentados en API.md y tres muestras recientes consecutivas. Settings → Reading details distingue los pendientes de esta cuenta de los conservados para otra cuenta o servidor: las 200 lecturas antiguas no bloquean las muestras nuevas ni cambian de propietario.

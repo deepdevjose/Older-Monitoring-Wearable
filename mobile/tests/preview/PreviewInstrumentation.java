@@ -71,6 +71,7 @@ public final class PreviewInstrumentation extends Instrumentation {
             PackageInfo manifest=getTargetContext().getPackageManager().getPackageInfo("org.caremonitor.preview",android.content.pm.PackageManager.GET_PERMISSIONS|android.content.pm.PackageManager.GET_SERVICES);
             check("preview requests no permissions",manifest.requestedPermissions==null||manifest.requestedPermissions.length==0);
             check("preview declares no services",manifest.services==null||manifest.services.length==0);
+            scopedOutbox();
             launch(MainActivity.class,null);
             main(()->{((Handler)get(activity,"main")).removeCallbacks((Runnable)get(activity,"poll"));((Handler)get(activity,"main")).removeCallbacks((Runnable)get(activity,"presentationTick"));set(activity,"visible",false);});
             if(onlyWearable){for(float scale:new float[]{1f,2f}){main(()->font(scale));wearableKeySetup(scale);}}
@@ -78,10 +79,12 @@ public final class PreviewInstrumentation extends Instrumentation {
                 main(()->font(scale));
                 productOverview(false,scale);
                 main(()->mainHistory(false,scale));
+                historyDateScopes(false);
                 idle();main(()->{layout(root());chartLayout();});
                 capture("elder_history_"+fontLabel(scale));
                 productOverview(true,scale);
                 main(()->mainHistory(true,scale));
+                historyDateScopes(true);
                 idle();main(()->{layout(root());chartLayout();});
                 capture("caregiver_history_"+fontLabel(scale));
                 wearableKeySetup(scale);
@@ -95,6 +98,29 @@ public final class PreviewInstrumentation extends Instrumentation {
             code=Activity.RESULT_OK;
         }catch(Throwable failure){result.putString("result","FAIL");result.putString("detail",failure.getClass().getSimpleName()+": "+String.valueOf(failure.getMessage()));try{captureFailure();}catch(Throwable ignored){/* Keep the original assertion as the result. */}}
         finally{try{close();}catch(Exception failure){result.putString("result","FAIL");result.putString("detail","Preview cleanup failed");code=Activity.RESULT_CANCELED;}result.putInt("checks",checks);result.putInt("screenshots",screenshots);finish(code,result);}
+    }
+    /** Real encrypted storage, isolated package: an old queue must not block or join a new owner. */
+    private void scopedOutbox()throws Exception{
+        Context context=getTargetContext();String legacy="sensor_outbox_v2.enc";
+        ApiSession old=account(false);
+        JSONObject body=new JSONObject().put("access_token","fixture-token-never-used-for-network-123456789").put("expires_at","2099-01-01T00:00:00Z").put("user",new JSONObject().put("id","fixture-new-owner").put("role","elder").put("display_name","Fixture").put("email","fixture@example.invalid"));
+        ApiSession current=ApiSession.save(context,old.base,body);String own=OutboxScope.file(current.id,current.base+"/readings");
+        JSONArray original=new JSONArray();for(int i=0;i<200;i++)original.put(new JSONObject().put("sample_id","old-"+i).put("payload",new JSONObject()));
+        SecureStore.write(context,legacy,new JSONObject().put("endpoint",old.base+"/readings").put("owner",old.id).put("samples",original).toString());
+        SecureStore.write(context,own,new JSONObject().put("endpoint",current.base+"/readings").put("owner",current.id).put("samples",new JSONArray().put(new JSONObject().put("sample_id","current-only").put("payload",new JSONObject()))).toString());
+        byte[] encrypted;try(java.io.InputStream input=new java.io.FileInputStream(new File(context.getFilesDir(),legacy))){encrypted=ApiClient.readLimited(input,1024*1024);}
+        ServerRelay relay=new ServerRelay(context,(s,q,t)->{});
+        java.util.concurrent.ScheduledThreadPoolExecutor worker=(java.util.concurrent.ScheduledThreadPoolExecutor)get(relay,"worker");
+        try{
+            check("new owner selects a separate encrypted outbox",worker.submit(()->(Boolean)invoke(relay,"selectScope",new Class<?>[]{ApiSession.class},current)).get(10,TimeUnit.SECONDS));
+            check("old 200 do not block current owner's queue",relay.queuedCount()==1&&relay.retainedOtherCount()==200);
+            check("returning to original owner retrieves original queue",worker.submit(()->(Boolean)invoke(relay,"selectScope",new Class<?>[]{ApiSession.class},old)).get(10,TimeUnit.SECONDS)&&relay.queuedCount()==200);
+            check("returning to current owner restores only its own queue",worker.submit(()->(Boolean)invoke(relay,"selectScope",new Class<?>[]{ApiSession.class},current)).get(10,TimeUnit.SECONDS)&&relay.queuedCount()==1);
+            relay.clearQueue();worker.submit(()->{}).get(10,TimeUnit.SECONDS);
+            check("clearing current queue leaves old readings retained",relay.queuedCount()==0&&new JSONObject(SecureStore.read(context,legacy,1024*1024)).getJSONArray("samples").length()==200);
+            try(java.io.InputStream input=new java.io.FileInputStream(new File(context.getFilesDir(),legacy))){check("original encrypted queue remains byte for byte unchanged",java.util.Arrays.equals(encrypted,ApiClient.readLimited(input,1024*1024)));}
+            check("storage check never starts delivery",!(Boolean)get(relay,"running"));
+        }finally{relay.close();worker.awaitTermination(5,TimeUnit.SECONDS);SecureStore.delete(context,legacy);SecureStore.delete(context,own);SecureStore.delete(context,"session_v2.enc");}
     }
     private ApiSession account(boolean caregiver)throws Exception{return new ApiSession("https://192.0.2.1:8443/api/v1",new JSONObject().put("access_token","fixture-token-never-used-for-network-123456789").put("expires_at","2099-01-01T00:00:00Z").put("user",new JSONObject().put("id",caregiver?"fixture-caregiver":"fixture-patient").put("role",caregiver?"caregiver":"elder").put("display_name",caregiver?"Fixture Caregiver":"Fixture Older Adult").put("email","fixture@example.invalid")));}
     private JSONObject currentOverview()throws Exception{
@@ -118,16 +144,18 @@ public final class PreviewInstrumentation extends Instrumentation {
             overviewFixture(currentOverview());set(activity,"notifications",new JSONArray());set(activity,"reminders",new JSONArray());
             set(activity,"notice","");set(activity,"page","home");invoke(activity,"render");
             check("Today omits recent readings summary",text("Recent readings")==null);
+            check("Today has one prominent heading",count(root(),v->v instanceof TextView&&"Today".contentEquals(((TextView)v).getText())&&((TextView)v).getTextSize()>30*activity.getResources().getDisplayMetrics().scaledDensity)==1);
+            check("Today keeps prototype explanations in Settings",!prototypeCopy(root()));
             check("Today groups readings by role and everyday meaning",caregiver?text("Their readings")!=null&&text("Their surroundings")!=null&&text("Your readings")==null:text("Your readings")!=null&&text("Around you")!=null&&text("Their readings")==null);
             check("Today hides raw light ADC",find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("1234"))==null);
             check("Today omits the retired light sensor",descriptionPrefix("Light,")==null);
             check("Today offers role-appropriate help",caregiver?text("Ask for help")==null:text("Ask for help")!=null);
             check("Updates is a persistent navigation destination",description("Updates")!=null);
-            if(caregiver){check("caregiver sees selected person's name on Today",text("Fixture Older Adult")!=null||text("✓  Fixture Older Adult")!=null);check("caregiver can review pending updates",text("Review updates")!=null&&text("Needs your review")!=null);}
+            if(caregiver){check("caregiver sees selected person's name on Today",text("Fixture Older Adult")!=null||text("✓  Fixture Older Adult")!=null);View updates=description("Needs your review");check("caregiver can review pending updates",updates!=null&&updates.isClickable()&&updates.isFocusable()&&text("Review updates")==null);updates.performClick();check("pending update row opens review destination",get(activity,"page").equals("alerts"));set(activity,"page","home");invoke(activity,"render");}
             else check("older adult can open their care plan",text("View my care plan")!=null);
             secure();
         });
-        idle();main(()->{layout(root());targets(root());});capture(role+"_today_"+size);
+        idle();main(()->{layout(root());targets(root());View tile=descriptionPrefix("Heart rate,");check("health reading cards use the available page width",tile!=null&&tile.getWidth()==((View)get(activity,"content")).getWidth()-((View)get(activity,"content")).getPaddingLeft()-((View)get(activity,"content")).getPaddingRight());});capture(role+"_today_"+size);
         stableReadings(caregiver);
         main(()->{
             description("Updates").performClick();
@@ -145,7 +173,7 @@ public final class PreviewInstrumentation extends Instrumentation {
             if(caregiver)check("Care names the selected person",text("Fixture Older Adult")!=null);
         });
         idle();main(()->{layout(root());targets(root());});capture(role+"_care_"+size);
-        main(()->{set(activity,"page","account");invoke(activity,"render");check("Settings owns reading details",description("Reading details")!=null);check("Settings keeps learning and server controls",text("Learning insights")!=null&&text("Server connection")!=null);});
+        main(()->{set(activity,"page","account");invoke(activity,"render");check("Settings owns reading details",description("Reading details")!=null);check("Settings keeps learning and server controls",text("Learning insights")!=null&&text("Server connection")!=null);View about=description("About CareMonitor");check("About information is accessible from Settings",about!=null&&about.isClickable()&&about.isFocusable());about.performClick();check("About opens under Settings navigation",get(activity,"page").equals("about")&&description("Settings").isSelected());check("About retains educational and clinical limitations",prototypeCopy(root()));invoke(activity,"goBack");check("About returns to Settings",get(activity,"page").equals("account"));});
         idle();main(()->{layout(root());targets(root());});capture(role+"_settings_"+size);
         main(()->{
             View details=description("Reading details");check("Reading details action is operable",details.isClickable()&&details.isFocusable());details.performClick();
@@ -154,6 +182,7 @@ public final class PreviewInstrumentation extends Instrumentation {
             check("details omits the retired light channel",descriptionPrefix("Light,")==null&&find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("1234"))==null);
             check("details explains temperature limits",find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("not core body temperature"))!=null);
             check("caregiver cannot configure the local wearable",!caregiver||text("Set up my wearable")==null);
+            check("only older adult can request saved-reading uploads",caregiver?text("Sync saved readings")==null:text("Sync saved readings")!=null);
             for(String label:new String[]{"Heart rate","Estimated oxygen","Surface temperature","Ambient temperature","Movement"})check("details retains metric history: "+label,descriptionPrefix(label+",")!=null);
             check("reading details belongs to Settings navigation",description("Settings")!=null&&description("Settings").isSelected());
         });
@@ -209,6 +238,12 @@ public final class PreviewInstrumentation extends Instrumentation {
             ((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
             check("new sensor values preserve navigation and controls",get(activity,"content")==content[0]&&descriptionPrefix("Heart rate,")==tile[0]&&get(activity,"homeStatus")==status[0]);
             check("new sensor value is shown exactly",descriptionPrefix("Heart rate, 74.0 bpm")!=null);
+            JSONObject extreme=currentOverview();JSONObject optical=extreme.getJSONObject("reading").getJSONObject("payload").getJSONObject("max30102");
+            optical.put("status","poor_signal").put("heart_rate_valid",false).put("spo2_valid",false).put("heart_rate_bpm",450).put("spo2_percent",130);
+            overviewFixture(extreme);((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
+            check("outlying heart rate remains visible despite quality flags",descriptionPrefix("Heart rate, 450.0 bpm")!=null);
+            check("outlying oxygen remains visible despite quality flags",descriptionPrefix("Estimated oxygen, 130.0 %")!=null);
+            overviewFixture(updated);((LiveMonitorService.Listener)get(activity,"liveListener")).onLiveChanged();
             check("new sensor values preserve scroll position",scroll.getScrollY()==y[0]);
             check("only readings changing preserves the refresh structure key",key[0].equals(invoke(activity,"homeStructureKey")));
             check("raw protocol and storage details stay off Today",text("Source: Wearable")==null&&find(root(),v->v instanceof TextView&&((TextView)v).getText().toString().contains("Last stored reading:"))==null);
@@ -374,15 +409,29 @@ public final class PreviewInstrumentation extends Instrumentation {
             set(activity,"historyLoading",false);set(activity,"historyError","");set(activity,"historyData",history(metrics[i],false));invoke(activity,"render");
             MetricHistoryChartView chart=(MetricHistoryChartView)find(root(),v->v instanceof MetricHistoryChartView);
             check("stored history mounts production chart",chart!=null);
+            check("history keeps prototype explanations in Settings",!prototypeCopy(root()));
             check("chart accessibility names gaps and provenance",chart.getContentDescription().toString().contains("Missing intervals are gaps")&&chart.getContentDescription().toString().contains("Wearable sensor diagnostics"));
             check("chart keyboard navigation works",chart.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT)));
             check("chart selection explains actual count",chart.getContentDescription().toString().contains("2 observations"));
             chart.onKeyDown(KeyEvent.KEYCODE_DPAD_RIGHT,new KeyEvent(KeyEvent.ACTION_DOWN,KeyEvent.KEYCODE_DPAD_RIGHT));check("missing interval remains missing",chart.getContentDescription().toString().contains("Selected:")&&chart.getContentDescription().toString().endsWith("No valid observations"));
-            check("summary reports valid sample count",text("4 valid samples · interval averages")!=null);
+            check("summary reports valid sample count",text("4 readings")!=null);
+            if(i==0){
+                JSONObject huge=history(metrics[i],false);JSONArray points=huge.getJSONArray("points");points.getJSONObject(0).put("value",1e308);points.getJSONObject(2).put("value",-1e308);
+                chart.setHistory(huge);float ordinate=((Number)invoke(chart,"y",new Class<?>[]{double.class},1e308)).floatValue();
+                check("unbounded finite estimates do not overflow chart coordinates",!Float.isNaN(ordinate)&&!Float.isInfinite(ordinate));
+                chart.setHistory(history(metrics[i],false));
+            }
+            if(scale>=1.3f)check("large-font history summary stacks label and value",((android.widget.LinearLayout)text("Latest").getParent()).getOrientation()==android.widget.LinearLayout.VERTICAL);
             if(scale==2f)check("large font stacks period controls",((android.widget.LinearLayout)text("Day").getParent()).getOrientation()==android.widget.LinearLayout.VERTICAL);
             secure();
         }
-        set(activity,"historyData",history("heart_rate_bpm",true));set(activity,"historyMetric","heart_rate_bpm");invoke(activity,"render");check("empty range is explicit",text("No valid readings in this period")!=null);
+        set(activity,"historyData",history("heart_rate_bpm",true).put("available_readings",new JSONObject().put("count",0)));set(activity,"historyMetric","heart_rate_bpm");invoke(activity,"render");
+        check("account without saved readings is distinct from an empty date range",text("No saved readings yet")!=null&&text("No readings for this period")==null);
+        check("only older adult can connect a wearable from empty history",caregiver?text("Connect my wearable")==null:text("Connect my wearable")!=null);
+        if(!caregiver){text("Connect my wearable").performClick();check("empty-history connection action opens guided setup",get(activity,"page").equals("device"));set(activity,"page","history");set(activity,"historyLoading",false);}
+        JSONObject empty=history("heart_rate_bpm",true);long latest=ApiSession.expiryMs("2026-10-25T16:00:00Z");empty.put("available_readings",new JSONObject().put("count",4).put("latest_at",ApiSession.utc(latest)));
+        set(activity,"historyData",empty);set(activity,"historyMetric","heart_rate_bpm");invoke(activity,"render");check("empty range is explicit",text("No readings for this period")!=null);
+        String person=(String)invoke(activity,"selectedPatient");click("View latest saved day");check("latest saved day preserves the selected person and measurement",person.equals(invoke(activity,"selectedPatient"))&&get(activity,"historyMetric").equals("heart_rate_bpm"));check("latest saved day selects the actual stored day",get(activity,"historyPeriod").equals("day")&&(Long)get(activity,"historyEndMillis")==latest+1000);
         set(activity,"historyLoading",true);invoke(activity,"render");check("loading state is visible",text("Loading your history…")!=null);
         set(activity,"historyLoading",false);set(activity,"historyError","Fixture server unreachable");set(activity,"historyData",null);invoke(activity,"render");check("network failure gives actionable history error",text("History could not be loaded")!=null&&text("Fixture server unreachable")!=null);
         long epoch=(Long)get(activity,"epoch"),request=(Long)get(activity,"historyRequest");
@@ -395,6 +444,45 @@ public final class PreviewInstrumentation extends Instrumentation {
     private JSONObject history(String metric,boolean empty)throws Exception{
         JSONArray points=new JSONArray().put(new JSONObject().put("at","2026-10-26T00:00:00Z").put("value",71).put("count",2)).put(new JSONObject().put("at","2026-10-26T08:00:00Z").put("value",JSONObject.NULL).put("count",0)).put(new JSONObject().put("at","2026-10-26T16:00:00Z").put("value",75).put("count",2));
         return new JSONObject().put("source","device_diagnostic").put("metric",metric).put("unit","bpm").put("period","day").put("start","2026-10-26T00:00:00Z").put("end","2026-10-27T00:00:00Z").put("points",empty?new JSONArray():points).put("coverage",new JSONObject().put("complete",true)).put("summary",new JSONObject().put("count",empty?0:4).put("average",73).put("min",71).put("max",75).put("latest",75).put("latest_at","2026-10-26T16:00:00Z"));
+    }
+    private View datePickerWindow(){
+        if(Build.VERSION.SDK_INT<29)return null;
+        for(View window:android.view.inspector.WindowInspector.getGlobalWindowViews())if(window.isAttachedToWindow()&&find(window,v->v instanceof android.widget.DatePicker)!=null)return window;
+        return null;
+    }
+    /** A date chosen for one metric/account/person cannot overwrite another history scope. */
+    private void historyDateScopes(boolean caregiver)throws Exception{
+        if(Build.VERSION.SDK_INT<29)return;
+        for(String change:caregiver?new String[]{"none","person","metric","page","account"}:new String[]{"none","metric","page","account"}){
+            final long[] request=new long[1];
+            main(()->{
+                set(activity,"session",account(caregiver));set(activity,"patientId",caregiver?"fixture-patient":"");
+                set(activity,"patients",new JSONArray().put(new JSONObject().put("id","fixture-patient").put("display_name","Fixture Older Adult")).put(new JSONObject().put("id","fixture-other-person").put("display_name","Fixture Second Person")));
+                set(activity,"page","history");set(activity,"historyMetric","heart_rate_bpm");set(activity,"historyPeriod","week");set(activity,"historyEndMillis",0L);set(activity,"historyLoading",false);set(activity,"historyError","");set(activity,"historyData",history("heart_rate_bpm",false));invoke(activity,"render");
+                click("Choose date");request[0]=(Long)get(activity,"historyRequest");
+            });
+            idle();main(()->{
+                View window=datePickerWindow();check("history date picker is available",window!=null);
+                android.widget.DatePicker picker=(android.widget.DatePicker)find(window,v->v instanceof android.widget.DatePicker);check("history date picker excludes future days",picker.getMaxDate()<=System.currentTimeMillis());picker.updateDate(2026,java.util.Calendar.OCTOBER,10);
+                if(change.equals("person"))set(activity,"patientId","fixture-other-person");
+                else if(change.equals("metric"))set(activity,"historyMetric","spo2_percent");
+                else if(change.equals("page"))set(activity,"page","home");
+                else if(change.equals("account"))set(activity,"session",account(!caregiver));
+                View confirm=window.findViewById(android.R.id.button1);check("history date confirmation is operable",confirm!=null&&confirm.isClickable()&&confirm.performClick());
+            });
+            // AlertDialog delivers its standard positive action through the main message queue.
+            idle();main(()->{
+                if(change.equals("none")){
+                    java.util.Calendar expected=java.util.Calendar.getInstance();expected.set(2026,java.util.Calendar.OCTOBER,10,23,59,59);expected.set(java.util.Calendar.MILLISECOND,999);
+                    check("date picker preserves person metric and period",get(activity,"page").equals("history")&&get(activity,"historyMetric").equals("heart_rate_bpm")&&get(activity,"historyPeriod").equals("week")&&invoke(activity,"selectedPatient").equals("fixture-patient"));
+                    check("date picker loads through the selected local day's end (actual "+get(activity,"historyEndMillis")+", expected "+expected.getTimeInMillis()+")",(Long)get(activity,"historyEndMillis")==expected.getTimeInMillis());
+                    check("date picker requests the selected date",(Long)get(activity,"historyRequest")>request[0]);
+                }else check("stale date picker cannot change history after "+change+" change",(Long)get(activity,"historyRequest")==request[0]&&(Long)get(activity,"historyEndMillis")==0L);
+            });idle();
+        }
+        main(()->{
+            set(activity,"session",account(caregiver));set(activity,"patientId",caregiver?"fixture-patient":"");set(activity,"page","history");set(activity,"historyOrigin","home");set(activity,"historyMetric","heart_rate_bpm");set(activity,"historyPeriod","day");set(activity,"historyEndMillis",0L);set(activity,"historyLoading",false);set(activity,"historyError","");set(activity,"historyData",history("heart_rate_bpm",false));invoke(activity,"render");secure();
+        });
     }
     /** Exercise the real production dialog while the isolated package has no saved account. */
     private void wearableKeySetup(float scale)throws Exception {
@@ -551,6 +639,8 @@ public final class PreviewInstrumentation extends Instrumentation {
     private View root(){return activity.getWindow().getDecorView();}
     private interface Predicate{boolean test(View view);}
     private View find(View view,Predicate test){if(test.test(view))return view;if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++){View found=find(((ViewGroup)view).getChildAt(i),test);if(found!=null)return found;}return null;}
+    private int count(View view,Predicate test){int total=test.test(view)?1:0;if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)total+=count(((ViewGroup)view).getChildAt(i),test);return total;}
+    private boolean prototypeCopy(View view){return find(view,v->{if(!(v instanceof TextView))return false;String value=((TextView)v).getText().toString().toLowerCase(java.util.Locale.ENGLISH);return value.contains("educational prototype")||value.contains("clinically validated")||value.contains("academic demo");})!=null;}
     private TextView text(String value){return (TextView)find(root(),v->v instanceof TextView&&value.contentEquals(((TextView)v).getText()));}
     private View description(String value){return find(root(),v->v.getContentDescription()!=null&&value.contentEquals(v.getContentDescription()));}
     private View descriptionPrefix(String value){return find(root(),v->v.getContentDescription()!=null&&v.getContentDescription().toString().startsWith(value));}

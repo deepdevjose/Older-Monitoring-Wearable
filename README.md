@@ -2,12 +2,10 @@
 
 Una única base de código para ESP32 → Bluetooth → Android → HTTPS → servidor local. Sin Firebase, servicios de nube ni APIs de mapas. Cuentas de adulto y cuidadores, vínculos aprobados por el adulto, avisos privados, recordatorios y experimentos de IA claramente separados de los diagnósticos del dispositivo.
 
-**Para retomar el equipo preparado:** [arranque paso a paso sin internet](docs/PUESTA_EN_MARCHA.md). La nueva **Network** está preparada para conexión manual; la computadora conserva su red con internet hasta que decidas cambiarla. Al hacer la prueba, conecta ambos equipos a Network y utiliza la IP que imprima el arranque. No necesita descargas. El enlace USB queda como alternativa; el arranque no cambia Wi-Fi ni VPN. **Instalación general:** [guía de servidor y teléfono](docs/SERVER.md). **Límites y consentimiento:** [seguridad y ética](docs/SECURITY_ETHICS.md). **Contrato:** [API](docs/API.md).
+**Para retomar el equipo preparado:** [arranque paso a paso](docs/PUESTA_EN_MARCHA.md). El S22 usa el servidor por USB, conservando Wi-Fi y VPN de la computadora. Mantén el cable conectado. El modo LAN es una alternativa manual; el arranque no cambia de red. **Instalación general:** [servidor y teléfono](docs/SERVER.md). **Contrato:** [API](docs/API.md).
 
 ```bash
-./tools/start_offline.sh --check --serial R5CT20D7X6D
-# Cuando laptop y S22 ya estén en Network; USB conectado para preparar el APK:
-./tools/start_offline.sh --serial R5CT20D7X6D
+./tools/start_offline.sh --usb --serial R5CT20D7X6D
 ./carectl status
 ```
 
@@ -32,7 +30,7 @@ Las carpetas de versiones anteriores se retiraron del árbol activo después de 
 
 ## Alcance
 
-La revisión 1.0.0/código **20**, instalada en el S22 SM-S901E / Android 13, organiza la interfaz en inglés alrededor de las tareas de cada rol. **Today** ofrece a la persona mayor una conexión comprensible, pedir ayuda, su próximo recordatorio y sus indicadores; al cuidador le muestra la persona seleccionada, avisos por revisar, lecturas y ubicación compartida si está autorizada. **Updates**, **Care** y **Settings** mantienen nombres y posiciones estables. La tarjeta técnica Recent readings se sustituye por **Settings → Reading details**; las cinco métricas siguen abriendo históricos **Day / Week / Month**.
+La revisión 1.0.0/código **21**, instalada en el S22 SM-S901E / Android 13, organiza la interfaz en inglés alrededor de las tareas de cada rol. **Today** prioriza pedir ayuda y lecturas antes del plan; al cuidador le muestra la persona seleccionada, avisos por revisar, lecturas y ubicación compartida si está autorizada. Las tarjetas de ancho completo usan valores grandes, unidades discretas y la fecha de la lectura. **Updates**, **Care** y **Settings** mantienen nombres y posiciones estables. Los textos técnicos y límites están en **Settings → Reading details / About CareMonitor**. Las cinco métricas abren **Day / Week / Month**, con fecha elegible y acceso al último día guardado cuando el periodo está vacío.
 
 Los controles grandes, el texto ampliable, las actualizaciones sin reconstruir la pantalla y las animaciones breves de conexión apoyan esa jerarquía. **Settings → Reduce motion** desactiva el movimiento. Las transiciones no inventan ni suavizan valores de sensores. Es un diseño orientado a personas mayores y cuidadores; no se presenta como un estudio de usabilidad con adultos mayores.
 

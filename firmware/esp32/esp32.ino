@@ -215,6 +215,8 @@ bool fingerDetected = false;
 
 bool hrValid = false;
 bool spo2Valid = false;
+bool hrAvailable = false;
+bool spo2Available = false;
 
 int32_t heartRate = 0;
 int32_t spo2 = 0;
@@ -607,6 +609,8 @@ void updateMAX30102()
 
       hrValid = false;
       spo2Valid = false;
+      hrAvailable = false;
+      spo2Available = false;
 
       heartRate = 0;
       spo2 = 0;
@@ -653,6 +657,11 @@ void updateMAX30102()
         &heartRate,
         &heartRateValidFlag
       );
+
+      // Keep computed estimates independent of quality/range flags. -999 is
+      // the algorithm's no-result sentinel, not an estimated pulse or oxygen.
+      hrAvailable = heartRate != -999;
+      spo2Available = spo2 != -999;
 
 
       // -------------------------------------------------
@@ -769,7 +778,7 @@ void printJSON()
     spo2Valid;
 
 
-  if (hrValid)
+  if (hrAvailable)
   {
     max["heart_rate_bpm"] =
       heartRate;
@@ -781,7 +790,7 @@ void printJSON()
   }
 
 
-  if (spo2Valid)
+  if (spo2Available)
   {
     max["spo2_percent"] =
       spo2;

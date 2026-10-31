@@ -1,7 +1,7 @@
 \clearpage
 \subsection{Observed USB system execution: 30 October 2026}
 \label{app:usb-run}
-The current bench campaign uses real Bluetooth Classic SPP acquisition and real HTTPS requests from production Java and resources in an isolated Android application ID, \code{org.caremonitor.reportqa}. Its permissions and services come from the production manifest. A separate SQLite deployment on PC loopback port 19444 uses the existing trusted CA; adb reverse carries its HTTPS connection. Production accounts, the main application data and the laptop's Wi-Fi/VPN are preserved. The main installed application's separate USB deployment remains at port 19443.
+The earlier 30 October benchmark campaign used real Bluetooth Classic SPP acquisition and real HTTPS requests from production Java and resources in an isolated Android application ID, \code{org.caremonitor.reportqa}. Its permissions and services come from the production manifest. A separate SQLite deployment on PC loopback port 19444 uses the existing trusted CA; adb reverse carries its HTTPS connection. Production accounts, the main application data and the laptop's Wi-Fi/VPN are preserved. The main installed application's separate USB deployment remains at port 19443.
 
 The campaign creates controlled adult and caregiver accounts with fictional names, verifies that an unapproved caregiver sees no adult, requests a link and approves it, receives the physical wearable stream and checks the upload queue against retained server records. It then renders the native adult/caregiver pages using actual HTTPS results. These captures are not in-memory preview fixtures. Saved learning exercises explicitly use synthetic CSV examples. The temporary package is removed at the end, including its credentials and installation key; no default credentials are distributed.\cite{systemrun}
 
@@ -12,24 +12,26 @@ Observation & Evidence and meaning\\\midrule
 Phone and software & Samsung S22 SM-S901E / Android 13, code 20 production Java/resources in the isolated report package. Its full input hash map is retained; the production APK installation has a separate hash and readonly client check.\\
 Physical transport & 67 received samples at the first checkpoint in the measured campaign; both GY906 and MPU6050 reported online. The server later retained 76 device readings and the outbox reached zero pending.\\
 Optical validity & Contact was supplied for a bench check. Reported optical status and validity flags are retained together: warming/invalid states are not presented as valid physiological readings. No accuracy or clinical population study is inferred.\\
-Installed firmware & The installed image still reports legacy microphone/light fields. These do not establish connected modules. The corrected three-sensor source compiled without being flashed.\\
+Installed firmware at this earlier checkpoint & The 30 October image reports legacy microphone/light fields, which do not establish connected modules. The three-sensor source had compiled without being flashed; the later update is recorded separately in \path{FIRMWARE_RAW_ESTIMATES_EVIDENCE.json}.\\
 Role and AI execution & Approved caregiver reads the adult's retained history. Three synthetic learning exercises are saved through the real API and reviewed under both roles. Device temperature is not sent to the body-temperature model.\\
 Capture campaign & \USBCaptureRecords{} device readings retained; representative record \USBRecordId{} with stable sample ID below. The device screen uses UTC+8 and may show 31 October while the UTC log remains 30 October.\\\bottomrule
 \end{tabularx}
 \end{table}
 
 \begin{figure}[H]\centering
-\resizebox{\linewidth}{!}{%
-\begin{tikzpicture}[font=\sffamily\small]
-\node[archbox,text width=3.05cm,minimum height=2.25cm] (board) at (1.75,0) {\textbf{1 / Physical ESP32}\\MAX / GY906 / MPU6050\\Validity flags + uptime\\Authenticated SPP NDJSON};
-\node[archbox,text width=3.05cm,minimum height=2.25cm] (app) at (5.75,0) {\textbf{2 / Android relay}\\Timestamp + stable sample ID\\Encrypted outbox\\HTTPS POST /readings};
-\node[archbox,text width=3.05cm,minimum height=2.25cm] (db) at (9.75,0) {\textbf{3 / FastAPI + SQLite}\\Validate and commit\\Retained record ID\\\USBRecordId{}};
-\node[archbox,text width=3.05cm,minimum height=2.25cm] (ui) at (13.75,0) {\textbf{4 / Native views}\\GET overview + history\\Adult's selected resource\\Surface chart + reading details};
-\draw[archflow] (board)--(app);\draw[archflow] (app)--(db);\draw[archflow] (db)--(ui);
-\node[archnote,align=center,text width=14.8cm,anchor=north] at (7.75,-1.75)
- {Representative stable sample ID: \texttt{\USBSampleId}\\Captured at \texttt{\USBRecordTimestamp}. Source: device\_diagnostic.\\The chart aggregates the short bench interval; it is not a fabricated day-long waveform or a one-pixel-per-record trace.};
-\end{tikzpicture}}
-\caption{Representative sensor-to-API-to-mobile evidence chain from the controlled capture campaign. The server record and queue confirmation establish persistence; native views are fetched for that account and interval. A screenshot alone does not identify every aggregate contributor.}\label{fig:physical-trace}
+\begin{tikzpicture}
+\foreach \x/\id/\title/\body in {
+ 1.65/a/{01 / Physical source}/{ESP32 sensor JSON\\Validity + uptime\\Authenticated SPP},
+ 5.7/b/{02 / Android relay}/{Stable sample identity\\Encrypted outbox\\HTTPS POST /readings},
+ 9.75/c/{03 / Durable record}/{FastAPI validation\\SQLite commit\\Record \USBRecordId{}},
+ 13.8/d/{04 / Native retrieval}/{Authorised overview\\Metric history GET\\Selected adult resource}} {
+ \node[dBox,text width=2.8cm,minimum height=1.8cm] (\id) at (\x,0) {\textbf{\title}\\[5pt]\body};}
+\draw[dFlow] (a)--(b);\draw[dFlow] (b)--(c);\draw[dFlow] (c)--(d);
+\node[dNote,text width=15.1cm,anchor=north west] at (.1,-1.45)
+ {\textbf{Representative identity}\quad\texttt{\USBSampleId}\\
+Captured: \texttt{\USBRecordTimestamp}\quad /\quad Source: device\_diagnostic};
+\end{tikzpicture}
+\caption{Traceable sensor-to-API-to-mobile chain. Stable identity and commit/queue confirmation establish persistence; the native chart then reads retained aggregates for that account and interval. A short bench interval does not represent a day-long measurement trace.}\label{fig:physical-trace}
 \end{figure}
 
 \subsection{Measured mobile response and native notification delivery}
@@ -50,31 +52,5 @@ The first campaign exposed the S22's 25-notification package limit: Android reje
 
 The final source also translates newly generated and recognised historical system event defaults into English without changing user-authored text or rewriting encrypted historical records. A later capture pass records that presentation correction. Original timing arrays retain their own run identity and are not relabelled as newly measured values.
 
-\newcommand{\SystemScreenPair}[5]{%
-\begin{figure}[H]\centering
-\begin{subfigure}[t]{.46\textwidth}\centering
-\includegraphics[width=\linewidth,height=.65\textheight,keepaspectratio]{system/#1}
-\caption{#2}
-\end{subfigure}\hfill
-\begin{subfigure}[t]{.46\textwidth}\centering
-\includegraphics[width=\linewidth,height=.65\textheight,keepaspectratio]{system/#3}
-\caption{#4}
-\end{subfigure}
-\caption{#5}
-\end{figure}}
-
-\clearpage
-\subsection{Older adult: live acquisition and understandable readings}
-\SystemScreenPair{elder_live_home_bottom.png}{Current thermal and movement cards; retired light card absent.}{elder_device_bottom.png}{Authenticated reception, server confirmation and zero pending uploads.}{Native S22 adult views during the real USB/SPP capture run. These controlled-account screens retain sensor validity and show live relay state. Counts continue increasing while pages are captured; they are checkpoints rather than a fixed total. The capture's complete hashes and original filenames are retained.}
-
-\clearpage
-\subsection{Older adult: stored history and separate learning results}
-\SystemScreenPair{elder_history_top.png}{Surface history from retained device observations.}{elder_learning_bottom.png}{Saved synthetic classifications and model scores.}{Adult history and learning exercise results from real HTTPS responses. The short bench run contributes a small number of aggregate chart points. The synthetic confidence display is separate from the physical surface-temperature history; its score is not medical certainty.}
-
-\clearpage
-\subsection{Caregiver: selected person and reviewable notices}
-\SystemScreenPair{caregiver_home_bottom.png}{Shared readings and the agreed care reminder.}{caregiver_alerts_top.png}{Controlled help notice awaiting this caregiver's review.}{Native approved-caregiver views from the isolated capture campaign. The help event is labelled test data, and acknowledgement is a human review action rather than proof that an emergency response occurred. Names identify fictional test accounts; the device observations originate from the bench assembly.}
-
-\clearpage
-\subsection{Caregiver: authorised history and saved synthetic confidence}
-\SystemScreenPair{caregiver_history_top.png}{History explicitly names the selected adult.}{caregiver_learning_bottom.png}{Read-only access to that adult's retained exercises.}{Caregiver access is acquired through an invitation, request and adult approval before these real API-backed views are captured. Historical charts and saved class/confidence are demonstrated on the handset, while location/audio permissions remain separate opt-ins.}
+\medskip
+The current code 22 screenshots replace the earlier interface illustrations in Appendix~\ref{app:mobile-screens}. Its separate capture campaign completed 305 checks, retained 78 physical device readings and produced 83 unique PNG files from 89 capture operations. Those current observations do not replace the dated notification latency arrays above.\cite{appatlas}

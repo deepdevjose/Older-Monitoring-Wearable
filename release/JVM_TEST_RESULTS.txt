@@ -14,6 +14,10 @@ PASS: 35 LiveSampleFreshness checks
 Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
 PASS: 22 ReadingAge checks
 Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
+PASS: 86 MetricHistoryQuery checks
+Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
+PASS: 19 OpticalReading checks
+Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
 RelayPolicyTest: 73 checks passed
 Picked up JAVA_TOOL_OPTIONS: -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8
 PASS: 320 SessionLineBuffer checks

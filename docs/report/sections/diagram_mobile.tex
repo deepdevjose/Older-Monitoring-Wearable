@@ -1,98 +1,115 @@
+% Native Android views: compact, source-derived diagrams at their final print size.
+% Shared diagram styles and palette are defined in diagram_system.tex.
 \newcommand{\ActorsDiagram}{%
 \begin{figure}[H]\centering
-\resizebox{\linewidth}{!}{%
-\begin{tikzpicture}[font=\sffamily\small]
-\path[fill=light,draw=ink!25,rounded corners=4pt] (2.2,-1.15) rectangle (13.45,8.4);
-\node[font=\sffamily\large\bfseries,text=ink] at (7.8,8) {CareMonitor: roles and resource ownership};
-\foreach \x/\title in {.7/{Older adult},14.95/{Caregiver}} {
- \draw[ink,line width=1pt] (\x,5.8) circle (.24);
- \draw[ink,line width=1.2pt,line cap=round] (\x,5.56)--(\x,4.65)
- (\x-.42,5.3)--(\x+.42,5.3) (\x,4.65)--(\x-.33,4.15) (\x,4.65)--(\x+.33,4.15);
- \node[align=center,font=\sffamily\bfseries,text width=1.8cm] at (\x,3.55) {\title};}
-\foreach \y/\leftText/\rightText [count=\i] in {
-  6.6/{Connect and authorise\\own wearable}/{Select an approved adult\\and inspect their readings},
-  4.7/{Approve or revoke\\caregiver access}/{Request access using\\an adult's invitation},
-  2.8/{Confirm a help request;\\review agreed reminders}/{Create or cancel reminders;\\review own notifications},
-  .9/{Review own metric history;\\add synthetic exercises}/{Review shared metric history;\\read saved synthetic exercises}} {
- \node[archbox,text width=4.2cm,minimum height=1.22cm,align=center] (a\i) at (5,\y) {\leftText};
- \node[archbox,text width=4.2cm,minimum height=1.22cm,align=center] (c\i) at (10.7,\y) {\rightText};
- \draw[ink!55] (.7,4.95)--(1.6,4.95)--(1.6,\y)--(a\i.west);
- \draw[ink!55] (14.95,4.95)--(14.05,4.95)--(14.05,\y)--(c\i.east);
-}
-\node[archnote,align=center,text width=10.5cm] at (7.8,-.62)
- {Each account keeps its own credentials and inbox. The FastAPI resource guard checks approval on every patient request; hiding a control in Android is not authorisation.};
-\end{tikzpicture}}
-\caption{Actor and use-case map for the implemented adult and caregiver roles. Caregiver access starts with a request and becomes effective after adult approval. The wearable setup key belongs only to an adult account and its chosen server/device.}\label{fig:actors}
+\begin{tikzpicture}[font=\sffamily\fontsize{8.5}{11}\selectfont]
+% Role cards describe responsibility; approval is its own server boundary.
+\node[dBox,fill=bluewash,text width=6.25cm,minimum height=1.05cm] (adult) at (3.45,0)
+ {\textbf{OLDER ADULT}\\Own account, wearable and care choices};
+\node[dBox,fill=tealwash,text width=6.25cm,minimum height=1.05cm] (caregiver) at (11.75,0)
+ {\textbf{CAREGIVER}\\Own account and private notification inbox};
+\node[dBox,text width=6.25cm,minimum height=2.15cm] (adulttasks) at (3.45,-2.05)
+ {Connect and authenticate own wearable\\Review own readings and metric history\\Confirm a help request; review reminders\\Add synthetic learning exercises};
+\node[dBox,text width=6.25cm,minimum height=2.15cm] (caretasks) at (11.75,-2.05)
+ {Select an approved adult\\Review shared readings and metric history\\Create or cancel agreed reminders\\Review own notices and saved learning results};
+\draw[dFlow] (adult)--(adulttasks);
+\draw[dFlow] (caregiver)--(caretasks);
+\node[dData,text width=8.8cm,minimum height=1.3cm,align=center] (approval) at (7.6,-4.55)
+ {\textbf{SERVER-ENFORCED CARE RELATIONSHIP}\\Invitation $\rightarrow$ caregiver request $\rightarrow$ adult approval\\Adult can revoke access};
+\draw[dFlow] (adulttasks.south)--(3.45,-3.55)-|node[dLabel,pos=.30,above]{approve / revoke}(approval.north west);
+\draw[dFlow] (caretasks.south)--(11.75,-3.55)-|node[dLabel,pos=.30,above]{request access}(approval.north east);
+\node[dNote,text width=14.8cm,anchor=north] at (7.6,-5.7)
+ {\textbf{Boundary:} every patient request is checked against the role and current approved relationship. Wearable setup is adult-only. Each account retains separate credentials and its own inbox.};
+\node[dNote,anchor=north west] at (.05,-6.65) {\tikz{\draw[dFlow](0,0)--(.65,0);}\quad User action or access-control flow};
+\end{tikzpicture}
+\caption{Implemented adult and caregiver use cases. An invitation alone grants no access; approval and revocation are checked by FastAPI for each patient resource.}\label{fig:actors}
 \end{figure}}
 
 \newcommand{\MobileFlowDiagram}{%
 \begin{figure}[H]\centering
-\resizebox{\linewidth}{!}{%
-\begin{tikzpicture}[font=\sffamily\small]
-\node[archbox,text width=13.8cm] (entry) at (7,0)
- {\textbf{Sign in or create account}\quad Role $\rightarrow$ name $\rightarrow$ email $\rightarrow$ password and acknowledgement\\
-Progressive registration preserves its draft; an existing server account signs in rather than registering again.};
-\node[archbox,text width=6.1cm,minimum height=2.4cm] (adult) at (3.25,-2.5)
- {\textbf{Adult Today}\\Wearable connection + age of reading\\Ask for help with confirmation\\Next reminder and own metric cards};
-\node[archbox,text width=6.1cm,minimum height=2.4cm] (caregiver) at (10.75,-2.5)
- {\textbf{Caregiver Today}\\Explicit approved-person selection\\Pending notices before detail\\That person's readings and care context};
-\draw[archflow] (entry.south)--(7,-1.25)-|(adult.north);
-\draw[archflow] (7,-1.25)-|(caregiver.north);
-\node[archbox,text width=13.8cm] (nav) at (7,-5.1)
- {\textbf{Stable navigation}\quad Today \enspace / \enspace Updates \enspace / \enspace Care \enspace / \enspace Settings\\
-Metric card $\rightarrow$ Day / Week / Month history. Settings $\rightarrow$ Reading details, connection and optional features. Settings $\rightarrow$ Learning insights for saved synthetic exercises.};
-\draw[archflow] (adult.south)--(adult.south|-nav.north);
-\draw[archflow] (caregiver.south)--(caregiver.south|-nav.north);
-\node[archbox,text width=6.1cm,minimum height=2cm] (live) at (3.25,-7.8)
- {\textbf{Live presentation}\\Update changed labels and age in place. Preserve focus, scroll and selected person. Short motion respects Reduce motion and battery saving.};
-\node[archbox,text width=6.1cm,minimum height=2cm] (guard) at (10.75,-7.8)
- {\textbf{Ownership and failure handling}\\Reject old-account callbacks. Separate stale, missing and invalid values. Re-authenticate after endpoint changes; never move an outbox silently.};
-\draw[archflow] (nav.south)--(7,-6.4)-|(live.north);\draw[archflow] (7,-6.4)-|(guard.north);
-\end{tikzpicture}}
-\caption{Mobile workflow and information hierarchy. Frequent care tasks remain on Today; connection administration and detailed readings are one level deeper. Classification is explicitly a synthetic workspace rather than an interpretation of the physical wearable.}\label{fig:mobile-flow}
+\begin{tikzpicture}[font=\sffamily\fontsize{8.5}{11}\selectfont]
+\node[dBox,fill=bluewash,text width=14.4cm,minimum height=1.05cm] (entry) at (7.6,0)
+ {\textbf{CREATE ACCOUNT OR SIGN IN}\\New account: role $\rightarrow$ name $\rightarrow$ email $\rightarrow$ password and acknowledgement. Existing account: sign in.};
+\node[dBox,text width=6.25cm,minimum height=1.6cm] (adult) at (3.45,-2.15)
+ {\textbf{Adult Today}\\Wearable state and age of reading\\Help request with confirmation\\Next reminder and own metric cards};
+\node[dBox,text width=6.25cm,minimum height=1.6cm] (caregiver) at (11.75,-2.15)
+ {\textbf{Caregiver Today}\\Explicit approved-person selection\\Pending notices before detail\\Selected person's readings and care context};
+\draw[dFlow] (entry.south)--(7.6,-.95)-|(adult.north);
+\draw[dFlow] (7.6,-.95)-|(caregiver.north);
+\node[dData,text width=14.4cm,minimum height=.85cm,align=center] (nav) at (7.6,-4.25)
+ {\textbf{STABLE NAVIGATION}\\Today\qquad Updates\qquad Care\qquad Settings};
+\draw[dFlow] (adult.south)--(adult.south|-nav.north);
+\draw[dFlow] (caregiver.south)--(caregiver.south|-nav.north);
+\node[dBox,text width=4.05cm,minimum height=1.7cm] (history) at (2.4,-6.55)
+ {\textbf{Tap a metric card}\\Day / Week / Month history\\Read the stored aggregates\\Keep missing values distinct};
+\node[dBox,text width=4.05cm,minimum height=1.7cm] (care) at (7.6,-6.55)
+ {\textbf{Updates and Care}\\Private notices and review\\Reminders and care links\\Role-specific actions};
+\node[dBox,text width=4.05cm,minimum height=1.7cm] (settings) at (12.8,-6.55)
+ {\textbf{Settings}\\Reading details and connection\\Optional phone features\\Synthetic learning workspace};
+\draw[dFlow] (nav.south)--(7.6,-5.15)-|(history.north);
+\draw[dFlow] (7.6,-5.15)--(care.north);
+\draw[dFlow] (7.6,-5.15)-|(settings.north);
+\node[dNote,text width=14.8cm,anchor=north] at (7.6,-7.85)
+ {Live updates preserve focus and selected person; motion respects Reduce motion. Account guards reject stale callbacks and keep the upload queue bound to its original server.};
+\node[dNote,anchor=north west] at (.05,-8.65) {\tikz{\draw[dFlow](0,0)--(.65,0);}\quad User navigation or role branch};
+\end{tikzpicture}
+\caption{Native mobile workflow and information hierarchy. Frequent care tasks are visible on Today; administration and detailed readings are reached through Settings. Learning is a synthetic exercise workspace, separate from physical wearable interpretation.}\label{fig:mobile-flow}
 \end{figure}}
 
 \newcommand{\MobileClassDiagram}{%
 \begin{figure}[H]\centering
-\resizebox{\linewidth}{!}{%
-\begin{tikzpicture}[font=\sffamily\small,
- class/.style={archbox,text width=4.15cm,minimum height=2cm},
- dep/.style={-{Stealth[length=2mm]},draw=ink!60,dashed,line width=.7pt}]
-\node[class] (main) at (7.15,0) {\textbf{MainActivity}\quad Activity\\session / page / patientId\\render(); refresh(); openHistory()};
-\node[class] (learn) at (2.2,0) {\textbf{LearningActivity}\quad Activity\\patientId / synthetic features\\load(); classify(); render()};
-\node[class] (view) at (12.1,0) {\textbf{Native view helpers}\\MetricHistoryChartView\\CareStatusView / CareMotion\\ReadingSummary / ReadingAge};
-\draw[dep] (main)--(learn);
-\draw[dep] (main)--(view);
-\node[class] (api) at (2.2,-3.6) {\textbf{ApiClient}\quad HTTPS boundary\\call(); request(); tls()\\\textbf{ApiSession}: load/save/valid\\Account + endpoint ownership};
-\node[class] (monitor) at (7.15,-3.6) {\textbf{LiveMonitorService}\quad Service\\packetCount / snapshot / freshness\\scan(); stopMonitoring()\\Foreground SPP acquisition};
-\node[class] (private) at (12.1,-3.6) {\textbf{SecureStore}\quad AtomicFile\\read(); write(); delete()\\AndroidKeyStore / AES-GCM\\\textbf{WearableKeys}: scoped key};
-\draw[dep] (learn)--(api);\draw[dep] (main.south)--(monitor.north);
-\draw[dep] (main.south west)--(api.north east);
-\node[class] (notices) at (2.2,-7.2) {\textbf{NotificationSync}\\sync(); waitAndSync()\\NotificationCursor + bounded window\\Foreground / scheduled services};
-\node[class] (relay) at (7.15,-7.2) {\textbf{ServerRelay}\quad Worker\\encrypted bounded outbox\\enqueue(); start(); pause()\\RelayPolicy: retries and errors};
-\node[class] (transport) at (12.1,-7.2) {\textbf{SensorTransport}\quad interface\\callbacks / connect / stop\\SppSensorClient implements SPP\\BleSensorClient is a separate option};
-\draw[dep] (notices)--(api);\draw[dep] (monitor)--(relay);\draw[dep] (monitor.south east)--(transport.north west);
-\draw[dep] (relay.south)--(7.15,-9.1)--(-.85,-9.1)--(-.85,-3.6)--(api.west);
-\node[archlabel,text width=1.3cm] at (-.85,-5.4) {HTTPS\\uploads};
-\draw[dep] (transport)--(private);
-\draw[dep] (relay.east)--(9.65,-7.2)--(9.65,-5.35)-|node[archlabel,pos=.7]{persists}(private.south);
-\node[archnote,text width=14.2cm,anchor=north] at (7.15,-9.7)
- {Dashed arrows are dependencies, not inheritance. Activities retain both view and controller duties: this is an MVC-inspired organisation with reusable service/data helpers, not a complete MVVM architecture. SppSensorClient additionally uses WearableAuth, SessionLineBuffer and NdjsonFramer; the ESP32 image does not expose a BLE GATT service.};
-\end{tikzpicture}}
-\caption{Selected production classes and actual responsibility boundaries. Fields and methods are representative rather than a full API listing. The diagram is derived from the canonical Java sources, not a proposed refactoring.}\label{fig:mobile-classes}
+\begin{tikzpicture}[font=\sffamily\fontsize{8.5}{11}\selectfont,
+ cbox/.style={dBox,text width=4.1cm,minimum height=2.1cm},
+ cdep/.style={-{Stealth[length=1.7mm]},draw=muted,dashed,line width=.65pt}]
+\node[cbox,fill=bluewash] (learn) at (2.3,0)
+ {\textbf{LearningActivity}\\\textit{Activity: synthetic exercises}\\[3pt]patientId; feature input\\load(); classify(); render()};
+\node[cbox,fill=bluewash] (main) at (7.6,0)
+ {\textbf{MainActivity}\\\textit{Activity: view + controller}\\[3pt]session; page; patientId\\render(); refresh(); openHistory()};
+\node[cbox,fill=bluewash] (views) at (12.9,0)
+ {\textbf{Native view helpers}\\\textit{Rendering and display state}\\[3pt]MetricHistoryChartView\\CareStatusView; CareMotion\\ReadingSummary; ReadingAge};
+\draw[cdep] (main)--(learn);
+\draw[cdep] (main)--(views);
+\node[cbox] (api) at (2.3,-3.55)
+ {\textbf{ApiClient / ApiSession}\\\textit{HTTPS and session ownership}\\[3pt]call(); request(); tls()\\Session: load / save / valid\\Account and server identity};
+\node[cbox] (monitor) at (7.6,-3.55)
+ {\textbf{LiveMonitorService}\\\textit{Foreground acquisition}\\[3pt]packet count; snapshot; freshness\\scan(); stopMonitoring()};
+\node[cbox] (store) at (12.9,-3.55)
+ {\textbf{SecureStore / WearableKeys}\\\textit{Private account-bound state}\\[3pt]AtomicFile; read / write / delete\\AndroidKeyStore; AES-GCM\\Scoped wearable key};
+\draw[cdep] (learn)--(api);
+\draw[cdep] (main.south)--(monitor.north);
+\draw[cdep] (main.south west)--(5,-1.85)-|(api.north east);
+\node[cbox] (notices) at (2.3,-7.1)
+ {\textbf{NotificationSync}\\\textit{Private inbox delivery}\\[3pt]sync(); waitAndSync()\\NotificationCursor; bounded window\\Foreground / scheduled services};
+\node[cbox] (relay) at (7.6,-7.1)
+ {\textbf{ServerRelay}\\\textit{Durable upload worker}\\[3pt]Encrypted bounded outbox\\enqueue(); start(); pause()\\RelayPolicy: retries and errors};
+\node[cbox] (transport) at (12.9,-7.1)
+ {\textbf{SensorTransport}\\\textit{Transport interface}\\[3pt]callbacks; connect; stop\\SppSensorClient: current SPP\\BleSensorClient: separate option};
+\draw[cdep] (notices)--(api);
+\draw[cdep] (monitor)--(relay);
+\draw[cdep] (monitor.east)--(10.25,-3.55)--(10.25,-5.75)-|(transport.north west);
+\draw[cdep] (transport)--(store);
+\draw[cdep] (relay.south)--(7.6,-8.85)--(15.3,-8.85)--(15.3,-3.55)--(store.east);
+\node[dLabel,rotate=90,fill=white] at (15.3,-5.6) {persists};
+% The outer upload route remains clear of node content and all other routes.
+\draw[cdep] (relay.south)--(7.6,-8.6)--(0,-8.6)--(0,-3.55)--(api.west);
+\node[dLabel,rotate=90,fill=white] at (0,-6.1) {HTTPS upload};
+\node[dNote,text width=14.8cm,anchor=north] at (7.6,-9.15)
+ {\tikz{\draw[cdep](0,0)--(.65,0);}\quad Dependency; not inheritance. Selected fields and methods are representative. Activities combine presentation and controller duties in an MVC-inspired structure. SPP also uses WearableAuth, SessionLineBuffer and NdjsonFramer; this ESP32 firmware has no BLE GATT service.};
+\end{tikzpicture}
+\caption{Source-derived Android responsibilities and dependencies. The reusable transport, persistence, notification and API helpers support the activities; the diagram does not imply a complete MVVM architecture.}\label{fig:mobile-classes}
 \end{figure}}
 
 \newcommand{\PermissionsFigure}{%
-\begin{table}[H]\centering\small
-\caption{Feature-to-permission map for the manifest and runtime checks. Optional phone sensing is separate from the removed wearable microphone.}\label{tab:permissions}
-\begin{tabularx}{\textwidth}{@{}P{32mm}P{49mm}Y@{}}\toprule
-User action & Android capability & Boundary and lifetime\\\midrule
-Sign in; read and upload & INTERNET, ACCESS\_NETWORK\_STATE; ACCESS\_LOCAL\_NETWORK on API37+ & HTTPS client and host verification still apply over USB. The S22 API33 does not use the API37 local-network prompt.\\
-Find/connect wearable & BLUETOOTH\_SCAN + BLUETOOTH\_CONNECT on API31+; legacy Bluetooth permissions through API30 & Requested at wearable setup. Older Android scanning uses location permission. The adult role is checked before key entry and connection.\\
-Keep wearable connected & FOREGROUND\_SERVICE; connectedDevice type and its API34+ permission & Explicit connection action, visible foreground status and stop action. No autonomous fall detector is inferred.\\
-Enable local care notices & POST\_NOTIFICATIONS on API33+; foreground specialUse type on API34+ & Explicit opt-in to NotificationChannelService. Private HTTPS long polling and a visible connection notification; no third-party push.\\
-Share phone location & ACCESS\_COARSE\_LOCATION / ACCESS\_FINE\_LOCATION; location foreground-service type & Adult's server consent plus runtime grant. Coordinates have accuracy and expiry; sharing can be stopped and consent revoked. No background-location permission is declared.\\
-Enable optional sound checks & RECORD\_AUDIO; microphone foreground-service type & Separate adult consent, visible service and human confirmation. The phone microphone is not an ESP32 microphone; raw audio is not uploaded. Loudness is not proof of a fall.\\
-Use device speaker & Android notification channel / system volume & No microphone permission is needed to play a notification. Channel, volume, Do Not Disturb and OS restrictions affect audibility. Posting a notification alone does not prove somebody heard it.\\\bottomrule
+\begin{table}[H]\centering\small\hyphenpenalty=10000\exhyphenpenalty=10000
+\caption{Feature-to-permission map from the manifest and runtime checks. Optional phone sensing is separate from the removed wearable microphone.}\label{tab:permissions}
+\begin{tabularx}{\textwidth}{@{}P{28mm}P{56mm}Y@{}}\toprule
+Action & Android capability & Scope and lifetime\\\midrule
+Sign in; upload; read & INTERNET\newline ACCESS\_NETWORK\_STATE\newline ACCESS\_LOCAL\_NETWORK (API37+) & Certificate and host verification also apply over USB. The S22/API33 has no API37 local-network prompt.\\
+Find and connect wearable & BLUETOOTH\_SCAN\newline BLUETOOTH\_CONNECT (API31+)\newline Legacy permissions through API30 & Requested during adult-only wearable setup. Scanning on older Android requires location permission.\\
+Keep wearable connected & FOREGROUND\_SERVICE; connectedDevice type and its API34+ permission & Explicit connection action, visible foreground status and Stop action. Connection is not autonomous fall detection.\\
+Enable private notices & POST\_NOTIFICATIONS on API33+; specialUse foreground-service type on API34+ & Explicit opt-in to NotificationChannelService; HTTPS long polling and visible connection status. No third-party push.\\
+Share phone location & ACCESS\_COARSE\_LOCATION\newline ACCESS\_FINE\_LOCATION\newline Location foreground-service type & Adult's server consent plus runtime grant. Accuracy and expiry are retained; sharing can stop and consent can be revoked. No background-location permission.\\
+Enable sound checks & RECORD\_AUDIO; microphone foreground-service type & Separate adult consent and visible service. Human confirmation is required; raw audio stays on the phone. Loudness alone does not establish a fall.\\
+Play a notice sound & Notification channel and system volume & No microphone permission. Channel settings, volume, Do Not Disturb and OS restrictions affect audibility. Native posting does not prove the user heard it.\\\bottomrule
 \end{tabularx}
 \end{table}}

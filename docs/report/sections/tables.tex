@@ -1,23 +1,40 @@
 \newcommand{\RequirementsTable}{%
-\begin{table}[htbp]\small
-\caption{Requirements traced to implementation and evidence. S: source inspected; E: backend or JVM executed; D: dated production-package checks on a phone; F: current isolated preview UI fixture on a phone.}\label{tab:requirements}
-\begin{tabularx}{\textwidth}{@{}P{10mm}Y Y P{12mm}@{}}\toprule
+\begin{table}[H]\small
+\caption{Requirements traced to implementation and distinct executed evidence.}\label{tab:requirements}
+\begin{tabularx}{\textwidth}{@{}P{10mm}Y Y P{16mm}@{}}\toprule
 ID & Requirement and component & Verification and scope & State\\\midrule
-R1 & Older adult and caregiver views; MainActivity & Role selection, navigation and caregiver wearable guard checked on device & E/D/F\\
-R2 & Reading storage and retrieval; readings API, SQLite & Idempotency, access and ordering tests pass & E\\
-R3 & Tappable metric history; history API, MetricHistoryChartView & Mounted Day/Week/Month charts; weighted aggregation, gaps and consent tested & E/F\\
-R4 & Three classes and confidence; ModelService, LearningActivity & Class, score and saved history in UI fixture; persistence and access tested separately & E/F\\
-R5 & Stored alerts and review; alerts, private inbox & Sustained episode, recovery and independent caregiver review tested & E\\
-R6 & Missing, invalid and disconnected states & Validation and relay policies tested; physical outage recovery outside this campaign & S/E\\
-R7 & Roles, consent and credentials & Authentication, approved membership, TLS and revocation tested & E\\
-R8 & Modular app and accessible navigation & JVM logic, tabs and enlarged registration checked; Activity coupling remains & E/D/F\\
-R9 & Controlled development and contribution & Four main history commits establish repository-level development history & S\\
-R10 & Synthetic demonstration and improvement & Isolated Learning insights; API episodes and matched backend comparison & E/F\\\bottomrule
+R1 & Adult and caregiver views; MainActivity & Role navigation, wearable guard and real approved-caregiver views & E/D/F/Q\\
+R2 & Reading storage and retrieval; readings API, SQLite & Idempotency/order tests; physical readings retained and fetched through native views & E/Q\\
+R3 & Tappable history; history API, MetricHistoryChartView & Day/Week/Month fixtures; actual surface-history views under both roles; aggregation/access tests & E/F/Q\\
+R4 & Three classes and confidence; ModelService, LearningActivity & Synthetic exercises saved and read via real API under both roles; model metrics tested separately & E/F/Q\\
+R5 & Stored alerts and private inbox & Rule/recovery and independent-review tests; native caregiver help notice and posting trials & E/Q\\
+R6 & Missing, invalid and disconnected states & Validation/relay tests and native unavailable states; physical outage recovery not measured & S/E/F/Q\\
+R7 & Roles, consent and credentials & TLS, authorisation and revocation tests; real request/approval before caregiver access & E/Q\\
+R8 & Modular app and accessible navigation & JVM logic, labelled tabs and enlarged-text fixture; Activities retain view/controller coupling & E/D/F\\
+R9 & Version control and attribution & Supplied contribution matrix and artefact links identify tasks; dated commits and build hashes record integration & S\\
+R10 & Demonstration and improvement & Learning exercises, matched retry comparison and measured native-posting improvement & E/F/Q\\\bottomrule
+\end{tabularx}
+\smallskip\par\footnotesize
+S: source inspected; E: backend/JVM software executed; D: dated production-package phone checks; F: current isolated preview fixture.
+Q: 30 October system QA on a physical S22 with real accounts and HTTPS, using production Java/resources in a separate application ID and database. Q is not acceptance of the installed production APK or a two-handset deployment.
+\end{table}}
+
+\newcommand{\MobileResponsibilitiesTable}{%
+\begin{table}[H]\small
+\caption{Concrete responsibility boundaries in the Android source. Methods are traceable in the named canonical Java source files.}\label{tab:mobile-responsibilities}
+\begin{tabularx}{\textwidth}{@{}P{29mm}P{58mm}Y@{}}\toprule
+Responsibility & Class and representative methods & Ownership and limit\\\midrule
+Care presentation & MainActivity: \code{render()}, \code{history()}, \code{openHistory()} & Builds native views and handles navigation; view and controller duties remain combined\\
+Asynchronous state & MainActivity: \code{loadHistory()}, \code{historyCurrent()} & Executor performs requests; main-thread callback verifies account, person, period and request identity\\
+Synthetic exercises & LearningActivity: \code{load()}, \code{classify()}, \code{render()}, \code{current()} & Separate screen, role guard and lifecycle checks; retains its own view/controller composition\\
+Chart rendering & MetricHistoryChartView: \code{setHistory()}, \code{onDraw()} & Draws supplied aggregates and supports selection; does not fetch readings or run inference\\
+Account and storage & ApiClient; ApiSession: \code{load()}, \code{save()}, \code{clear()}; SecureStore & HTTPS/JSON boundary, expiring account state and encrypted persistence\\
+Acquisition and policy & SensorTransport, SppSensorClient; ServerRelay; ReadingSummary, LiveSampleFreshness, AlertInbox & Radio access, queued upload and reusable logic remain outside screen composition\\\bottomrule
 \end{tabularx}
 \end{table}}
 
 \newcommand{\RoleTable}{%
-\begin{table}[htbp]\small
+\begin{table}[H]\small
 \caption{Role behaviour in the current release. Server checks enforce access; the Android UI also restricts wearable controls to the older adult.}\label{tab:roles}
 \begin{tabularx}{\textwidth}{@{}Y P{35mm}P{35mm}@{}}\toprule
 Action & Older adult & Approved caregiver\\\midrule
@@ -34,13 +51,13 @@ Registration accessibility & 200\% layout checked & 200\% layout checked\\\botto
 \end{table}}
 
 \newcommand{\DatasetFigure}{%
-\begin{figure}[htbp]\centering
+\begin{figure}[H]\centering
 \includegraphics[width=0.95\textwidth]{dataset_summary.pdf}
 \caption{Class balance and row partitions from the saved training metadata. Splitting operates on unique feature tuples, so row proportions differ slightly from 60/20/20. These labels are educational categories.}\label{fig:dataset}
 \end{figure}}
 
 \newcommand{\MetricsTable}{%
-\begin{table}[htbp]\small\centering
+\begin{table}[H]\small\centering
 \caption{Local validation and test performance. P, R and F1 are macro averages; all values are percentages. Validation selects the model.}\label{tab:metrics}
 \begin{tabular}{@{}llrrrrr@{}}\toprule
 Model & Partition & Accuracy & P & R & F1 & Critical R\\\midrule
@@ -52,13 +69,13 @@ Random Forest & Test & 100.00 & 100.00 & 100.00 & 100.00 & 100.00\\\bottomrule
 \end{table}}
 
 \newcommand{\ConfusionFigure}{%
-\begin{figure}[htbp]\centering
+\begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{confusion_comparison.pdf}
 \caption{Confusion matrices for 11,767 locally held out synthetic rows. The selected forest reconstructs the rule derived labels perfectly on this split. This is neither clinical validation nor an assessor hidden test.}\label{fig:confusion}
 \end{figure}}
 
 \newcommand{\RatesTable}{%
-\begin{table}[htbp]\small
+\begin{table}[H]\small
 \caption{Classification errors and alert observations with explicit denominators. Classifier rates do not measure phone delivery failures.}\label{tab:rates}
 \begin{tabularx}{\textwidth}{@{}Y P{32mm}P{31mm}@{}}\toprule
 Measure and denominator & Logistic regression & Random Forest\\\midrule
@@ -83,6 +100,7 @@ Metric history suite & \CurrentHistoryResult & Weighted means, validity, gaps, b
 Learning record suite & \CurrentLearningResult & Synthetic persistence, idempotency, authorisation and revocation\\
 Current Android scope & Code \CurrentVersionCode & \CurrentAndroidTableResult\\
 Current HTTPS scope & \CurrentIntegrationResult & Loopback checks; distinct from physical transport\\
+30 October system QA & 119 checks & Real SPP, HTTPS, controlled accounts and native views; 76 retained readings, zero pending uploads. Final native posting 30/30 within ten seconds on one screen-on S22\\
 27 October Bluetooth & 207 protocol checks & Exclusive authenticated link; code 17 received 138 samples with zero pending. Dated proof; current APK and caregiver delivery excluded\\\midrule
 Baseline Python/JVM & 88 / 2,830 & 26 October records: Python tests / JVM assertions\\
 Baseline HTTPS & 17/17 checks & Loopback TLS, fictional accounts; no phone or Bluetooth\\

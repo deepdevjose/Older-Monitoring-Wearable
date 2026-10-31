@@ -1,0 +1,58 @@
+{
+  "revision_date": "2026-10-31",
+  "timezone": "Asia/Shanghai",
+  "submitted_draft": {
+    "path": "enviado.pdf",
+    "sha256": "cd5825cf69765be6c9abd930fee1bde421211821531df3939dec993bb25f5af4",
+    "pages": 22
+  },
+  "teacher_feedback": {
+    "path": "IndiCare Strengths (teacher review).odt",
+    "sha256": "cd00b9d2171dc8d7a3bdcaca388f1cfa0042aa94ebf86a76c7c4a6460a2721ce"
+  },
+  "scope": "Editorial and vector-diagram revision; preserve existing evaluated results and their recorded dates. No new application, server or physical-device acceptance campaign.",
+  "retained_content": [
+    "synthetic dataset and grouped splits",
+    "Logistic Regression versus Random Forest evaluation",
+    "idempotent ingestion and bounded durable queue",
+    "independent caregiver review and episode recovery",
+    "security and consent controls",
+    "dated baseline and native system measurements"
+  ],
+  "additions": [
+    "complete runtime/offline system diagram",
+    "three-sensor electrical schematic",
+    "unified vector palette and legible unscaled typography",
+    "method-level Android responsibility table",
+    "current real-account QA evidence legend",
+    "completed-campaign demonstration summary",
+    "corrected server inheritance and handshake deadline",
+    "individual and shared contribution matrix supplied by Jose Manuel Cortes Ceron"
+  ],
+  "individual_tasks_confirmed": true,
+  "coverage": "FEEDBACK_COVERAGE.md",
+  "model_analysis_sha256": "fee01d2eeb4d5d66c2f4d332614d148b7fbb6a53486dfe12ebe2bc571803085b",
+  "model_analysis_matches_previous_report_source": true,
+  "model_analysis_comparison_baseline": "git b7dcb80e88ddf0a4121390d862d53c0300cde6b6:docs/report/sections/body.tex",
+  "contribution_confirmation": {
+    "record": "evidence/team_contributions.json",
+    "confirmed_by": "Jose Manuel Cortes Ceron",
+    "date": "2026-10-30",
+    "timezone": "America/Los_Angeles",
+    "scope": "Supplied task allocation with associated artifacts; Git chronology is not independent proof of individual authorship. Historical incomplete-contribution status in report_inputs.json is superseded."
+  },
+  "current_capture_revision": {
+    "date": "2026-10-31",
+    "timezone": "America/Los_Angeles",
+    "version_code": 22,
+    "guide": "sections/app_screens.tex",
+    "selected_current_screens": 38,
+    "current_pngs_retained": 85,
+    "physical_capture_checks": 305,
+    "physical_readings_retained": 78,
+    "supplementary_learning_checks": 29,
+    "software_tests": 248,
+    "jvm_assertions": 3381,
+    "scope": "New controlled current-interface physical capture and separate saved-synthetic-learning capture. Historical model metrics, benchmarks and notification trials retain their original dates and identities. Original evaluated model-analysis content preserved."
+  }
+}

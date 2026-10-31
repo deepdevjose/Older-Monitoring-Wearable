@@ -6,6 +6,7 @@ include samples outside its stated interval. Legacy indexing is incremental
 and its remaining coverage is explicitly reported rather than concealed.
 """
 from datetime import datetime, timezone
+from decimal import Decimal
 import math
 from time import time as current_time
 
@@ -31,10 +32,8 @@ def number(value, minimum, maximum):
 
 
 def metric_values(payload):
-    """Mirror the live-card validity flags, without assigning clinical meaning."""
+    """Preserve numeric optical estimates independently of quality/alert limits."""
     optical = payload.get("max30102", {})
-    optical_ok = (optical.get("status") == "ok" and optical.get("online") is not False
-                  and optical.get("finger_detected") is not False)
     temperature = payload.get("gy906", {})
     temperature_ok = temperature.get("online") is True and temperature.get("status", "ok") == "ok"
     motion = payload.get("mpu6050", {})
@@ -42,8 +41,8 @@ def metric_values(payload):
     xyz = [number(vector.get(axis), -100, 100) for axis in ("x", "y", "z")]
     acceleration = math.sqrt(sum(value*value for value in xyz)) if motion.get("online") is True and all(value is not None for value in xyz) else None
     return {
-        "heart_rate_bpm": number(optical.get("heart_rate_bpm"), 1, 400) if optical_ok and optical.get("heart_rate_valid") is True else None,
-        "spo2_percent": number(optical.get("spo2_percent"), 0, 100) if optical_ok and optical.get("spo2_valid") is True else None,
+        "heart_rate_bpm": optical_estimate(optical.get("heart_rate_bpm")),
+        "spo2_percent": optical_estimate(optical.get("spo2_percent")),
         "surface_temp_c": number(temperature.get("object_temp_c"), -70, 380) if temperature_ok else None,
         "ambient_temp_c": number(temperature.get("ambient_temp_c"), -70, 380) if temperature_ok else None,
         "light_adc": number(payload.get("photoresistor", {}).get("adc_raw"), 0, 4095),
@@ -51,8 +50,13 @@ def metric_values(payload):
     }
 
 
+def optical_estimate(value):
+    # -999 means no computation in the Maxim algorithm. Never manufacture zero.
+    return number(value, -math.inf, math.inf) if value != -999 else None
+
+
 def empty_stat():
-    return {"count": 0, "sum": 0.0, "min": None, "max": None, "latest": None, "latest_at": None, "invalid": 0}
+    return {"count": 0, "sum": "0", "min": None, "max": None, "latest": None, "latest_at": None, "invalid": 0}
 
 
 def add(stat, value, captured):
@@ -60,7 +64,7 @@ def add(stat, value, captured):
         stat["invalid"] += 1
         return
     stat["count"] += 1
-    stat["sum"] += value
+    stat["sum"] = str(Decimal(str(stat["sum"])) + Decimal(str(value)))
     stat["min"] = value if stat["min"] is None else min(stat["min"], value)
     stat["max"] = value if stat["max"] is None else max(stat["max"], value)
     if stat["latest_at"] is None or captured >= stat["latest_at"]:
@@ -69,7 +73,7 @@ def add(stat, value, captured):
 
 def merge(target, other):
     target["count"] += other["count"]
-    target["sum"] += other["sum"]
+    target["sum"] = str(Decimal(str(target["sum"])) + Decimal(str(other["sum"])))
     target["invalid"] += other["invalid"]
     if not other["count"]:
         return
@@ -102,8 +106,13 @@ def index_reading(conn, db, row, envelope=None):
 def metric_history(conn, db, patient, metric, period, end, source):
     duration, bucket_seconds = PERIODS[period]
     start = end - duration
-    retained_after = int(current_time()) - 30*86400
+    now = int(current_time())
+    retained_after = now - 30*86400
     available_start = max(start, retained_after)
+    # A range may be empty even though older readings remain available. Expose
+    # their dates without merging patients/sources or pretending each sensor
+    # produced a valid value. The UI can offer the last saved day explicitly.
+    available = conn.execute("SELECT COUNT(*) AS count,MIN(captured_at) AS first_at,MAX(captured_at) AS latest_at FROM readings WHERE elder_id=? AND source=? AND captured_at>=? AND captured_at<?", (patient, source, retained_after, now+31)).fetchone()
     # Bounded work when upgrading an older database. New ingestion is immediate.
     legacy = conn.execute("SELECT r.* FROM readings r LEFT JOIN metric_history_indexed i ON i.reading_id=r.id WHERE r.elder_id=? AND r.source=? AND r.captured_at>=? AND r.captured_at<? AND i.reading_id IS NULL ORDER BY r.id LIMIT ?", (patient, source, available_start, end, BACKFILL_LIMIT)).fetchall()
     for row in legacy:
@@ -128,7 +137,7 @@ def metric_history(conn, db, patient, metric, period, end, source):
         merge(total, stat)
         left, right = max(start, at), min(end, at+bucket_seconds)
         points.append({"start": stamp(left), "end": stamp(right), "at": stamp((left+right)//2),
-                       "value": stat["sum"]/stat["count"] if stat["count"] else None,
+                       "value": float(Decimal(str(stat["sum"]))/stat["count"]) if stat["count"] else None,
                        "min": stat["min"], "max": stat["max"], "count": stat["count"]})
     # Unindexed edge readings were already included exactly; subtract them from
     # the missing-index figure before describing actual response coverage.
@@ -136,7 +145,10 @@ def metric_history(conn, db, patient, metric, period, end, source):
     return {"patient_id": patient, "metric": metric, "title": METRICS[metric][0], "unit": METRICS[metric][1],
             "period": period, "source": source, "start": stamp(start), "end": stamp(end),
             "bucket_seconds": bucket_seconds, "aggregation": "mean", "points": points,
-            "summary": {"count": total["count"], "average": total["sum"]/total["count"] if total["count"] else None,
+            "available_readings": {"count": available["count"],
+                                   "first_at": stamp(available["first_at"]) if available["first_at"] is not None else None,
+                                   "latest_at": stamp(available["latest_at"]) if available["latest_at"] is not None else None},
+            "summary": {"count": total["count"], "average": float(Decimal(str(total["sum"]))/total["count"]) if total["count"] else None,
                         "min": total["min"], "max": total["max"], "latest": total["latest"],
                         "latest_at": stamp(total["latest_at"]) if total["latest_at"] is not None else None},
             "coverage": {"complete": missing_full == 0 and edge_count <= EDGE_LIMIT,

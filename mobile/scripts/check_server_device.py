@@ -1,12 +1,15 @@
 """Probe public HTTPS health using the installed Android app's real ApiClient.
 
 Builds a separate signed instrumentation APK. Device use always requires an exact
---serial. Only this helper package is installed/uninstalled. No account is loaded,
+--serial. Only this helper package is installed/uninstalled. By default no account is loaded,
 no login/permission grant/settings write/screenshot/sensor operation is performed.
 Android instrumentation may restart the target process; active target services
 cause an abort before installing the helper. --build-only never invokes adb.
 --check-register-route also sends an empty JSON object to registration and expects
 schema rejection (HTTP 422), without supplying account data or creating a login.
+--check-history explicitly loads the existing session, requires its server to
+match --base, and performs authorized history GETs without exporting sensor
+values or identities. It cannot be combined with --check-register-route.
 """
 from __future__ import annotations
 
@@ -49,18 +52,33 @@ def target_services_active(output: str) -> bool:
     return re.search(r"\bServiceRecord\{[^\r\n]*\borg\.caremonitor\.demo/", output) is not None
 
 
-def main() -> None:
+def arguments(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--serial", required=True, help="Exact adb serial; never selects a device implicitly")
     parser.add_argument("--base", required=True, type=endpoint, help="Explicit HTTPS base ending in /api/v1")
     parser.add_argument("--check-config", action="store_true", help="Report only whether installed default/saved endpoints match --base")
     parser.add_argument("--check-register-route", action="store_true", help="Expect HTTP 422 for an empty registration object; supplies no account data")
+    parser.add_argument("--check-history", action="store_true", help="Opt in to loading the existing session for read-only, authorized metric history checks; never prints identities or sensor values")
     parser.add_argument("--sdk", type=Path, default=os.environ.get("ANDROID_HOME", Path.home() / "Android/Sdk"))
     parser.add_argument("--jdk", type=Path, default=os.environ.get("JAVA_HOME", "/usr"))
     parser.add_argument("--build-only", action="store_true", help="Build and verify the helper without invoking adb")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not args.serial.strip() or args.serial.startswith("-") or re.search(r"\s", args.serial):
         parser.error("Supply one exact, nonempty device serial")
+    if args.check_history and args.check_register_route:
+        parser.error("--check-history is read-only and cannot be combined with --check-register-route")
+    return args
+
+
+def instrumentation_options(base: str, *, check_config=False, check_register_route=False, check_history=False):
+    """Account access remains an explicit false-by-default instrumentation flag."""
+    return ["-e", "base", base, "-e", "check_config", str(check_config).lower(),
+            "-e", "check_register_route", str(check_register_route).lower(),
+            "-e", "check_history", str(check_history).lower()]
+
+
+def main() -> None:
+    args = arguments()
     sdk, jdk = args.sdk.absolute(), args.jdk.absolute()
     suffix = ".exe" if os.name == "nt" else ""
     tools = sdk / "build-tools/36.0.0"
@@ -137,11 +155,12 @@ def main() -> None:
         installed = "Success" in install.stdout
         if not installed:
             raise RuntimeError("Probe-package installation did not confirm success")
-        print("Probing public health using installed CareMonitor: " + args.base)
+        print(("Checking public health and authorized saved history using the existing session: " if args.check_history
+               else "Probing public health using installed CareMonitor: ") + args.base)
         outcome = run([*selected, "shell", "am", "instrument", "-w", "-r",
-                       "-e", "base", args.base, "-e", "check_config", str(args.check_config).lower(),
-                       "-e", "check_register_route", str(args.check_register_route).lower(),
-                       TEST_PACKAGE + "/.NetworkProbeInstrumentation"], timeout=60).stdout
+                       *instrumentation_options(args.base, check_config=args.check_config,
+                           check_register_route=args.check_register_route, check_history=args.check_history),
+                       TEST_PACKAGE + "/.NetworkProbeInstrumentation"], timeout=300 if args.check_history else 60).stdout
         if "INSTRUMENTATION_RESULT: result=NEEDS_LOCAL_NETWORK_PERMISSION" in outcome:
             raise SystemExit("NEEDS_LOCAL_NETWORK_PERMISSION: allow local network access for CareMonitor in Android settings; no permissions were granted")
         if ("INSTRUMENTATION_RESULT: result=PASS" not in outcome

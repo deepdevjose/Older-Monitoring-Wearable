@@ -16,6 +16,8 @@ import java.util.concurrent.atomic.*;
 public final class ServerRelay {
     public interface Listener{void onStatus(String status,int queued,long lastSuccessMs);}
     private static final String FILE="sensor_outbox_v2.enc";
+    private String activeFile=FILE;
+    private volatile int retainedOther;
     private final Context context;private final Listener listener;
     private final Handler main=new Handler(Looper.getMainLooper());
     private final ScheduledThreadPoolExecutor worker=new ScheduledThreadPoolExecutor(1);
@@ -68,7 +70,7 @@ public final class ServerRelay {
             if(!(value instanceof JSONObject)||tokens.nextClean()!=0)throw new JSONException("Invalid JSON");
             JSONObject payload=(JSONObject)value;
             if(!RelayPolicy.EXPECTED_DEVICE_ID.equals(payload.optString("device_id")))throw new JSONException("Unexpected device");
-            if(!queue.isEmpty()&&(!RelayPolicy.mayDeliver(queueEndpoint,queueOwner,endpoint,owner))){publish("Pending readings belong to another account or server. Switch back to send them.");return;}
+            if(!selectScope(current)){return;}
             if(queue.size()>=RelayPolicy.MAX_QUEUE_SAMPLES){dropped++;publish("Queue full (200) · new sample discarded");return;}
             if(queue.isEmpty()){queueEndpoint=endpoint;queueOwner=owner;}
             JSONObject envelope=new JSONObject().put("sample_id",UUID.randomUUID().toString()).put("captured_at",ApiSession.utc(captured))
@@ -78,18 +80,20 @@ public final class ServerRelay {
         }catch(Exception failure){publish("Invalid sample discarded");}finally{pending.decrementAndGet();}});
     }
     public void clearQueue(){generation.incrementAndGet();cancelConnection();execute(()->{
-        cancelTimer();try{SecureStore.delete(context,FILE);queue.clear();queueEndpoint="";queueOwner="";queued=0;dropped=0;blocked=false;
+        cancelTimer();try{ApiSession account=ApiSession.load(context);if(account==null||!account.elder()||!selectScope(account))return;
+            SecureStore.delete(context,activeFile);queue.clear();queueEndpoint="";queueOwner="";queued=0;dropped=0;blocked=false;
             publish("Queue cleared at your request");if(running)schedule(0);
         }catch(Exception failure){blocked=true;publish("The queue could not be cleared");}});}
     private void save()throws Exception{
         JSONArray samples=new JSONArray();for(JSONObject entry:queue)samples.put(entry);
-        SecureStore.write(context,FILE,new JSONObject().put("version",2).put("endpoint",queueEndpoint).put("owner",queueOwner)
+        SecureStore.write(context,activeFile,new JSONObject().put("version",2).put("endpoint",queueEndpoint).put("owner",queueOwner)
             .put("samples",samples).put("dropped",dropped).put("last_success",lastSuccess).toString());
     }
     private void pump(){
         timer=null;if(closed||!running||!ready||blocked)return;
         ApiSession session=ApiSession.load(context);
         if(session==null||!session.elder()){publish("Signed out or session expired · private queue paused");return;}
+        if(!selectScope(session))return;
         if(!ApiClient.lanAllowed(context)){publish("Local network permission revoked · private queue paused");schedule(10000);return;}
         if(queue.isEmpty()){publish("Ready · waiting for wearable samples");return;}
         if(!RelayPolicy.mayDeliver(queueEndpoint,queueOwner,session.base+"/readings",session.id)){publish("Queue belongs to another account or server · sending blocked");return;}
@@ -122,6 +126,38 @@ public final class ServerRelay {
         finally{if(active==connection)active=null;if(connection!=null)connection.disconnect();}
     }
     private boolean current(long epoch){return !closed&&running&&generation.get()==epoch;}
+    /** Switch files, never ownership. The legacy encrypted queue remains untouched. */
+    private boolean selectScope(ApiSession session){
+        String endpoint=session.base+"/readings";
+        if(RelayPolicy.mayDeliver(queueEndpoint,queueOwner,endpoint,session.id))return true;
+        try{
+            String target=OutboxScope.file(session.id,endpoint);
+            String legacy=SecureStore.read(context,FILE,4*1024*1024);
+            if(!legacy.isEmpty()){
+                JSONObject old=new JSONObject(legacy);
+                if(RelayPolicy.mayDeliver(RelayPolicy.endpoint(old.getString("endpoint")),old.getString("owner"),endpoint,session.id))target=FILE;
+            }
+            String saved=SecureStore.read(context,target,4*1024*1024);
+            ArrayDeque<JSONObject> selected=new ArrayDeque<>();long selectedDropped=0,selectedSuccess=0;
+            if(!saved.isEmpty()){
+                JSONObject body=new JSONObject(saved);
+                if(!RelayPolicy.mayDeliver(RelayPolicy.endpoint(body.getString("endpoint")),body.getString("owner"),endpoint,session.id))throw new IOException("Queue scope mismatch");
+                JSONArray samples=body.getJSONArray("samples");if(samples.length()>RelayPolicy.MAX_QUEUE_SAMPLES)throw new IOException("Queue limit");
+                for(int i=0;i<samples.length();i++){JSONObject item=samples.getJSONObject(i);item.getString("sample_id");item.getJSONObject("payload");selected.add(item);}
+                selectedDropped=body.optLong("dropped");selectedSuccess=body.optLong("last_success");
+            }
+            int retained=0;
+            File[] files=context.getFilesDir().listFiles();
+            if(files!=null)for(File file:files){String name=file.getName();
+                if(name.equals(target)||!(name.equals(FILE)||name.matches("sensor_outbox_scope_[0-9a-f]{64}\\.enc")))continue;
+                String content=SecureStore.read(context,name,4*1024*1024);
+                if(!content.isEmpty())retained+=new JSONObject(content).getJSONArray("samples").length();
+            }
+            queue.clear();queue.addAll(selected);activeFile=target;queueEndpoint=endpoint;queueOwner=session.id;
+            queued=queue.size();retainedOther=retained;dropped=selectedDropped;lastSuccess=selectedSuccess;
+            failures=0;nextAllowed=0;return true;
+        }catch(Exception failure){publish("Saved queue could not be opened safely · sending paused");return false;}
+    }
     private void retry(String message){failures++;long delay=RelayPolicy.retryDelayMs(failures);nextAllowed=SystemClock.elapsedRealtime()+delay;publish(message+" · retrying in "+delay/1000+" s");schedule(delay);}
     private boolean defaultNetworkAvailable(){
         if(networks==null)return true; // A request still fails safely if Android has no route.
@@ -135,7 +171,7 @@ public final class ServerRelay {
     private void publish(String text){status=text+(dropped>0?" · "+dropped+" discarded from this queue":"");main.post(()->{if(!closed)listener.onStatus(status,queued,lastSuccess);});}
     public String endpoint(){ApiSession session=ApiSession.load(context);return session==null?"":session.base+"/readings";}
     public boolean isConfigured(){ApiSession session=ApiSession.load(context);return ready&&session!=null&&session.elder();}
-    public int queuedCount(){return queued;}public String status(){return status;}public long lastSuccessMs(){return lastSuccess;}
+    public int queuedCount(){return queued;}public int retainedOtherCount(){return retainedOther;}public String status(){return status;}public long lastSuccessMs(){return lastSuccess;}
     public void close(){if(closed)return;closed=true;running=false;generation.incrementAndGet();cancelConnection();execute(()->{
         cancelTimer();if(callbackRegistered)try{networks.unregisterNetworkCallback(networkCallback);}catch(RuntimeException ignored){}
         canceller.shutdown();worker.shutdown();});}

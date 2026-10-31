@@ -37,6 +37,13 @@ final class ApiClient {
         }
         return request(context,session.base,session.token,method,path,body,readTimeoutMs);
     }
+    static JSONObject history(Context context,ApiSession session,String patient,String metric,String period,long endMillis)throws Exception{
+        MetricHistoryQuery query=new MetricHistoryQuery(patient,metric,period,endMillis);
+        JSONObject result=call(context,session,"GET",query.path(),null,MetricHistoryQuery.READ_TIMEOUT_MS);
+        if(!query.matches(result.optString("patient_id"),result.optString("metric"),result.optString("period"),result.optString("source")))
+            throw new Failure(0,"The saved readings could not be verified. Refresh history to try again.");
+        return result;
+    }
     static JSONObject request(Context context,String base,String token,String method,String path,JSONObject body)throws Exception{
         return request(context,base,token,method,path,body,6000);
     }

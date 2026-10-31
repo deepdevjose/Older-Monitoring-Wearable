@@ -1,0 +1,39 @@
+{
+  "result": "PASS",
+  "recorded_at": "2026-10-31T07:46:25.583244+00:00",
+  "compiled_image_sha256": "ad51948588f65913d133e5b193e2e1e0587442e1df9842aaa800ca13c678fe1e",
+  "fqbn": "esp32:esp32:esp32:PartitionScheme=min_spiffs",
+  "input_sha256": {
+    "firmware/esp32/WearableBluetooth.cpp": "45b1d7927c613d05efb42b524218cbda9bd76cf26bd7cd07ebda2cdbc9b50338",
+    "firmware/esp32/WearableBluetooth.h": "c0b782c7c4271b340dcfc8b5b7c191e10a3e6f473ba37f1acf1522a13bce81db",
+    "firmware/esp32/WearableSession.h": "9cef73e9c9faebdb947f580d667642692188787413d1901303964fe689f8b831",
+    "firmware/esp32/esp32.ino": "69b02ce531dd43ba3663a4de4a2e37574356dc7691a8340a44f81ce6523c0573",
+    "firmware/esp32/secrets.example.h": "c4a7e92a8c691b85598b2acabd440e7ec1aaccba9b4d165277cfb77e759abe5d"
+  },
+  "physical_program_write": true,
+  "program_offset": 65536,
+  "flash_data_hash_verified_by_esptool": true,
+  "existing_partition_table_preserved": true,
+  "existing_nvs_not_erased": true,
+  "full_flash_backup_created_privately": true,
+  "backup_bytes": 4194304,
+  "runtime_frames": 25,
+  "runtime_invalid_json_frames": 0,
+  "runtime_frequency_hz": 1.0,
+  "sensor_online_flags": {
+    "mpu6050:True": 25,
+    "gy906:True": 25
+  },
+  "optical_states": {
+    "warming_up": 25
+  },
+  "validity_flags": {
+    "finger_detected:True": 25,
+    "heart_rate_valid:True": 25,
+    "spo2_valid:True": 24,
+    "spo2_valid:False": 1
+  },
+  "numeric_estimates_are_independent_of_quality_flags": true,
+  "no_result_representation": "null; -999 algorithm sentinel is never presented as a measurement",
+  "private_binaries_or_credentials_packaged": false
+}

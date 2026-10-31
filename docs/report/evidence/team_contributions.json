@@ -1,0 +1,97 @@
+{
+  "recorded_date": "2026-10-30",
+  "client_timezone": "America/Los_Angeles",
+  "source": "Task allocation supplied directly by Jose Manuel Cortes Ceron in project correspondence",
+  "confirmed_by": "Jose Manuel Cortes Ceron",
+  "individual_tasks_confirmed": true,
+  "interpretation": "A supplied team contribution declaration, not independent verification of each individual's authorship. Artifact pointers locate associated deliverables; shared Git history records integration chronology.",
+  "members": [
+    {
+      "name": "Nathan Ratichon",
+      "student_id": "2362789",
+      "tasks": [
+        "Participated in exploratory fall-related trials intended to support model development",
+        "Tested individual sensors with Cheng Zhang",
+        "Helped write the report progressively, recording development steps day by day"
+      ],
+      "associated_artifacts": [
+        "firmware/esp32/esp32.ino: individual sensor acquisition routines",
+        "docs/steps_pictures/: historical development captures",
+        "docs/reference-labs/IndiCare_Report_Rubric_Checked.odt",
+        "enviado.pdf",
+        "docs/report/sections/"
+      ]
+    },
+    {
+      "name": "Guannan Ge",
+      "student_id": "2364229",
+      "tasks": [
+        "Developed the app UI/UX with Cheng Zhang",
+        "Developed the initial integrated firmware with Jose Manuel Cortes Ceron, reading sensors together and transmitting JSON"
+      ],
+      "associated_artifacts": [
+        "mobile/app/src/main/java/org/caremonitor/demo/MainActivity.java",
+        "mobile/app/src/main/java/org/caremonitor/demo/AccountSetup.java",
+        "mobile/app/src/main/res/values/styles.xml",
+        "5c650c1:firmware/esp32/esp32.ino",
+        "docs/report/figures/system/"
+      ]
+    },
+    {
+      "name": "Jose Manuel Cortes Ceron",
+      "student_id": "2686162",
+      "tasks": [
+        "Developed the backend",
+        "Developed the initial integrated firmware with Guannan Ge",
+        "Refined JSON and sensor selection, removing the light sensor and microphone to simplify acquisition and transmission"
+      ],
+      "associated_artifacts": [
+        "server/caremonitor/api.py",
+        "server/caremonitor/db.py",
+        "server/caremonitor/security.py",
+        "server/caremonitor/alerts.py",
+        "firmware/esp32/esp32.ino: printJSON()",
+        "docs/FIRMWARE.md",
+        "docs/report/evidence/current/FIRMWARE_SOURCE_BUILD.json"
+      ]
+    },
+    {
+      "name": "Cheng Zhang",
+      "student_id": "2361292",
+      "tasks": [
+        "Developed the app UI/UX with Guannan Ge",
+        "Tested individual sensors with Nathan Ratichon before combined integration"
+      ],
+      "associated_artifacts": [
+        "mobile/app/src/main/java/org/caremonitor/demo/MainActivity.java",
+        "mobile/app/src/main/java/org/caremonitor/demo/AccountSetup.java",
+        "mobile/app/src/main/res/values/styles.xml",
+        "firmware/esp32/esp32.ino: individual sensor acquisition routines",
+        "docs/steps_pictures/: historical sensor captures"
+      ]
+    }
+  ],
+  "shared_work": [
+    "Developed the project idea and problem definition",
+    "Selected the sensors and defined the rationale for their use",
+    "Defined the system architecture, data exchange and communication protocols"
+  ],
+  "shared_artifacts": [
+    "docs/ARCHITECTURE.md",
+    "docs/FIRMWARE.md",
+    "docs/report/sections/diagram_system.tex",
+    "docs/report/sections/diagram_hardware.tex",
+    "docs/report/sections/diagram_mobile.tex"
+  ],
+  "evidence_boundaries": {
+    "development_fall_trials": "Separate from the datasets used for the reported model evaluation; no reported model metric is attributed to these trials",
+    "reported_health_classification": "Identified synthetic CSV and documented grouped splits",
+    "separate_sisfall_experiment": "Pre-existing public archive records, as documented in datasets/README.md and models/sisfall-v1/metadata.json; no linkage to team development trials is inferred",
+    "json_and_sensor_refinement": "Engineering contribution; no unmeasured latency or payload-size improvement is asserted",
+    "contribution_percentages": "Not supplied and not inferred"
+  },
+  "historical_snapshot_superseded": {
+    "path": "docs/report/evidence/report_inputs.json",
+    "scope": "Only the historical incomplete-individual-contributions status is superseded; all other historical evidence and provenance limits retain their original scope"
+  }
+}

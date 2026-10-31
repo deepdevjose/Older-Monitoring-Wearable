@@ -81,7 +81,7 @@ def test_invalid_optical_states_leave_gaps_and_sources_are_separate(service):
     end=int(time.time())//3600*3600
     send(client,elder,"physical",end-4000,72)
     send(client,elder,"synthetic",end-4000,180,source="synthetic")
-    send(client,elder,"invalid",end-8000,max30102={"status":"ok","heart_rate_valid":True,"spo2_valid":True,"finger_detected":False,"heart_rate_bpm":99,"spo2_percent":98})
+    send(client,elder,"invalid",end-8000,max30102={"status":"no_finger","heart_rate_valid":False,"spo2_valid":False,"finger_detected":False,"heart_rate_bpm":None,"spo2_percent":None})
     physical=get_history(client,elder_id,elder,end=stamp(end)).json()
     synthetic=get_history(client,elder_id,elder,end=stamp(end),source="synthetic").json()
     assert physical["summary"]["count"]==1 and physical["summary"]["latest"]==72
@@ -117,6 +117,36 @@ def test_duplicate_ingestion_does_not_duplicate_history(service):
     second=send(client,elder,"same",when)
     assert not first["duplicate"] and second["duplicate"]
     assert get_history(client,elder_id,elder).json()["summary"]["count"]==1
+
+
+def test_empty_day_still_exposes_older_saved_dates_without_mixing_sources_or_people(service):
+    client,_,_=service
+    elder_id,elder,_=account(client)
+    _,other,_=account(client,"other-person")
+    end=int(time.time())
+    send(client,elder,"older-wearable",end-3*86400,72)
+    send(client,elder,"newer-synthetic",end-100,180,source="synthetic")
+    send(client,other,"other-person-wearable",end-50,120)
+    result=get_history(client,elder_id,elder,end=stamp(end)).json()
+    assert result["summary"]["count"]==0
+    assert result["available_readings"]=={"count":1,"first_at":history.stamp(end-3*86400),"latest_at":history.stamp(end-3*86400)}
+    # Following the date returned by the server reveals the real older sample.
+    latest=get_history(client,elder_id,elder,end=stamp(end-3*86400+1)).json()
+    assert latest["summary"]["count"]==1 and latest["summary"]["latest"]==72
+    synthetic=get_history(client,elder_id,elder,source="synthetic").json()
+    assert synthetic["available_readings"]["count"]==1
+    assert synthetic["available_readings"]["latest_at"]==history.stamp(end-100)
+
+
+def test_saved_dates_describe_packets_without_claiming_sensor_validity(service):
+    client,_,_=service
+    elder_id,elder,_=account(client)
+    send(client,elder,"no-finger",int(time.time())-100,
+         max30102={"status":"no_contact","finger_detected":False,"heart_rate_valid":False,"spo2_valid":False})
+    result=get_history(client,elder_id,elder).json()
+    assert result["summary"]["count"]==0
+    assert result["available_readings"]["count"]==1
+    assert result["coverage"]["invalid_readings"]==1
 
 
 def test_legacy_backfill_is_idempotent_and_partial_coverage_explicit(service,monkeypatch):
@@ -164,6 +194,7 @@ def test_retention_hides_expired_rollups_and_cleanup_cascades_indexes(service,mo
     result=get_history(client,elder_id,elder,end=stamp(now)).json()
     assert result["summary"]["count"]==0
     assert result["summary"]["latest"] is None
+    assert result["available_readings"]=={"count":0,"first_at":None,"latest_at":None}
     process_due_reminders(app.state.db,future)
     with app.state.db.connection() as conn:
         assert conn.execute("SELECT COUNT(*) FROM readings").fetchone()[0]==0
@@ -265,6 +296,7 @@ def test_empty_history_keeps_bounded_real_timestamps_and_nulls(service,period,ma
     assert result["summary"]["count"]==0
     assert result["summary"]["average"] is None
     assert result["summary"]["latest"] is None
+    assert result["available_readings"]=={"count":0,"first_at":None,"latest_at":None}
     assert len(result["points"])<=maximum
     assert all(point["value"] is None for point in result["points"])
     assert all(point["start"]<point["end"] for point in result["points"])

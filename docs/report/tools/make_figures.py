@@ -12,7 +12,7 @@ meta = json.loads((REPORT / "evidence/model-metadata.json").read_text())
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10,
                      "axes.spines.top": False, "axes.spines.right": False,
                      "pdf.fonttype": 42, "savefig.bbox": "tight"})
-navy, teal, grey = "#16334A", "#087E83", "#718492"
+navy, teal, grey = "#203247", "#39766E", "#8795A5"
 classes = meta["classes"]
 fig, axs = plt.subplots(1, 2, figsize=(8.3, 2.7), layout="constrained")
 counts = [meta["label_counts"][c] for c in classes]
@@ -33,7 +33,7 @@ fig, axs = plt.subplots(1, 2, figsize=(8.3, 3.5), layout="constrained")
 for ax, key, title in zip(axs, ["logistic_regression", "random_forest"],
                           ["Logistic regression", "Selected Random Forest"]):
     a = np.array(meta["metrics"][key]["test"]["confusion_matrix"])
-    ax.imshow(a, cmap="Blues", vmin=0, vmax=4600)
+    ax.imshow(a, cmap=matplotlib.colors.LinearSegmentedColormap.from_list("indicare",["#F2F5F8","#8CA6BB","#203247"]), vmin=0, vmax=4600)
     ax.set_xticks(range(3), classes, fontsize=9)
     ax.set_yticks(range(3), classes, fontsize=9)
     ax.set_xlabel("Predicted educational label")

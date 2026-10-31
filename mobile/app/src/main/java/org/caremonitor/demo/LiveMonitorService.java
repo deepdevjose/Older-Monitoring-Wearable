@@ -199,6 +199,14 @@ public final class LiveMonitorService extends Service {
     public AlertInbox events() {return events;}
     public JSONObject snapshot() {return snapshot;}
     public void refreshSession() { relay.refreshSession(); if(running)relay.start(); }
+    /** Explicit Settings action; opening the app never starts saved uploads. */
+    public boolean resumeSavedUploads(ApiSession expected) {
+        ApiSession account=ApiSession.load(this);
+        if(expected==null||account==null||!account.elder()||!account.id.equals(expected.id)
+                ||!account.base.equals(expected.base)||!account.token.equals(expected.token))return false;
+        // The relay checks the original owner and endpoint before every POST.
+        relay.refreshSession();relay.start();return true;
+    }
     public void clearUploadQueue() {relay.clearQueue();}
 
     public void stopMonitoring() {
@@ -208,6 +216,7 @@ public final class LiveMonitorService extends Service {
         stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();changed();
     }
 
+    public int retainedOtherCount(){return relay.retainedOtherCount();}
     public double[] history(String key) {
         ArrayDeque<Double> values=histories.get(key);if(values==null)return null;
         double[] result=new double[values.size()];int index=0;
@@ -257,11 +266,10 @@ public final class LiveMonitorService extends Service {
 
     private void recordHistory(JSONObject data) {
         JSONObject optical=data.optJSONObject("max30102"),temp=data.optJSONObject("gy906"),mic=data.optJSONObject("microphone"),light=data.optJSONObject("photoresistor");
-        String state=optical==null?"":optical.optString("status","");
-        boolean estimates=optical!=null && !Boolean.FALSE.equals(optical.opt("online"))
-            && !Boolean.FALSE.equals(optical.opt("finger_detected")) && state.equals("ok");
-        addPoint("heart_rate_bpm",estimates&&Boolean.TRUE.equals(optical.opt("heart_rate_valid"))?number(optical,"heart_rate_bpm",Double.MIN_VALUE,Double.MAX_VALUE):Double.NaN);
-        addPoint("spo2_percent",estimates&&Boolean.TRUE.equals(optical.opt("spo2_valid"))?number(optical,"spo2_percent",0,100):Double.NaN);
+        for(String metric:new String[]{"heart_rate_bpm","spo2_percent"}){
+            Double estimate=optical==null?null:OpticalReading.value(optical.opt(metric));
+            addPoint(metric,estimate==null?Double.NaN:estimate);
+        }
         boolean temperature=available(temp);
         addPoint("surface_temp_c",temperature?number(temp,"object_temp_c",-273.15,Double.MAX_VALUE):Double.NaN);
         addPoint("ambient_temp_c",temperature?number(temp,"ambient_temp_c",-273.15,Double.MAX_VALUE):Double.NaN);
