@@ -1,41 +1,86 @@
-# CareMonitor 1.0 — demostrador académico local
+# CareMonitor 1.0.0
 
-Una única base de código para ESP32 → Bluetooth → Android → HTTPS → servidor local. Sin Firebase, servicios de nube ni APIs de mapas. Cuentas de adulto y cuidadores, vínculos aprobados por el adulto, avisos privados, recordatorios y experimentos de IA claramente separados de los diagnósticos del dispositivo.
+Demostrador académico local de monitorización: **ESP32 → Bluetooth → Android → HTTPS → servidor local**. El repositorio mantiene una sola fuente activa para firmware, aplicación y servidor. No depende de Firebase, servicios de nube ni APIs de mapas.
 
-**Para retomar el equipo preparado:** [arranque paso a paso](docs/PUESTA_EN_MARCHA.md). El S22 usa el servidor por USB, conservando Wi-Fi y VPN de la computadora. Mantén el cable conectado. El modo LAN es una alternativa manual; el arranque no cambia de red. **Instalación general:** [servidor y teléfono](docs/SERVER.md). **Contrato:** [API](docs/API.md).
+> **Estado actual — 31 de octubre de 2026:** aplicación 1.0.0 / código 22 instalada y verificada en un Samsung Galaxy S22 (SM-S901E, Android 13). La ruta activa de esta computadora utiliza HTTPS por USB; conserva Wi-Fi y VPN. El alcance y la evidencia por versión se detallan en [Estado actual](docs/STATUS.md).
+
+## Empezar
+
+Para continuar en el equipo ya preparado, conecta y autoriza el S22 por USB y ejecuta desde la raíz:
 
 ```bash
 ./tools/start_offline.sh --usb --serial R5CT20D7X6D
 ./carectl status
 ```
 
-Instalación nueva: `python3 -m venv .venv`, `.venv/bin/python -m pip install -r requirements.txt`, `./carectl init --host TU_IP_LAN`. No existen cuentas ni contraseñas predeterminadas.
+El servidor debe indicar `"reachable": true`. Esta ruta usa `https://127.0.0.1:19443/api/v1`; mantén el cable conectado mientras la utilizas. La alternativa Wi-Fi y los pasos para instalar, crear cuentas, conectar el wearable y vincular cuidadores están en [Puesta en marcha](docs/PUESTA_EN_MARCHA.md).
 
-## Fuente única
+Para una instalación nueva se requiere **Python 3.12 o posterior**:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+./carectl init --host IP_LAN_DEL_SERVIDOR --port 8443
+./carectl doctor
+./carectl start
+./carectl status
+```
+
+No hay cuentas ni contraseñas predeterminadas. Configura la dirección HTTPS correspondiente en la app; la guía de [servidor y teléfonos](docs/SERVER.md) explica TLS, instalación, red y operación. No ejecutes `carectl init` sobre un servidor ya inicializado para intentar cambiar su configuración.
+
+## Qué incluye
 
 | Ruta | Responsabilidad |
 |---|---|
-| `server/caremonitor/` | API, autorización, cifrado, alertas, avisos, CLI y modelos educativos. |
-| `mobile/` | Única app Android Java y compilador local. SDK 37; sin dependencias de Google Play Services. |
-| `firmware/esp32/` | Único firmware editable. Credenciales fuera del código distribuible. |
-| `datasets/` | CSV sintético y SisFall en un archivo comprimido, sin miles de archivos sueltos. |
-| `models/` | Modelos generados localmente, métricas, procedencia y hashes. |
-| `tools/` | Entrenamiento, diagnóstico serial y empaquetado. |
-| `tests/` | Pruebas del contrato, seguridad, recuperación y modelos. |
-| `docs/` | Guías actuales; laboratorios originales en un único ZIP de referencia. |
-| `release/` | APK, paquete de fuentes y evidencia de la entrega actual. No es otra copia editable. |
-| `.local/` | Estado privado ignorado: claves, base, historial anterior y diagnóstico. Nunca distribuir. |
+| [`server/caremonitor/`](server/caremonitor/) | API FastAPI, autenticación, autorización, cifrado, avisos, CLI y modelos educativos. |
+| [`mobile/`](mobile/) | Única aplicación Android nativa Java; código 22, Android mínimo API 24 y objetivo API 37. |
+| [`firmware/esp32/`](firmware/esp32/) | Firmware canónico editable para ESP32. Las claves y credenciales privadas no se distribuyen. |
+| [`datasets/`](datasets/) | Datos sintéticos y distribución documentada de SisFall. |
+| [`models/`](models/) | Modelos generados localmente, métricas, procedencia y hashes. |
+| [`tools/`](tools/) | Arranque local, diagnóstico, preparación de datos, entrenamiento y empaquetado. |
+| [`tests/`](tests/) | Pruebas de API, CLI, Bluetooth, historial, aprendizaje y modelos. |
+| [`docs/`](docs/) | Guías de operación, arquitectura, firmware, API, estado y seguridad/ética. |
+| [`release/`](release/) | APK, paquete de fuentes y evidencia de entregas identificadas por versión. No es una segunda fuente editable. |
+| `.local/` | Estado privado ignorado por Git: claves, base de datos, historial y diagnósticos. **No distribuir.** |
 
-Las carpetas de versiones anteriores se retiraron del árbol activo después de crear `.local/before-consolidation-20261025.tar.gz`. El snapshot de firmware defectuoso del 23 de octubre se conserva como evidencia histórica privada; no es el firmware canónico. Git mantiene también el historial. No se importó la antigua base de salud al servidor nuevo.
+## Recorrido y funciones
 
-## Alcance
+1. Los sensores conectados a la ESP32 transmiten paquetes JSON por **Bluetooth Classic SPP/RFCOMM**; este firmware no anuncia BLE.
+2. La app Android autentica el wearable, valida las lecturas y puede conservar una cola cifrada para reintentar el envío.
+3. La app entrega datos mediante HTTPS al servidor local. El servidor valida identidad, rol, vínculo y consentimiento, y almacena los registros en SQLite.
+4. Una persona cuidadora solicita un vínculo y la persona adulta lo aprueba. Las notificaciones se obtienen del servidor local mediante HTTPS; no se usa un proveedor push externo.
 
-La revisión 1.0.0/código **21**, instalada en el S22 SM-S901E / Android 13, organiza la interfaz en inglés alrededor de las tareas de cada rol. **Today** prioriza pedir ayuda y lecturas antes del plan; al cuidador le muestra la persona seleccionada, avisos por revisar, lecturas y ubicación compartida si está autorizada. Las tarjetas de ancho completo usan valores grandes, unidades discretas y la fecha de la lectura. **Updates**, **Care** y **Settings** mantienen nombres y posiciones estables. Los textos técnicos y límites están en **Settings → Reading details / About CareMonitor**. Las cinco métricas abren **Day / Week / Month**, con fecha elegible y acceso al último día guardado cuando el periodo está vacío.
+La app organiza las tareas en **Today**, **Updates**, **Care** y **Settings**. Cada rol ve sus funciones autorizadas; el cuidador solo consulta a una persona con vínculo aprobado. Las métricas disponen de históricos Day / Week / Month. Las colas se mantienen separadas por cuenta y servidor.
 
-Los controles grandes, el texto ampliable, las actualizaciones sin reconstruir la pantalla y las animaciones breves de conexión apoyan esa jerarquía. **Settings → Reduce motion** desactiva el movimiento. Las transiciones no inventan ni suavizan valores de sensores. Es un diseño orientado a personas mayores y cuidadores; no se presenta como un estudio de usabilidad con adultos mayores.
+Sensores del montaje actual:
 
-El APK, su instalación y el alcance comprobado se identifican por versión y SHA-256 en [la evidencia vigente](docs/STATUS.md). Las pruebas físicas del **27 de octubre, código 17**, acreditan autenticación Bluetooth con una clave privada por placa, una sola conexión activa y recepción confirmada por el servidor, con la cola en cero. Esos registros fechados no se atribuyen a una revisión posterior de la interfaz. El canal de avisos con pantalla bloqueada, TalkBack manual y el acceso exterior mantienen su propia comprobación. Settings → Learning insights conserva los ejercicios sintéticos separados del cuidado y de los sensores.
+- **MAX30102:** estimaciones de pulso y oxígeno con indicadores de contacto/calidad.
+- **GY906 / MLX90614:** temperatura de superficie/objeto y ambiente local del sensor.
+- **MPU6050:** aceleración y giro.
 
-La IA se evalúa con datos sintéticos o reproducciones del dataset documentado; no diagnostica personas. No hay sensor de presión arterial ni detector validado de deshidratación. El GY906 mide superficie y ambiente, y oscuridad no prueba que el wearable esté puesto. Ver [matriz de capacidades y ética](docs/SECURITY_ETHICS.md).
+La app y los controles priorizan texto ampliable, acciones grandes, estados explícitos y una opción **Reduce motion**. Son decisiones de diseño comprobadas con perfiles de prueba; no constituyen un estudio de usabilidad con personas mayores ni una evaluación manual completa de accesibilidad.
 
-La revisión del 30 de octubre integra los diagramas de arquitectura, conexiones, clases, permisos, protocolos y seguridad en [el informe](docs/report/README.md). La evidencia actual distingue la app principal instalada, los controles aislados de interfaz y las pruebas físicas del mismo código en cuentas controladas; véase [arquitectura actual](docs/ARCHITECTURE.md).
+## Seguridad, privacidad y límites
+
+El servidor y la app están diseñados para operación local: HTTPS con verificación de certificado, contraseñas con Argon2id, autorización por rol y vínculo, cifrado de campos sensibles en el servidor y almacenamiento cifrado en el teléfono. Las funciones de ubicación y micrófono son opcionales y requieren consentimiento y permisos; no se usan mapas ni servicios externos.
+
+CareMonitor es un **demostrador académico, no un producto médico ni un servicio de emergencias**. Las estimaciones de sensores no tienen validación clínica. El sistema no mide presión arterial ni detecta deshidratación, y el firmware no implementa un detector de caídas validado. Los ejercicios de IA usan datos sintéticos y se mantienen separados de las lecturas físicas. La ausencia de avisos no demuestra que la persona esté bien. Consulta [Seguridad, privacidad y límites éticos](docs/SECURITY_ETHICS.md) antes de usarlo.
+
+Protege `.local/`, las claves de wearable, credenciales, base de datos y copias de seguridad. No abras el servidor a Internet ni publiques claves o datos personales.
+
+## Validación y entregas
+
+El estado documentado para el 31 de octubre incluye **248 pruebas Python**, **3.381 comprobaciones JVM**, **24 controles HTTPS aislados** y **7.198 controles de interfaz**, con 48 capturas revisadas a escala normal y ampliada. Estas campañas tienen alcances distintos: las pruebas aisladas de interfaz/servidor no equivalen a una prueba física del recorrido completo.
+
+El APK actual es [`release/CareMonitor-1.0.0.apk`](release/CareMonitor-1.0.0.apk). La evidencia y los hashes vigentes están en [`docs/STATUS.md`](docs/STATUS.md) y los manifiestos de [`release/`](release/). Las pruebas físicas de otras versiones se conservan con sus fechas y no deben atribuirse automáticamente al código 22.
+
+## Documentación
+
+- [Puesta en marcha](docs/PUESTA_EN_MARCHA.md): USB, Wi-Fi, app, cuentas, Bluetooth y comprobación del recorrido.
+- [Servidor y teléfonos](docs/SERVER.md): instalación limpia, TLS, operación local y conexión Android.
+- [Arquitectura y conexiones](docs/ARCHITECTURE.md): componentes, protocolos, sensores y límites de las comprobaciones.
+- [Contrato de la API](docs/API.md)
+- [Guía del firmware](docs/FIRMWARE.md)
+- [Estado y evidencia por versión](docs/STATUS.md)
+- [Seguridad, privacidad y ética](docs/SECURITY_ETHICS.md)
+- [Informe y diagramas](docs/report/README.md)
